@@ -57,71 +57,6 @@ input::placeholder{color:#AAAAAA}
 </div>
   
 <script>
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbygAEyBOyRP57tXYaHS5lVBH1gRMbmfM7Fw64iSBuh-J1_8WKe_3vFu5LhdsT7sKd1-GQ/exec';
-
-function log(msg, color) {
-  var el = document.getElementById('debugLog');
-  if(!el) return;
-  var line = document.createElement('div');
-  line.style.color = color || '#333';
-  line.style.fontSize = '11px';
-  line.style.marginBottom = '2px';
-  line.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
-  el.appendChild(line);
-  el.style.display = 'block';
-}
-
-// Fetch staff data using fetch() API — works on all mobile browsers
-(function loadFromSheets() {
-  disableLogin('⏳ Loading…');
-  log('Page loaded. Fetching staff from Sheets...', '#003D2B');
-
-  var timeout = setTimeout(function() {
-    log('⚠ Timeout — using cached data', 'orange');
-    enableLogin();
-  }, 15000);
-
-  fetch(SHEET_URL + '?action=read', {
-    method: 'GET',
-    mode: 'cors'
-  })
-  .then(function(response) {
-    if(!response.ok) throw new Error('HTTP ' + response.status);
-    return response.json();
-  })
-  .then(function(json) {
-    clearTimeout(timeout);
-    log('✅ Got response. ok=' + json.ok, 'green');
-    if(json.ok && json.data) {
-      var d = json.data;
-      var staffCount = d.staff ? d.staff.length : 0;
-      log('Staff records: ' + staffCount, staffCount > 0 ? 'green' : 'orange');
-      if(d.staff && d.staff.length) {
-        // Normalise loginPin to string
-        d.staff = d.staff.map(function(s) {
-          if(s.loginPin !== undefined && s.loginPin !== null) s.loginPin = String(s.loginPin);
-          return s;
-        });
-        localStorage.setItem('bb_staff', JSON.stringify(d.staff));
-      }
-      if(d.customers && d.customers.length) {
-        d.customers = d.customers.map(function(c) {
-          if(c.loginPin !== undefined && c.loginPin !== null) c.loginPin = String(c.loginPin);
-          return c;
-        });
-        localStorage.setItem('bb_customers', JSON.stringify(d.customers));
-      }
-      if(d.salons && d.salons.length) localStorage.setItem('bb_salons', JSON.stringify(d.salons));
-      localStorage.setItem('bb_sheetUrl', SHEET_URL);
-      _staffLoaded = staffCount > 0;
-    } else {
-      log('⚠ No data in response', 'orange');
-    }
-    enableLogin();
-  })
-  .catch(function(err) {
-    clearTimeout(timeout);
-    log('❌ Fetc<script>
 // ✅ GET SUPABASE CONFIG (from index.html)
 const SUPABASE_URL = localStorage.getItem('bb_supabase_url');
 const SUPABASE_KEY = localStorage.getItem('bb_supabase_key');
@@ -166,7 +101,7 @@ async function login(){
     }));
 
     // ✅ Redirect to app
-    window.location.href = "/BBS/app-barber.html";
+    window.location.href = "BBS/app-barber.html";
 
   }catch(e){
     errEl.innerText = "Login error";

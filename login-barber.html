@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget Barber – Barber Login</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
-<style>
+<title>Barber Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Barlow',sans-serif;background:#F0F0EA;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px}
 .card{background:white;border-radius:16px;padding:32px 24px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.10);border:1px solid #E0E0D8}
@@ -122,49 +121,58 @@ function log(msg, color) {
   })
   .catch(function(err) {
     clearTimeout(timeout);
-    log('❌ Fetch error: ' + err.message, 'red');
-    log('Using cached data (' + (JSON.parse(localStorage.getItem('bb_staff')||'[]').length) + ' staff)', 'orange');
-    enableLogin();
-  });
-})();
+    log('❌ Fetc<script>
+// ✅ GET SUPABASE CONFIG (from index.html)
+const SUPABASE_URL = localStorage.getItem('bb_supabase_url');
+const SUPABASE_KEY = localStorage.getItem('bb_supabase_key');
 
-function disableLogin(msg) {
-  var btn = document.getElementById('loginBtn');
-  if(btn) { btn.disabled = true; btn.textContent = msg; }
-}
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function enableLogin() {
-  var btn = document.getElementById('loginBtn');
-  if(btn) { btn.disabled = false; btn.textContent = 'Login →'; }
-  var cached = JSON.parse(localStorage.getItem('bb_staff') || '[]');
-  log('localStorage bb_staff count: ' + cached.length, cached.length > 0 ? 'green' : 'orange');
-}
-function doLogin(){
-  var phone=document.getElementById('phoneInput').value.trim();
-  var pin  =document.getElementById('pinInput').value.trim();
-  var errEl=document.getElementById('errMsg');
-  if(phone.length<8){errEl.textContent='Enter a valid phone number';errEl.style.display='block';document.getElementById('phoneInput').focus();return;}
-  if(pin.length<4){errEl.textContent='Enter your 4-digit PIN';errEl.style.display='block';document.getElementById('pinInput').focus();return;}
+// ✅ LOGIN FUNCTION (REPLACES GOOGLE SHEETS)
+async function login(){
+  const phone = document.getElementById('phoneInput').value.trim();
+  const pin   = document.getElementById('pinInput').value.trim();
+  const errEl = document.getElementById('err');
+
+  errEl.style.display = 'none';
+
+  if(!phone || !pin){
+    errEl.innerText = "Enter phone & PIN";
+    errEl.style.display = 'block';
+    return;
+  }
+
   try{
-    var staffList=JSON.parse(localStorage.getItem('bb_staff'))||[];
-    var sm=staffList.find(function(u){return String (u.phone)===phone&&u.role==='barber';});
-    if(!sm){errEl.textContent='Phone not registered as a Barber. Contact your manager.';errEl.style.display='block';return;}
-    if(!sm.loginPin||String (sm.loginPin)!==pin){errEl.textContent='Wrong PIN. Try again.';errEl.style.display='block';document.getElementById('pinInput').value='';document.getElementById('pinInput').focus();return;}
-    errEl.style.display='none';
-    sessionStorage.setItem('bb_role','barber');
-    sessionStorage.setItem('bb_phone',phone);
-    sessionStorage.setItem('bb_name',sm.name||'Barber');
-    window.location.href='https://abudgetbarber.github.io/BB/app-barber.html';
+    const { data, error } = await supabase
+      .from('staff')
+      .select('*')
+      .eq('phone', String(phone))
+      .eq('login_pin', String(pin))
+      .eq('role', 'barber') // 🔥 IMPORTANT
+      .single();
+
+    if(error || !data){
+      errEl.innerText = "Invalid login";
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // ✅ Save session
+    localStorage.setItem('bb_user', JSON.stringify({
+      id: data.id,
+      name: data.name,
+      salon_id: data.salon_id,
+      role: data.role
+    }));
+
+    // ✅ Redirect to app
+    window.location.href = "/BBS/app-barber.html";
+
   }catch(e){
-  console.error("LOGIN ERROR:", e);
-
-  errEl.textContent = 'Error: ' + (e.message || 'Unknown error');
-  errEl.style.display = 'block';
-
-  alert("ERROR DETAILS:\n" + JSON.stringify(e));
+    errEl.innerText = "Login error";
+    errEl.style.display = 'block';
+  }
 }
-}
-document.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 </script>
   
 </body>

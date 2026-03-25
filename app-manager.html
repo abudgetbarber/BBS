@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Budget Barber – Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1E18;--surface:#172318;--surface2:#1E2E24;--surface3:#243328;
+  --accent:#00C48C;--accent2:#00A374;--gold:#F5C842;--blue:#5BC4F0;
+  --green:#4DC98A;--white:#E8F5EE;--muted:#6BA896;--muted2:#3D6858;
+  --danger:#E06B5B;--warn:#E8A642;
+  --r:12px;--rs:8px;--BF:'Barlow',sans-serif;--HF:'Bebas Neue',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15px;min-height:100vh;overflow-x:hidden}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--surface);border-bottom:2px solid var(--accent);padding:0 14px;display:flex;align-items:stretch;position:sticky;top:0;z-index:100;min-height:54px}
+.logo{background:var(--gold);border-radius:6px;padding:3px 10px;display:inline-flex;align-items:center;margin:9px 12px 9px 0;flex-shrink:0}
+.logo span{font-family:var(--HF);font-size:17px;color:#0F1E18;line-height:1;letter-spacing:1px}
+
+/* FIX 1: Outlet name in topbar */
+.tb-center{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.tb-mgr-name{font-size:13px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-outlet{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.tb-right{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.tb-badge{background:rgba(91,196,240,.15);border:1px solid rgba(91,196,240,.3);color:var(--blue);font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:1px;text-transform:uppercase}
+.tb-out{background:none;border:1px solid rgba(224,107,91,.3);color:var(--danger);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:var(--BF)}
+
+/* ── TABS ── */
+.nav-tabs{background:var(--surface);border-bottom:1px solid rgba(255,255,255,.06);display:flex;overflow-x:auto;padding:0 4px}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nt{flex-shrink:0;padding:11px 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--BF)}
+.nt.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── PANELS ── */
+.panel{display:none;padding:16px;padding-bottom:36px}
+.panel.on{display:block;animation:fi .22s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ── STAT GRID ── */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.sg3{grid-template-columns:1fr 1fr 1fr}
+.sc{background:var(--surface2);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:14px 16px}
+.sc.a{border-left:3px solid var(--accent)}.sc.g{border-left:3px solid var(--gold)}
+.sc.b{border-left:3px solid var(--blue)}.sc.gr{border-left:3px solid var(--green)}
+.sc.warn{border-left:3px solid var(--warn)}
+.sc-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.sc-val{font-family:var(--HF);font-size:26px;color:var(--white);letter-spacing:.5px;line-height:1}
+.sc.a .sc-val{color:var(--accent)}.sc.g .sc-val{color:var(--gold)}
+.sc.b .sc-val{color:var(--blue)}.sc.gr .sc-val{color:var(--green)}
+.sc.warn .sc-val{color:var(--warn)}
+
+/* Cash-in counter — compact strip, not full card */
+.cash-counter{background:var(--surface2);border:1px solid rgba(245,200,66,.25);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.cc-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);white-space:nowrap;padding-top:2px}
+.cc-amount{font-family:var(--HF);font-size:18px;color:var(--gold);line-height:1;font-weight:700}
+.cc-entries{flex:1;min-width:180px}
+
+/* ── BARBER PERF CARDS ── */
+.bc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.bc{background:var(--surface2);border-radius:var(--r);padding:14px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .2s}
+.bc:hover{border-color:var(--accent)}
+.bc-ava{width:36px;height:36px;background:rgba(0,196,140,.15);border:2px solid var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:8px}
+.bc-name{font-weight:700;font-size:13px;color:var(--white)}
+.bc-total{font-size:13px;color:var(--accent);font-weight:700;margin-top:3px}
+.bc-count{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── TABLE ── */
+.tbl-wrap{background:var(--surface2);border-radius:var(--r);overflow:hidden;border:1px solid rgba(255,255,255,.06);overflow-x:auto}
+.tbl-head{background:rgba(0,196,140,.15);padding:9px 12px;display:grid;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);border-bottom:1px solid rgba(0,196,140,.15);min-width:520px;text-align:center}
+.tbl-body .tbl-row{display:grid;padding:9px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;min-width:520px;text-align:center}
+.tbl-body .tbl-row:last-child{border-bottom:none}
+.tbl-body .tbl-row:hover{background:rgba(255,255,255,.025)}
+.tbl-empty{padding:28px;text-align:center;color:var(--muted2);font-size:13px;font-style:italic}
+/* # | Date | Stylist | Customer | Phone | Services | PhPay | Cash | Ph Tip | Cash Tip | Total | Act */
+.cols-m{grid-template-columns:22px 62px 78px 70px 72px 1fr 54px 52px 46px 50px 52px 44px}
+.tag-ph{color:var(--blue);font-size:12px;font-weight:600}
+.tag-cash{color:var(--green);font-size:12px;font-weight:600}
+.tag-tip{color:var(--warn);font-size:12px;font-weight:600}
+.tag-tot{color:var(--gold);font-size:13px;font-weight:700}
+.btn-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:0;line-height:1}
+.btn-del:hover{color:var(--danger)}
+.btn-edit{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:0;margin-right:4px}
+.btn-edit:hover{color:var(--blue)}
+/* Salon cash-in / expense summary panel */
+.outlet-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.os-box{border-radius:var(--r);padding:13px 14px;border:2px solid}
+.os-box.ci{background:rgba(77,201,138,.07);border-color:rgba(77,201,138,.3)}
+.os-box.ex{background:rgba(224,107,91,.07);border-color:rgba(224,107,91,.3)}
+.os-box.net{background:rgba(245,200,66,.07);border-color:rgba(245,200,66,.3)}
+.os-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.os-box.ci .os-lbl{color:var(--green)}
+.os-box.ex .os-lbl{color:var(--danger)}
+.os-box.net .os-lbl{color:var(--gold)}
+.os-val{font-family:var(--HF);font-size:22px;line-height:1}
+.os-box.ci .os-val{color:var(--green)}
+.os-box.ex .os-val{color:var(--danger)}
+.os-box.net .os-val{color:var(--gold)}
+/* Expense log in dashboard */
+.exp-log-panel{background:var(--surface2);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;border:1px solid rgba(255,255,255,.06)}
+.exp-log-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--danger);margin-bottom:10px}
+.exp-log-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.exp-log-row:last-child{border-bottom:none}
+.exp-log-desc{color:var(--white);font-weight:600}
+.exp-log-meta{font-size:11px;color:var(--muted2);margin-top:1px}
+/* Filter toggle */
+.ft-wrap{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.ft-btn{padding:8px 14px;border-radius:var(--rs);border:1.5px solid rgba(255,255,255,.1);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--BF)}
+.ft-btn.on{background:rgba(0,196,140,.15);border-color:var(--accent);color:var(--accent)}
+/* Yearly table */
+.yr-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.yr-tbl th{background:rgba(0,196,140,.15);padding:9px 10px;text-align:right;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--accent)}
+.yr-tbl th:first-child{text-align:left}
+.yr-tbl td{padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.yr-tbl td:first-child{text-align:left;font-weight:600;color:var(--white)}
+.yr-tbl tr:last-child td{border-bottom:none;background:rgba(0,196,140,.07);font-weight:700}
+.yr-tbl tr:hover td{background:rgba(255,255,255,.025)}
+/* Manager counter input */
+.mgr-counter{background:var(--surface2);border-radius:var(--r);padding:13px 14px;margin-bottom:12px;border:2px solid}
+.mgr-counter.ci{border-color:rgba(77,201,138,.3)}
+.mgr-counter.ex{border-color:rgba(224,107,91,.3)}
+.mgr-ci-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.mgr-ci-title.ci{color:var(--green)}
+.mgr-ci-title.ex{color:var(--danger)}
+.mgr-ci-total{font-family:var(--HF);font-size:22px;line-height:1}
+.mgr-ci-row{display:flex;gap:7px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+.mgr-ci-inp{flex:1;min-width:80px;padding:8px 10px;background:var(--bg);border:1.5px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF)}
+.mgr-ci-inp:focus{border-color:var(--accent)}
+.mgr-ci-log{font-size:11px;color:var(--muted2);max-height:60px;overflow-y:auto}
+.mgr-ci-item{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
+.mgr-ci-item:last-child{border-bottom:none}
+/* Salary row in staff modal */
+.sal-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+.sal-row:last-child{border-bottom:none;padding-top:10px;margin-top:4px}
+.sal-row.net .sal-lbl{color:var(--gold);font-weight:800;font-size:14px}
+.sal-row.net .sal-val{font-size:20px;color:var(--gold);font-family:var(--HF)}
+.sal-row.ded .sal-val{color:var(--danger)}
+.sal-row.inc .sal-val{color:var(--green)}
+.sal-lbl{color:var(--muted)}
+.sal-val{font-weight:700}
+/* br-stats5 for hairstylist breakdown */
+.br-stats5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px}
+.br-stat.tip .br-stat-val{color:var(--warn)}
+
+/* ── TOTALS BAR ── */
+.tot-bar{background:var(--surface2);border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;display:flex;gap:14px;flex-wrap:wrap;border-left:3px solid var(--accent)}
+.tot-item{font-size:12px;color:var(--muted)}
+.tot-item b{color:var(--white);font-size:13px;margin-left:4px}
+
+/* ── FILTER ── */
+.fr{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.fr .ifield{flex:1;min-width:120px}
+.ifield label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.fi{width:100%;padding:11px 13px;background:var(--bg);border:1.5px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-size:14px;outline:none;transition:border-color .2s;font-family:var(--BF);-webkit-appearance:none}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--muted2)}
+.btn-sm{padding:10px 14px;background:var(--surface3);border:1px solid rgba(255,255,255,.1);color:var(--white);border-radius:var(--rs);font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:var(--BF)}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── BAR CHART ── */
+.month-chart{background:var(--surface2);border-radius:var(--r);padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,.06)}
+.chart-title{font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:100px}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.bar{width:100%;border-radius:3px 3px 0 0;background:var(--accent);min-height:3px;transition:height .4s;position:relative;cursor:pointer}
+.bar:hover::after{content:attr(data-tip);position:absolute;top:-24px;left:50%;transform:translateX(-50%);background:var(--bg);color:var(--white);font-size:10px;padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none;font-weight:700}
+.bar-lbl{font-size:9px;color:var(--muted2);text-align:center}
+
+/* FIX 2: Barber breakdown card */
+.barber-report{background:var(--surface2);border-radius:var(--r);padding:16px;border:1px solid rgba(255,255,255,.06);margin-bottom:12px}
+.br-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.br-ava{width:38px;height:38px;background:rgba(0,196,140,.15);border:2px solid var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.br-name{font-size:15px;font-weight:800;color:var(--white)}
+.br-count{font-size:12px;color:var(--muted);margin-top:1px}
+.br-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+.br-stat{background:var(--surface3);border-radius:var(--rs);padding:10px 8px;text-align:center}
+.br-stat-lbl{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.br-stat-val{font-size:13px;font-weight:800;color:var(--white)}
+.br-stat.ph .br-stat-val{color:var(--blue)}
+.br-stat.cash .br-stat-val{color:var(--green)}
+.br-stat.tot .br-stat-val{color:var(--gold)}
+.br-stat.cust .br-stat-val{color:var(--accent)}
+
+/* FIX 3: OTP card in staff */
+.otp-reveal{background:rgba(245,200,66,.1);border:2px solid var(--gold);border-radius:var(--r);padding:16px;text-align:center;margin-top:14px}
+.otp-code{font-family:var(--HF);font-size:48px;color:var(--gold);letter-spacing:6px;line-height:1}
+.otp-msg{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
+
+/* ── STAFF CARD ── */
+.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.staff-card{background:var(--surface2);border-radius:var(--r);padding:14px;border:1px solid rgba(255,255,255,.06)}
+.staff-name{font-weight:700;font-size:14px;color:var(--white)}
+.staff-phone{font-size:12px;color:var(--muted);margin-top:3px}
+.staff-otp{font-size:11px;color:var(--gold);margin-top:5px;font-weight:600}
+.s-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:6px;font-weight:700;background:rgba(0,196,140,.12);color:var(--accent);border:1px solid rgba(0,196,140,.25)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:700;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--surface);border-radius:var(--r);padding:22px;width:100%;max-width:440px;border:1px solid rgba(0,196,140,.2);animation:mIn .2s ease;max-height:90dvh;overflow-y:auto}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-hdr h3{font-size:15px;font-weight:700;color:var(--white)}
+.btn-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.btn-primary{padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--BF);flex:1;transition:all .15s}
+.btn-primary:active{transform:scale(.97)}
+.btn-cancel{flex:1;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:var(--rs);font-size:14px;cursor:pointer;font-family:var(--BF)}
+
+/* ── SECTION ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+
+/* ── TOAST ── */
+.toast-el{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);color:var(--white);padding:11px 22px;border-radius:50px;font-size:13px;z-index:999;display:none;border:1px solid rgba(0,196,140,.3);box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+
+@media(max-width:400px){
+  .sg{grid-template-columns:1fr 1fr}
+  .bc-grid{grid-template-columns:1fr 1fr}
+  .staff-grid{grid-template-columns:1fr}
+  .br-stats{grid-template-columns:1fr 1fr}
+}
+
+/* ── SETUP BANNER ── */
+#setup-banner{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+#setup-banner.show{display:flex}
+.sb-logo{background:var(--gold);border-radius:10px;padding:10px 24px;margin-bottom:24px;display:inline-block}
+.sb-logo-text{font-family:var(--HF);font-size:32px;color:#003D2B;line-height:1;letter-spacing:2px;display:block}
+.sb-title{font-size:20px;font-weight:800;color:var(--white);margin-bottom:8px}
+.sb-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6;max-width:320px}
+.sb-card{background:var(--surface2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px;width:100%;max-width:360px;margin-bottom:16px}
+.sb-url-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;text-align:left}
+.sb-url-input{width:100%;padding:10px 12px;background:var(--darker);border:1.5px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-size:12px;font-family:var(--BF);outline:none;margin-bottom:10px}
+.sb-url-input:focus{border-color:var(--accent)}
+.sb-btn-restore{width:100%;padding:14px;background:var(--accent);border:none;border-radius:var(--rs);color:#0F1E18;font-family:var(--BF);font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;margin-bottom:10px}
+.sb-btn-skip{width:100%;padding:10px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:var(--rs);color:var(--muted);font-family:var(--BF);font-size:12px;font-weight:700;cursor:pointer}
+.sb-status{font-size:12px;margin-top:10px;min-height:20px;color:var(--muted)}
+
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="restoreBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#003D2B;color:#F5E030;padding:12px 16px;align-items:center;justify-content:center;gap:10px;font-family:var(--BF);font-size:13px;font-weight:700">
+  <span style="animation:spin 1s linear infinite;display:inline-block">⟳</span>
+  Loading your salon data from Google Sheets…
+</div>
+<!-- SETUP BANNER (shown when localStorage is empty / no staff record found) -->
+<div id="setup-banner" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">
+  <div class="sb-logo"><span class="sb-logo-text">BB</span></div>
+  <div class="sb-title">Device Setup Required</div>
+  <div class="sb-sub">This device doesn't have salon data yet.<br>Paste your Google Sheets sync URL below and tap Restore to get all data.</div>
+  <div class="sb-card">
+    <div class="sb-url-label">Google Sheets Sync URL</div>
+    <input type="url" class="sb-url-input" id="sb-url-input" placeholder="https://script.google.com/macros/s/...">
+    <button class="sb-btn-restore" onclick="sbRestore()">⬇ Restore All Data</button>
+    <button class="sb-btn-skip" onclick="sbSkip()">Skip — I'll set up later</button>
+    <div class="sb-status" id="sb-status"></div>
+  </div>
+  <div style="font-size:11px;color:var(--muted2);margin-top:8px">Ask your Admin for the Google Sheets URL</div>
+</div>
+
+
+<!-- ── TOPBAR ── FIX 1: Outlet name -->
+<div id="app-content">
+<div class="topbar">
+  <div class="logo"><span>BB</span></div>
+  <div class="tb-center">
+    <div class="tb-mgr-name" id="tbName">Manager</div>
+    <div class="tb-outlet" id="tbOutlet">Loading outlet…</div>
+  </div>
+  <div class="tb-right">
+    <span class="tb-badge">🏪 Mgr</span>
+    <span id="lastSyncTime" style="font-size:9px;color:var(--muted2);letter-spacing:.3px;white-space:nowrap;margin-right:4px"></span><button class="tb-out" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- ── NAV TABS ── -->
+<div class="nav-tabs">
+  <button class="nt on" id="nt-dashboard" onclick="showTab('dashboard')">📊 Dashboard</button>
+  <button class="nt"    id="nt-sales"     onclick="showTab('sales')">📋 Sales</button>
+  <button class="nt"    id="nt-yearly"    onclick="showTab('yearly')">📅 Yearly</button>
+  <button class="nt"    id="nt-customers" onclick="showTab('customers')">👤 Customers</button>
+  <button class="nt"    id="nt-staff"     onclick="showTab('staff')">👥 Staff</button>
+  <button class="nt"    id="nt-settings"  onclick="showTab('settings')">⚙️ Settings</button>
+</div>
+
+<!-- ════ DASHBOARD ════ -->
+<div class="panel on" id="pn-dashboard">
+
+  <div class="sg" id="dash-stats"></div>
+  <div class="sec-hdr"><div class="sec-title">Today — Hairstylist Performance</div></div>
+  <div class="bc-grid" id="dash-barbers"></div>
+  <div class="sec-hdr"><div class="sec-title">Today's Customers</div></div>
+  <div id="dash-bills"></div>
+
+  <!-- Cash-In log (barbers) -->
+  <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--rs);padding:8px 14px;margin-top:16px;margin-bottom:12px;border-left:3px solid var(--green)">
+    <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--green)">💵 Cash-In Today (Hairstylists)</span>
+    <span style="font-family:var(--HF);font-size:22px;color:var(--green);letter-spacing:.5px" id="cc-total">₹0</span>
+  </div>
+  <div id="cc-log" style="margin-bottom:12px"></div>
+
+  <!-- Hairstylist expenses -->
+  <div id="expense-log-panel"></div>
+
+  <!-- Manager's own Cash-In entry -->
+  <div class="mgr-counter ci">
+    <div class="mgr-ci-title ci"><span>💵 Add Cash-In (Manager)</span><span class="mgr-ci-total" id="mgr-ci-total">₹0</span></div>
+    <div class="mgr-ci-row">
+      <input type="number" class="mgr-ci-inp" id="mgr-ci-inp" placeholder="Enter amount…" min="0" inputmode="numeric">
+      <button onclick="addMgrCashIn()" style="padding:8px 12px;background:rgba(77,201,138,.15);border:1.5px solid var(--green);color:var(--green);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">+ Add</button>
+    </div>
+    <div class="mgr-ci-log" id="mgr-ci-log"></div>
+  </div>
+
+  <!-- Manager's own Expenses entry -->
+  <div class="mgr-counter ex">
+    <div class="mgr-ci-title ex"><span>🧾 Add Expense (Manager)</span><span class="mgr-ci-total" id="mgr-exp-total">₹0</span></div>
+    <div class="mgr-ci-row">
+      <input type="text" class="mgr-ci-inp" id="mgr-exp-desc" placeholder="Description…" style="flex:1.5">
+      <input type="number" class="mgr-ci-inp" id="mgr-exp-amt" placeholder="₹" min="0" inputmode="numeric" style="flex:.8;min-width:70px">
+      <button onclick="addMgrExpense()" style="padding:8px 12px;background:rgba(224,107,91,.12);border:1.5px solid var(--danger);color:var(--danger);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">+ Add</button>
+    </div>
+    <div class="mgr-ci-log" id="mgr-exp-log"></div>
+  </div>
+
+  <!-- Total Cash In / Total Expenses / Net — bottom of page -->
+  <div class="sec-hdr" style="margin-top:18px;margin-bottom:8px"><div class="sec-title">Today — Outlet Summary</div></div>
+  <div class="outlet-summary" id="outlet-summary"></div>
+</div>
+
+<!-- ════ SALES RECORDS ════ -->
+<div class="panel" id="pn-sales">
+  <!-- Filter toggle: Day/Range OR Month -->
+  <div class="ft-wrap">
+    <button class="ft-btn on" id="ft-day" onclick="setSalesFilter('day')">📅 Day / Range</button>
+    <button class="ft-btn"    id="ft-mon" onclick="setSalesFilter('month')">📆 Month</button>
+    <button class="btn-sm"    onclick="clearSalesFilters()">Clear</button>
+  </div>
+  <div id="sal-filter-day" style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">
+    <div class="ifield" style="flex:1"><label>From</label><input type="date" class="fi" id="sal-from" onchange="renderSalesTable()"></div>
+    <div class="ifield" style="flex:1"><label>To</label><input type="date" class="fi" id="sal-to" onchange="renderSalesTable()"></div>
+    <div class="ifield" style="flex:1"><label>Hairstylist</label>
+      <select class="fi" id="sal-barber" onchange="renderSalesTable()"><option value="">All</option></select>
+    </div>
+  </div>
+  <div id="sal-filter-month" style="display:none;flex-wrap:wrap;gap:9px;margin-bottom:12px;align-items:flex-end">
+    <div class="ifield" style="flex:1"><label>Month</label><input type="month" class="fi" id="sal-month-pick" onchange="renderSalesTable()"></div>
+    <div class="ifield" style="flex:1"><label>Hairstylist</label>
+      <select class="fi" id="sal-barber-mon" onchange="renderSalesTable()"><option value="">All</option></select>
+    </div>
+  </div>
+
+  <div class="tot-bar" id="sal-totbar"></div>
+  <div class="tbl-wrap">
+    <div class="tbl-head cols-m">
+      <span>#</span><span>Date</span><span>Stylist</span><span>Customer</span>
+      <span>Phone</span><span>Services</span><span>PhPay</span><span>Cash</span><span>Ph Tip</span><span>Cash Tip</span><span>Total</span><span>Act</span>
+    </div>
+    <div class="tbl-body" id="sal-body"></div>
+  </div>
+
+  <!-- Monthly Summary (merged from old Monthly tab) -->
+  <div id="sal-monthly-section" style="display:none;margin-top:20px">
+    <div class="sec-hdr" style="margin-bottom:12px"><div class="sec-title">📈 Monthly Summary</div></div>
+    <div id="mon-stats"></div>
+    <div id="mon-chart"></div>
+    <div class="sec-hdr" style="margin-bottom:12px"><div class="sec-title">Hairstylist-wise Breakdown</div></div>
+    <div id="mon-barbers"></div>
+  </div>
+</div>
+
+<!-- ════ YEARLY TAB ════ -->
+<div class="panel" id="pn-yearly">
+  <div class="fr" style="margin-bottom:14px">
+    <div class="ifield"><label>Year</label>
+      <select class="fi" id="yr-year" onchange="renderYearly()"></select>
+    </div>
+  </div>
+  <div id="yr-summary" style="margin-bottom:14px"></div>
+  <div class="tbl-wrap" style="overflow-x:auto">
+    <table class="yr-tbl" id="yr-table">
+      <thead><tr>
+        <th>Month</th><th>Customers</th><th>PhonePe</th><th>Cash</th><th>Ph Tips</th><th>Cash Tips</th><th>Sales Total</th>
+      </tr></thead>
+      <tbody id="yr-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ CUSTOMERS ════ -->
+<div class="panel" id="pn-customers">
+  <div class="sec-hdr"><div class="sec-title">Customer Directory</div></div>
+  <div class="tbl-wrap">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:460px">
+      <thead>
+        <tr style="background:rgba(0,196,140,.15);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent)">
+          <th style="padding:9px 12px;text-align:left">Name</th>
+          <th style="padding:9px 12px;text-align:left">Phone</th>
+          <th style="padding:9px 12px;text-align:left">Visits</th>
+          <th style="padding:9px 12px;text-align:left">Last Visit</th>
+          <th style="padding:9px 12px;text-align:left">Fav Style</th>
+          <th style="padding:9px 12px;text-align:left">Login OTP</th>
+          <th style="padding:9px 12px;text-align:center">Edit</th>
+        </tr>
+      </thead>
+      <tbody id="cust-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ STAFF ════ -->
+<div class="panel" id="pn-staff">
+  <div class="sec-hdr">
+    <div class="sec-title">Hairstylists — <span id="staff-salon-name" style="color:var(--accent)">My Salon</span></div>
+    <button class="btn-sm" onclick="openModal('addStaffModal')">+ Add Hairstylist</button>
+  </div>
+  <div class="staff-grid" id="staff-list"></div>
+</div>
+
+<!-- ── EDIT BILL MODAL ── -->
+<div class="modal-bg" id="editModal" onclick="if(event.target===this)closeModal('editModal')">
+  <div class="modal-box">
+    <div class="modal-hdr"><h3>Edit Bill Entry</h3><button class="btn-close" onclick="closeModal('editModal')">✕</button></div>
+    <!-- Fix 3: Customer dropdown with datalist of existing customers -->
+    <div class="ifield" style="margin-bottom:10px">
+      <label>Customer Name</label>
+      <input type="text" class="fi" id="edit-cust-name" placeholder="Type name or select…" list="cust-datalist" autocomplete="off" oninput="autofillPhone(this.value)">
+      <datalist id="cust-datalist"></datalist>
+    </div>
+    <div class="ifield" style="margin-bottom:10px">
+      <label>Customer Phone</label>
+      <input type="tel" class="fi" id="edit-cust-phone" placeholder="Phone number (auto-fills from name)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'');autofillName(this.value)">
+    </div>
+    <div class="ifield" style="margin-bottom:10px"><label>Services</label><input type="text" class="fi" id="edit-services" placeholder="e.g. Haircut, Shave"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:0">
+      <div class="ifield"><label>PhonePe (₹)</label><input type="number" class="fi" id="edit-ph" placeholder="0" min="0"></div>
+      <div class="ifield"><label>Cash (₹)</label><input type="number" class="fi" id="edit-cash" placeholder="0" min="0"></div>
+      <div class="ifield"><label>Tip (₹)</label><input type="number" class="fi" id="edit-tip" placeholder="0" min="0" style="border-color:rgba(232,166,66,.4)"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD HAIRSTYLIST MODAL ── -->
+<div class="modal-bg" id="addStaffModal" onclick="if(event.target===this)closeModal('addStaffModal')">
+  <div class="modal-box">
+    <div class="modal-hdr"><h3>Add New Hairstylist</h3><button class="btn-close" onclick="closeModal('addStaffModal')">✕</button></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Full Name</label><input type="text" class="fi" id="ab-name" placeholder="Hairstylist's full name"></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Mobile Number</label><input type="tel" class="fi" id="ab-phone" placeholder="10-digit phone" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="ifield"><label>Fixed Salary (₹)</label><input type="number" class="fi" id="ab-salary" placeholder="0" min="0"></div>
+      <div class="ifield"><label>Food Money (₹)</label><input type="number" class="fi" id="ab-food" placeholder="0" min="0"></div>
+      <div class="ifield"><label>Cleaning (₹)</label><input type="number" class="fi" id="ab-clean" placeholder="0" min="0"></div>
+    </div>
+    <div class="otp-reveal" id="otp-reveal-box" style="display:none">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Login OTP — Share with Hairstylist</div>
+      <div class="otp-code" id="generated-otp">----</div>
+      <div class="otp-msg">They log in with their phone + this OTP.</div>
+    </div>
+    <div class="modal-actions" id="add-staff-actions">
+      <button class="btn-cancel" onclick="closeModal('addStaffModal')">Cancel</button>
+      <button class="btn-primary" onclick="addBarber()">Add + Generate OTP</button>
+    </div>
+    <div id="add-staff-done" style="display:none;margin-top:14px">
+      <button class="btn-primary" style="background:var(--surface3);border:1px solid var(--accent);color:var(--accent)" onclick="copyOTP()">📋 Copy OTP</button>
+      <button class="btn-primary" style="margin-top:8px" onclick="doneAddBarber()">✓ Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT STAFF MODAL ── -->
+<div class="modal-bg" id="editStaffModal" onclick="if(event.target===this)closeModal('editStaffModal')">
+  <div class="modal-box">
+    <div class="modal-hdr"><h3>Edit Hairstylist</h3><button class="btn-close" onclick="closeModal('editStaffModal')">✕</button></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Full Name</label><input type="text" class="fi" id="es-name"></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Mobile Number</label><input type="tel" class="fi" id="es-phone" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:0">
+      <div class="ifield"><label>Fixed Salary (₹)</label><input type="number" class="fi" id="es-salary" placeholder="0" min="0"></div>
+      <div class="ifield"><label>Food Money (₹)</label><input type="number" class="fi" id="es-food" placeholder="0" min="0"></div>
+      <div class="ifield"><label>Cleaning (₹)</label><input type="number" class="fi" id="es-clean" placeholder="0" min="0"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('editStaffModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STAFF SALARY / ATTENDANCE / DEDUCTIONS MODAL ── -->
+<div class="modal-bg" id="staffSalaryModal" onclick="if(event.target===this)closeModal('staffSalaryModal')">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-hdr"><h3 id="ss-title">Salary & Attendance</h3><button class="btn-close" onclick="closeModal('staffSalaryModal')">✕</button></div>
+    <div class="ifield" style="margin-bottom:12px"><label>Month</label><input type="month" class="fi" id="ss-month" onchange="renderStaffSalary()"></div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px">Attendance Override</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="ifield"><label>Present Days</label><input type="number" class="fi" id="ss-present" placeholder="0" min="0" onchange="renderStaffSalary()"></div>
+        <div class="ifield"><label>Half Days</label><input type="number" class="fi" id="ss-half" placeholder="0" min="0" onchange="renderStaffSalary()"></div>
+        <div class="ifield"><label>Absent Days</label><input type="number" class="fi" id="ss-absent" placeholder="0" min="0" onchange="renderStaffSalary()"></div>
+      </div>
+      <button onclick="saveAttendanceOverride()" style="padding:7px 14px;background:rgba(0,196,140,.15);border:1.5px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">✓ Save Attendance</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px">Add Deduction</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <input type="text" class="fi" id="ss-ded-desc" placeholder="Reason (e.g. Late fine)" style="flex:1.5;min-width:110px;padding:9px 11px">
+        <input type="number" class="fi" id="ss-ded-amt" placeholder="₹" min="0" inputmode="numeric" style="flex:1;min-width:72px;padding:9px 11px">
+        <button onclick="addDeduction()" style="padding:9px 12px;background:rgba(224,107,91,.12);border:1.5px solid var(--danger);color:var(--danger);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Add</button>
+      </div>
+      <div id="ss-ded-log" style="margin-top:8px"></div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--r);padding:13px;border:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:9px">Net Salary</div>
+      <div id="ss-salary-breakdown"></div>
+    </div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn-cancel" onclick="closeModal('staffSalaryModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT CUSTOMER MODAL ── -->
+<div class="modal-bg" id="editCustModal" onclick="if(event.target===this)closeModal('editCustModal')">
+  <div class="modal-box">
+    <div class="modal-hdr"><h3>Edit Customer</h3><button class="btn-close" onclick="closeModal('editCustModal')">✕</button></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Full Name</label><input type="text" class="fi" id="ec-name" placeholder="Customer name"></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Phone Number</label><input type="tel" class="fi" id="ec-phone" placeholder="10-digit phone" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="ifield"><label>Hair Type</label>
+        <select class="fi" id="ec-hair">
+          <option value="">— Select —</option>
+          <option>Straight</option><option>Wavy</option><option>Curly</option>
+          <option>Coily</option><option>Thick</option><option>Fine</option>
+        </select>
+      </div>
+      <div class="ifield"><label>Face Shape</label>
+        <select class="fi" id="ec-face">
+          <option value="">— Select —</option>
+          <option>Oval</option><option>Round</option><option>Square</option>
+          <option>Heart</option><option>Diamond</option><option>Oblong</option>
+        </select>
+      </div>
+    </div>
+    <div class="ifield" style="margin-bottom:10px"><label>Notes (allergies, preferences…)</label>
+      <textarea class="fi" id="ec-notes" placeholder="Any special notes…" rows="3" style="resize:vertical;min-height:60px"></textarea>
+    </div>
+    <!-- Login Details Section -->
+    <div style="background:rgba(0,196,140,.07);border:1.5px solid rgba(0,196,140,.2);border-radius:var(--rs);padding:11px 13px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">📲 Customer Login Details</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--muted)">Login OTP</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="ec-otp-val" style="font-family:var(--HF);font-size:22px;color:var(--gold);letter-spacing:3px">----</span>
+          <button onclick="genCustOTP()" style="padding:4px 9px;background:rgba(0,196,140,.15);border:1px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">New OTP</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Login URL: <span style="color:var(--white)">login-customer.html</span> · Phone + OTP above</div>
+      <button onclick="shareCustLogin()" style="width:100%;padding:8px;background:rgba(0,196,140,.12);border:1px solid rgba(0,196,140,.3);color:var(--accent);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">📋 Copy Login Details to Share</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('editCustModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveCustomerEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SETTINGS ════ -->
+<div class="panel" id="pn-settings">
+  <div style="background:var(--surface2);border-radius:var(--r);padding:16px;margin-bottom:14px;border:1px solid rgba(255,255,255,.06)">
+    <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Logged In As</div>
+    <div style="font-size:15px;font-weight:700;color:var(--white)" id="settingsName">—</div>
+    <div style="font-size:12px;color:var(--muted2);margin-top:3px">🏪 Manager</div>
+  </div>
+  <div style="background:var(--surface2);border-radius:var(--r);padding:16px;border:1px solid rgba(255,255,255,.06);margin-bottom:14px">
+    <div style="font-size:12px;font-weight:700;color:var(--white);margin-bottom:12px">☁ Google Sheets Sync</div>
+    <div class="ifield" style="margin-bottom:10px"><label>Apps Script URL</label><input type="url" class="fi" id="sh-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Sheet Name</label><input type="text" class="fi" id="sh-name" placeholder="Sheet1"></div>
+    <button class="btn-sm" onclick="saveSheetConfig()" style="width:100%;margin-bottom:10px">💾 Save Config</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <button class="btn-sm" onclick="syncAllData()" style="background:rgba(0,196,140,.15);border-color:var(--accent);color:var(--accent);text-align:center">⬆ Sync to Sheets</button>
+      <button class="btn-sm" onclick="restoreFromSheets()" style="background:rgba(91,196,240,.1);border-color:var(--blue);color:var(--blue);text-align:center">⬇ Restore from Sheets</button>
+    </div>
+    <div id="sync-status" style="display:none;border-radius:var(--rs);padding:9px 12px;font-size:12px;font-weight:600;text-align:center;margin-bottom:8px"></div>
+    <div style="font-size:10px;color:var(--muted2);line-height:1.5">
+      <b style="color:var(--muted)">Sync to Sheets</b> — pushes all data up to Google Sheets.<br>
+      <b style="color:var(--muted)">Restore from Sheets</b> — pulls data from Sheets to this device.
+    </div>
+  </div>
+  <button onclick="logout()" style="width:100%;padding:13px;background:rgba(255,107,91,.08);border:1px solid rgba(255,107,91,.25);color:var(--danger);border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--BF)">Logout</button>
+</div>
+
+<!-- STAFF ATTENDANCE MODAL -->
+<div class="modal-bg" id="staffAttModal" onclick="if(event.target===this)closeModal('staffAttModal')">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-hdr"><h3 id="att-modal-title">Staff Attendance</h3><button class="btn-close" onclick="closeModal('staffAttModal')">✕</button></div>
+    <div class="ifield" style="margin-bottom:12px"><label>Month</label><input type="month" class="fi" id="att-modal-month" onchange="renderStaffAttModal()"></div>
+    <div id="att-modal-cal-wrap" style="margin-bottom:12px"></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('staffAttModal')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast-el" id="toastEl"></div>
+
+<script>
+
+var BB_SHEET_URL = 'https://script.google.com/macros/s/AKfycbygAEyBOyRP57tXYaHS5lVBH1gRMbmfM7Fw64iSBuh-J1_8WKe_3vFu5LhdsT7sKd1-GQ/exec';
+
+// ── DIRECT SHEETS WRITE — JSONP GET (reliable on all browsers/devices) ──
+// fetch+no-cors drops the body on Google's redirect, so we use script tags instead
+
+function appendRowToSheet(sheetName, rowObj, onDone){
+  var url=LS.get('sheetUrl')||BB_SHEET_URL;
+  if(!url){ if(onDone)onDone(false); return; }
+  var payload={action:'appendRow',sheet:sheetName,data:rowObj};
+  var cbName='_bbA'+Date.now();
+  var script=document.createElement('script');
+  var done=false;
+  var timer=setTimeout(function(){
+    if(done)return; done=true;
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(false);
+  },15000);
+  window[cbName]=function(res){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(!!(res&&res.ok));
+  };
+  script.onerror=function(){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(false);
+  };
+  script.src=url+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbName;
+  document.head.appendChild(script);
+}
+
+function updateRowInSheet(sheetName, rowObj, onDone){
+  var url=LS.get('sheetUrl')||BB_SHEET_URL;
+  if(!url){ if(onDone)onDone(false); return; }
+  var payload={action:'updateRow',sheet:sheetName,data:rowObj,idField:'id'};
+  var cbName='_bbU'+Date.now();
+  var script=document.createElement('script');
+  var done=false;
+  var timer=setTimeout(function(){
+    if(done)return; done=true;
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(false);
+  },15000);
+  window[cbName]=function(res){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(!!(res&&res.ok));
+  };
+  script.onerror=function(){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(false);
+  };
+  script.src=url+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbName;
+  document.head.appendChild(script);
+}
+
+function deleteRowFromSheet(sheetName, id, onDone){
+  var url=LS.get('sheetUrl')||BB_SHEET_URL;
+  if(!url){ if(onDone)onDone(false); return; }
+  var payload={action:'deleteRow',sheet:sheetName,id:id,idField:'id'};
+  var cbName='_bbD'+Date.now();
+  var script=document.createElement('script');
+  var done=false;
+  var timer=setTimeout(function(){
+    if(done)return; done=true;
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(false);
+  },15000);
+  window[cbName]=function(res){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(!!(res&&res.ok));
+  };
+  script.onerror=function(){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    if(script.parentNode)document.head.removeChild(script);
+    if(onDone)onDone(false);
+  };
+  script.src=url+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbName;
+  document.head.appendChild(script);
+}
+
+// ── FETCH rows from one sheet with optional filters ──
+function fetchSheetRows(sheetName, filters, onDone){
+  var url=LS.get('sheetUrl')||BB_SHEET_URL;
+  if(!url){ onDone([]); return; }
+  var params='?action=getRows&sheet='+encodeURIComponent(sheetName);
+  if(filters) Object.keys(filters).forEach(function(k){
+    params+='&'+encodeURIComponent(k)+'='+encodeURIComponent(filters[k]);
+  });
+  var cbName='_bbRows'+Date.now(),script=document.createElement('script'),done=false;
+  var timer=setTimeout(function(){
+    if(done)return; done=true; delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    onDone([]);
+  },20000);
+  window[cbName]=function(json){
+    if(done)return; done=true; clearTimeout(timer); delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    try{ onDone((json&&json.ok&&json.rows)?json.rows:[]); }
+    catch(e){ onDone([]); }
+  };
+  script.onerror=function(){if(done)return;done=true;clearTimeout(timer);onDone([]);};
+  script.src=url+params+'&callback='+cbName;
+  document.head.appendChild(script);
+}
+
+// ── AUTH ──
+var SESSION_PHONE = sessionStorage.getItem('bb_phone');
+var SESSION_ROLE  = sessionStorage.getItem('bb_role');
+if (!SESSION_PHONE || SESSION_ROLE !== 'manager') { window.location.href = 'login-manager.html'; }
+
+// ── STORAGE ──
+var LS = {
+  get: function(k){ try{ return JSON.parse(localStorage.getItem('bb_'+k)); } catch(e){ return null; } },
+  set: function(k,v){ try{ localStorage.setItem('bb_'+k, JSON.stringify(v)); return true; } catch(e){ return false; } }
+};
+
+// ── HELPERS ──
+function today(){ return new Date().toLocaleDateString('en-IN'); }
+function todayISO(){ return new Date().toISOString().split('T')[0]; }
+function fmtINR(n){ return '₹'+Number(n||0).toLocaleString('en-IN'); }
+function getEntries(){ return LS.get('entries')||[]; }
+function filterByDate(entries,ds){
+  if(!ds)return entries;
+  var p=ds.split('-'); var local=parseInt(p[2])+'/'+parseInt(p[1])+'/'+p[0];
+  return entries.filter(function(e){ return e.date===local; });
+}
+function filterByMonth(entries,mo){
+  if(!mo)return entries;
+  var p=mo.split('-');
+  return entries.filter(function(e){
+    var d=(e.date||'').split('/');
+    return parseInt(d[1])===parseInt(p[1]) && parseInt(d[2])===parseInt(p[0]);
+  });
+}
+// ── INIT ──
+var ME=null, mySalonId=null, mySalonName='My Salon';
+(function(){
+  var staff=LS.get('staff')||[];
+  ME=staff.find(function(u){return u.phone===SESSION_PHONE&&u.role==='manager';});
+  if(!ME){
+    document.getElementById('app-content').style.display='none';
+    document.getElementById('setup-banner').style.display='block';
+    return;
+  }
+  mySalonId=ME.salonId;
+  var salons=LS.get('salons')||[];
+  var salon=salons.find(function(s){return s.id===mySalonId;});
+  mySalonName=salon?salon.name:'My Salon';
+
+  // FIX 1: show outlet in topbar
+  document.getElementById('tbName').textContent    = ME.name;
+  document.getElementById('tbOutlet').textContent  = '📍 '+mySalonName;
+  document.getElementById('staff-salon-name').textContent = mySalonName;
+
+  // populate hairstylist filter dropdowns in both day and month modes
+  var myBarbers=(LS.get('staff')||[]).filter(function(u){return u.salonId===mySalonId&&u.role==='barber';});
+  ['sal-barber','sal-barber-mon'].forEach(function(selId){
+    var sel=document.getElementById(selId);
+    if(!sel)return;
+    myBarbers.forEach(function(u){var o=document.createElement('option');o.value=u.id;o.textContent=u.name;sel.appendChild(o);});
+  });
+  document.getElementById('sal-from').value=todayISO();
+  document.getElementById('sal-to').value=todayISO();
+  document.getElementById('sal-month-pick').value=new Date().toISOString().slice(0,7);
+
+  // Populate year selector in Yearly tab
+  var yrSel=document.getElementById('yr-year');
+  var curYr=new Date().getFullYear();
+  for(var yy=curYr;yy>=curYr-3;yy--){var o=document.createElement('option');o.value=yy;o.textContent=yy;yrSel.appendChild(o);}
+
+  initCashCounter();
+  renderDashboard();
+})();
+
+// ── AUTO SYNC (every 5 minutes) ──
+function setSalesFilter(mode){
+  salFilterMode=mode;
+  document.getElementById('ft-day').classList.toggle('on',mode==='day');
+  document.getElementById('ft-mon').classList.toggle('on',mode==='month');
+  document.getElementById('sal-filter-day').style.display   =mode==='day'?'flex':'none';
+  document.getElementById('sal-filter-month').style.display =mode==='month'?'flex':'none';
+  document.getElementById('sal-monthly-section').style.display=mode==='month'?'block':'none';
+  renderSalesTable();
+  if(mode==='month') renderMonthlyInSales();
+}
+function clearSalesFilters(){
+  document.getElementById('sal-from').value=todayISO();
+  document.getElementById('sal-to').value=todayISO();
+  document.getElementById('sal-month-pick').value=new Date().toISOString().slice(0,7);
+  salFilterMode='day';
+  setSalesFilter('day');
+}
+
+function showTab(tab){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.nt').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('pn-'+tab).classList.add('on');
+  document.getElementById('nt-'+tab).classList.add('on');
+  if(tab==='sales')    { renderSalesTable(); if(salFilterMode==='month') renderMonthlyInSales(); }
+  if(tab==='yearly')   renderYearly();
+  if(tab==='customers')renderCustomers();
+  if(tab==='staff')    renderStaff();
+  if(tab==='settings'){
+    document.getElementById('settingsName').textContent=sessionStorage.getItem('bb_name')||'Manager';
+    document.getElementById('sh-url').value=LS.get('sheetUrl')||'';
+    document.getElementById('sh-name').value=LS.get('sheetName')||'Sheet1';
+  }
+  if(tab==='dashboard'){initCashCounter();renderDashboard();}
+}
+
+// ════ MANAGER OWN CASH-IN ════
+function addMgrCashIn(){
+  var amt=parseFloat(document.getElementById('mgr-ci-inp').value)||0;
+  if(amt<=0){toast('Enter amount');return;}
+  var log=LS.get('mgrCashIn')||[];
+  var now=new Date();
+  log.push({amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId});
+  LS.set('mgrCashIn',log);
+  appendRowToSheet('MgrCashIn',log[log.length-1],function(ok){if(!ok)toast('⚠ Saved locally');});
+  document.getElementById('mgr-ci-inp').value='';
+  renderMgrCounters();
+  renderDashboard();
+  toast('💵 Cash-in ₹'+amt+' recorded');
+}
+function addMgrExpense(){
+  var desc=document.getElementById('mgr-exp-desc').value.trim();
+  var amt=parseFloat(document.getElementById('mgr-exp-amt').value)||0;
+  if(!desc){toast('Enter description');return;}
+  if(amt<=0){toast('Enter amount');return;}
+  var log=LS.get('mgrExpenses')||[];
+  var now=new Date();
+  log.push({desc:desc,amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId});
+  LS.set('mgrExpenses',log);
+  appendRowToSheet('MgrExpenses',log[log.length-1],function(ok){if(!ok)toast('⚠ Saved locally');});
+  document.getElementById('mgr-exp-desc').value='';
+  document.getElementById('mgr-exp-amt').value='';
+  renderMgrCounters();
+  renderDashboard();
+  toast('🧾 Expense recorded');
+}
+function renderMgrCounters(){
+  var ci=(LS.get('mgrCashIn')||[]).filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
+  var ex=(LS.get('mgrExpenses')||[]).filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
+  var ciT=ci.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  var exT=ex.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  document.getElementById('mgr-ci-total').textContent=fmtINR(ciT);
+  document.getElementById('mgr-exp-total').textContent=fmtINR(exT);
+  var ciEl=document.getElementById('mgr-ci-log');
+  ciEl.innerHTML=!ci.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No entries today</span>':
+    ci.slice().reverse().map(function(e){return '<div class="mgr-ci-item"><span>'+e.time+'</span><span style="color:var(--green);font-weight:700">'+fmtINR(e.amount)+'</span></div>';}).join('');
+  var exEl=document.getElementById('mgr-exp-log');
+  exEl.innerHTML=!ex.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No expenses today</span>':
+    ex.slice().reverse().map(function(e){return '<div class="mgr-ci-item"><span>'+e.time+' — '+e.desc+'</span><span style="color:var(--danger);font-weight:700">'+fmtINR(e.amount)+'</span></div>';}).join('');
+}
+
+// ════ CASH-IN COUNTER — reads hairstylist entries, editable ════
+function initCashCounter(){ renderCashCounter(); renderMgrCounters(); }
+function renderCashCounter(){
+  var stylistIds = (LS.get('staff')||[])
+    .filter(function(u){return u.salonId===mySalonId&&u.role==='barber';})
+    .map(function(u){return u.id;});
+  var log = (LS.get('cashIn')||[]).filter(function(e){
+    return e.date===today() && stylistIds.indexOf(e.barberId)>-1;
+  });
+  var total = log.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  document.getElementById('cc-total').textContent = fmtINR(total);
+  var el = document.getElementById('cc-log');
+  if (!log.length) {
+    el.innerHTML = '<span style="font-size:11px;color:var(--muted2);font-style:italic">No entries from hairstylists today</span>';
+    return;
+  }
+  var staff = LS.get('staff')||[];
+  // Compact row: amount (editable) · time · name [✓] [✕]
+  el.innerHTML = log.slice().reverse().map(function(e, i){
+    var realIdx = log.length-1-i;
+    var st = staff.find(function(u){return u.id===e.barberId;});
+    var stName = st ? st.name.split(' ')[0] : '—';
+    return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap">'+
+      '<input type="number" id="ci-edit-'+realIdx+'" value="'+e.amount+'" min="0" '+
+        'style="width:64px;background:var(--bg);border:1px solid rgba(245,200,66,.3);border-radius:5px;color:var(--gold);font-size:12px;font-weight:700;padding:3px 6px;outline:none;font-family:var(--BF)">'+
+      '<span style="font-size:11px;color:var(--muted)">'+e.time+' · '+stName+'</span>'+
+      '<button onclick="saveCashInEdit('+realIdx+')" title="Save" '+
+        'style="background:rgba(77,201,138,.12);border:1px solid var(--green);color:var(--green);border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;padding:2px 7px;font-family:var(--BF)">✓</button>'+
+      '<button onclick="deleteCashIn('+realIdx+')" title="Delete" '+
+        'style="background:rgba(224,107,91,.1);border:1px solid var(--danger);color:var(--danger);border-radius:5px;font-size:10px;cursor:pointer;padding:2px 7px;font-family:var(--BF)">✕</button>'+
+    '</div>';
+  }).join('');
+}
+function saveCashInEdit(idx){
+  var log = LS.get('cashIn')||[];
+  var newAmt = parseFloat(document.getElementById('ci-edit-'+idx).value)||0;
+  if (newAmt<=0){ toast('Enter valid amount'); return; }
+  log[idx].amount = newAmt;
+  LS.set('cashIn',log);
+  renderCashCounter();
+  renderDashboard();
+  toast('✅ Cash-in updated');
+}
+function deleteCashIn(idx){
+  if(!confirm('Remove this cash-in entry?'))return;
+  var log = LS.get('cashIn')||[];
+  log.splice(idx,1);
+  LS.set('cashIn',log);
+  renderCashCounter();
+  renderDashboard();
+  toast('Cash-in entry removed');
+}
+
+// ════ DASHBOARD ════
+function renderDashboard(){
+  var allE      = getEntries().filter(function(e){return e.salonId===mySalonId;});
+  var todayE    = allE.filter(function(e){return e.date===today();});
+  var monthE    = filterByMonth(allE, new Date().toISOString().slice(0,7));
+  var myStylists = (LS.get('staff')||[]).filter(function(u){return u.salonId===mySalonId&&u.role==='barber';});
+
+  // FIX 4: Tips NOT added to totals — track separately
+  var totPhT   = todayE.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+  var totCshT  = todayE.reduce(function(a,e){return a+Number(e.cash||0);},0);
+  var totTipT  = todayE.reduce(function(a,e){return a+Number(e.tip||0);},0);
+  var totT     = totPhT + totCshT; // tips excluded from sales total
+  var totPhM   = monthE.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+  var totCshM  = monthE.reduce(function(a,e){return a+Number(e.cash||0);},0);
+  var totM     = totPhM + totCshM; // tips excluded
+
+  // FIX 2: Cash-in counter shows ONLY what barbers entered (read from bb_cashIn by barberId in this salon)
+  var stylistIds = myStylists.map(function(u){return u.id;});
+  var barberCashIn = (LS.get('cashIn')||[]).filter(function(e){
+    return e.date===today() && stylistIds.indexOf(e.barberId)>-1;
+  });
+  var allExpenses = (LS.get('expenses')||[]).filter(function(e){
+    return e.date===today() && stylistIds.indexOf(e.barberId)>-1;
+  });
+  var totalBarberCashIn = barberCashIn.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  var totalExpenses     = allExpenses.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  // Include manager's own cash-in and expenses in outlet totals
+  var mgrCiToday=(LS.get('mgrCashIn')||[]).filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
+  var mgrExToday=(LS.get('mgrExpenses')||[]).filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
+  var totalMgrCashIn=mgrCiToday.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  var totalMgrExpenses=mgrExToday.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  var totalCashIn   = totalBarberCashIn + totalMgrCashIn + totCshT; // cash counter + manager + today's cash sales
+  var totalExp      = totalExpenses + totalMgrExpenses;
+  var netCash       = totalCashIn - totalExp;
+
+  // Outlet summary
+  document.getElementById('outlet-summary').innerHTML=
+    '<div class="os-box ci"><div class="os-lbl">💵 Total Cash In</div><div class="os-val">'+fmtINR(totalCashIn)+'</div></div>'+
+    '<div class="os-box ex"><div class="os-lbl">🧾 Total Expenses</div><div class="os-val">'+fmtINR(totalExp)+'</div></div>'+
+    '<div class="os-box net"><div class="os-lbl">📊 Net</div><div class="os-val">'+fmtINR(netCash)+'</div></div>';
+
+  // Expense log panel
+  var expPanelEl = document.getElementById('expense-log-panel');
+  if (allExpenses.length) {
+    expPanelEl.innerHTML =
+      '<div class="exp-log-panel">'+
+        '<div class="exp-log-title">🧾 Today\'s Expenses ('+allExpenses.length+')</div>'+
+        allExpenses.slice().reverse().map(function(e){
+          var st = (LS.get('staff')||[]).find(function(u){return u.id===e.barberId;});
+          return '<div class="exp-log-row">'+
+            '<div><div class="exp-log-desc">'+e.desc+'</div>'+
+            '<div class="exp-log-meta">'+e.time+(st?' · '+st.name:'')+'</div></div>'+
+            '<div style="color:var(--danger);font-weight:700;font-size:13px">'+fmtINR(e.amount)+'</div>'+
+          '</div>';
+        }).join('')+
+      '</div>';
+  } else {
+    expPanelEl.innerHTML = '';
+  }
+
+  // Fix 3: Today Customers = total bills today (matches table below exactly)
+  var todayCustCount = todayE.length;
+
+  // Stats
+  document.getElementById('dash-stats').innerHTML=
+    '<div class="sc a"><div class="sc-lbl">Today Customers</div><div class="sc-val">'+todayCustCount+'</div></div>'+
+    '<div class="sc g"><div class="sc-lbl">Today Sales</div><div class="sc-val" style="font-size:18px">'+fmtINR(totT)+'</div></div>'+
+    '<div class="sc b"><div class="sc-lbl">PhonePe</div><div class="sc-val" style="font-size:18px">'+fmtINR(totPhT)+'</div></div>'+
+    '<div class="sc gr"><div class="sc-lbl">Cash</div><div class="sc-val" style="font-size:18px">'+fmtINR(totCshT)+'</div></div>'+
+    '<div class="sc warn"><div class="sc-lbl">Tips (separate)</div><div class="sc-val" style="font-size:18px">'+fmtINR(totTipT)+'</div></div>'+
+    '<div class="sc"><div class="sc-lbl">Month Sales</div><div class="sc-val" style="font-size:18px">'+fmtINR(totM)+'</div></div>';
+
+  // Hairstylist performance cards — Fix 1: show customers not bills
+  var attLog=LS.get('attendance')||[];
+  document.getElementById('dash-barbers').innerHTML=myStylists.map(function(u){
+    var ue  = todayE.filter(function(e){return e.barberId===u.id;});
+    var ph  = ue.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+    var csh = ue.reduce(function(a,e){return a+Number(e.cash||0);},0);
+    var tip = ue.reduce(function(a,e){return a+Number(e.tip||0);},0);
+    var tot = ph+csh;
+    // Get today's attendance for this stylist
+    var attToday=attLog.filter(function(r){return r.barberId===u.id&&r.date===today();});
+    var inRecs =attToday.filter(function(r){return r.type==='in';});
+    var outRecs=attToday.filter(function(r){return r.type==='out';});
+    var attHtml='';
+    if(inRecs.length||outRecs.length){
+      attHtml='<div style="margin-top:5px;font-size:10px;display:flex;gap:8px;flex-wrap:wrap">';
+      if(inRecs.length)  attHtml+='<span style="color:var(--accent)">🟢 In: '+inRecs.map(function(r){return r.time;}).join(', ')+'</span>';
+      if(outRecs.length) attHtml+='<span style="color:var(--danger)">🔴 Out: '+outRecs.map(function(r){return r.time;}).join(', ')+'</span>';
+      attHtml+='</div>';
+    } else {
+      attHtml='<div style="margin-top:4px;font-size:10px;color:var(--muted2)">Not clocked in</div>';
+    }
+    return '<div class="bc" onclick="goToBarber(\''+u.id+'\')">'+
+      '<div class="bc-ava">✂️</div>'+
+      '<div class="bc-name">'+u.name+'</div>'+
+      '<div class="bc-total">'+fmtINR(tot)+'</div>'+
+      '<div class="bc-count">'+ue.length+' customers'+(tip>0?' · Tip '+fmtINR(tip):'')+'</div>'+
+      attHtml+
+    '</div>';
+  }).join('')||'<div style="color:var(--muted);font-size:13px;padding:10px 0">No hairstylists yet. Add from Staff tab.</div>';
+
+  document.getElementById('dash-bills').innerHTML=renderEntriesTable(todayE,true);
+}
+function goToBarber(uid){
+  showTab('sales');
+  setTimeout(function(){var el=document.getElementById('sal-barber');if(el){el.value=uid;renderSalesTable();}},80);
+}
+
+// ════ SALES TABLE ════
+function renderSalesTable(){
+  var allE=getEntries().filter(function(e){return e.salonId===mySalonId;});
+  var entries;
+  var bid;
+  if(salFilterMode==='month'){
+    var mo=document.getElementById('sal-month-pick').value;
+    entries=mo?filterByMonth(allE,mo):allE;
+    bid=document.getElementById('sal-barber-mon').value;
+  } else {
+    var fromVal=document.getElementById('sal-from').value;
+    var toVal=document.getElementById('sal-to').value;
+    function localToISO(ds){if(!ds)return '';var p=ds.split('/');return p[2]+'-'+(p[1].length<2?'0':'')+p[1]+'-'+(p[0].length<2?'0':'')+p[0];}
+    entries=allE.filter(function(e){
+      var d=localToISO(e.date);
+      if(fromVal&&d<fromVal)return false;
+      if(toVal&&d>toVal)return false;
+      return true;
+    });
+    bid=document.getElementById('sal-barber').value;
+  }
+  if(bid) entries=entries.filter(function(e){return e.barberId===bid;});
+  entries=entries.slice().reverse();
+  var totPh  = entries.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+  var totCash= entries.reduce(function(a,e){return a+Number(e.cash||0);},0);
+  var totTip = entries.reduce(function(a,e){return a+Number(e.tip||0);},0);
+  var totSales = totPh+totCash;
+  // Fix 1: count unique customers in this filtered set
+  var salCustCount = new Set(entries.filter(function(e){return e.customerPhone&&e.customerPhone.length>=10;}).map(function(e){return e.customerPhone;})).size || entries.length;
+  document.getElementById('sal-totbar').innerHTML=
+    '<div class="tot-item">Customers: <b>'+salCustCount+'</b></div>'+
+    '<div class="tot-item">PhonePe: <b style="color:var(--blue)">'+fmtINR(totPh)+'</b></div>'+
+    '<div class="tot-item">Cash: <b style="color:var(--green)">'+fmtINR(totCash)+'</b></div>'+
+    '<div class="tot-item">Tips: <b style="color:var(--warn)">'+fmtINR(totTip)+'</b></div>'+
+    '<div class="tot-item">Sales Total: <b style="color:var(--gold)">'+fmtINR(totSales)+'</b></div>';
+  document.getElementById('sal-body').innerHTML=entries.length===0?
+    '<div class="tbl-empty">No entries found.</div>':
+    entries.map(function(e,i){
+      var custDisp = e.customerName||'Walk-in';
+      var custPhone= e.customerPhone||'—';
+      var sales = Number(e.phPay||0)+Number(e.cash||0);
+      var phTip  = Number(e.phTip||0);
+      var cashTip= Number(e.cashTip||0);
+      return '<div class="tbl-row cols-m">'+
+        '<span style="color:var(--muted2);font-size:11px">'+(i+1)+'</span>'+
+        '<span style="font-size:11px;color:var(--muted);line-height:1.3">'+e.date+'<br>'+e.time+'</span>'+
+        '<span style="font-size:12px;font-weight:600">'+e.barberName+'</span>'+
+        '<span style="font-size:12px;color:var(--muted)">'+custDisp+'</span>'+
+        '<span style="font-size:11px;color:var(--muted)">'+custPhone+'</span>'+
+        '<span style="font-size:12px;color:var(--muted)">'+e.services+'</span>'+
+        '<span class="tag-ph">'+(Number(e.phPay||0)>0?fmtINR(e.phPay):'—')+'</span>'+
+        '<span class="tag-cash">'+(Number(e.cash||0)>0?fmtINR(e.cash):'—')+'</span>'+
+        '<span class="tag-tip">'+(phTip>0?fmtINR(phTip):'—')+'</span>'+
+        '<span class="tag-tip">'+(cashTip>0?fmtINR(cashTip):'—')+'</span>'+
+        '<span class="tag-tot">'+fmtINR(sales)+'</span>'+
+        '<span>'+
+          (e.date===today()?
+            '<button class="btn-edit" onclick="openEdit('+e.id+')" title="Edit">✏️</button>'+
+            '<button class="btn-del"  onclick="delEntry('+e.id+')" title="Delete">✕</button>'
+          :'<span style="font-size:10px;color:var(--muted2)">—</span>')+
+        '</span>'+
+      '</div>';
+    }).join('');
+}
+
+// ════ MONTHLY SUMMARY (shown in Sales tab when month filter active) ════
+function renderMonthlyInSales(){
+  var month = document.getElementById('sal-month-pick').value||new Date().toISOString().slice(0,7);
+  var salonEntries = filterByMonth(getEntries().filter(function(e){return e.salonId===mySalonId;}),month);
+  var staff = (LS.get('staff')||[]).filter(function(u){return u.salonId===mySalonId&&u.role==='barber';});
+  var yr = parseInt(month.split('-')[0]), mo = parseInt(month.split('-')[1]);
+  var daysInMonth = new Date(yr,mo,0).getDate();
+  var mName = new Date(yr,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+  var totM    = salonEntries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+  var totPh   = salonEntries.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+  var totCash = salonEntries.reduce(function(a,e){return a+Number(e.cash||0);},0);
+  var totPhTip  = salonEntries.reduce(function(a,e){return a+Number(e.phTip||0);},0);
+  var totCashTip= salonEntries.reduce(function(a,e){return a+Number(e.cashTip||0);},0);
+
+  // Monthly cash-in and expenses from barbers in this salon
+  var salonBarberIds = staff.map(function(u){return u.id;});
+  var allCashIn = (LS.get('cashIn')||[]).filter(function(e){
+    if(e.salonId===mySalonId) return true;
+    var p = (e.date||'').split('/');
+    return salonBarberIds.indexOf(e.barberId)>-1 && parseInt(p[1])===mo && parseInt(p[2])===yr;
+  });
+  var allExpenses = (LS.get('expenses')||[]).filter(function(e){
+    var p = (e.date||'').split('/');
+    return salonBarberIds.indexOf(e.barberId)>-1 && parseInt(p[1])===mo && parseInt(p[2])===yr;
+  });
+  var mCashIn  = allCashIn.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  var mExpenses= allExpenses.reduce(function(a,e){return a+Number(e.amount||0);},0);
+
+  // Fix 4: Customers = total entries count (all customers served, not unique)
+  var totalCusts = salonEntries.length;
+
+  // Overall stats
+  document.getElementById('mon-stats').innerHTML=
+    '<div class="sg">'+
+    '<div class="sc g"><div class="sc-lbl">Month Sales</div><div class="sc-val" style="font-size:18px">'+fmtINR(totM)+'</div></div>'+
+    '<div class="sc b"><div class="sc-lbl">PhonePe</div><div class="sc-val" style="font-size:18px">'+fmtINR(totPh)+'</div></div>'+
+    '<div class="sc gr"><div class="sc-lbl">Cash</div><div class="sc-val" style="font-size:18px">'+fmtINR(totCash)+'</div></div>'+
+    '<div class="sc warn"><div class="sc-lbl">Ph Tips</div><div class="sc-val" style="font-size:18px">'+fmtINR(totPhTip)+'</div></div>'+
+    '<div class="sc warn"><div class="sc-lbl">Cash Tips</div><div class="sc-val" style="font-size:18px">'+fmtINR(totCashTip)+'</div></div>'+
+    '<div class="sc a"><div class="sc-lbl">Customers</div><div class="sc-val">'+totalCusts+'</div></div>'+
+    '<div class="sc"><div class="sc-lbl">Daily Avg</div><div class="sc-val" style="font-size:18px">'+fmtINR(Math.round(totM/daysInMonth))+'</div></div>'+
+    '</div>'+
+    // Cash-in / Expenses monthly summary
+    '<div class="outlet-summary" style="margin-bottom:14px">'+
+    '<div class="os-box ci"><div class="os-lbl">💵 Cash In (month)</div><div class="os-val">'+fmtINR(mCashIn)+'</div></div>'+
+    '<div class="os-box ex"><div class="os-lbl">🧾 Expenses (month)</div><div class="os-val">'+fmtINR(mExpenses)+'</div></div>'+
+    '<div class="os-box net"><div class="os-lbl">📊 Net (month)</div><div class="os-val">'+fmtINR(mCashIn-mExpenses)+'</div></div>'+
+    '</div>';
+
+  // Daily bar chart
+  var dayTotals = [];
+  for(var d=1; d<=daysInMonth; d++){
+    var ds = d+'/'+mo+'/'+yr;
+    var t = salonEntries.filter(function(e){return e.date===ds;})
+      .reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0); // FIX 4: tip excluded
+    dayTotals.push({day:d,tot:t});
+  }
+  var maxT = Math.max.apply(null,dayTotals.map(function(d){return d.tot;})); if(maxT===0)maxT=1;
+  document.getElementById('mon-chart').innerHTML=
+    '<div class="month-chart"><div class="chart-title">Daily Revenue — '+mName+'</div>'+
+    '<div class="bar-chart">'+dayTotals.map(function(d){
+      return '<div class="bar-group"><div class="bar" style="height:'+Math.max(3,Math.round((d.tot/maxT)*100))+'%" data-tip="'+fmtINR(d.tot)+'"></div><div class="bar-lbl">'+d.day+'</div></div>';
+    }).join('')+'</div></div>';
+
+  // Per-hairstylist breakdown — 5 stats: PhonePe / Cash / Tips / Total / Customers
+  document.getElementById('mon-barbers').innerHTML=staff.map(function(u){
+    var ue     = salonEntries.filter(function(e){return e.barberId===u.id;});
+    var uph    = ue.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+    var ucash  = ue.reduce(function(a,e){return a+Number(e.cash||0);},0);
+    var uphTip =ue.reduce(function(a,e){return a+Number(e.phTip||0);},0);
+    var ucashTip=ue.reduce(function(a,e){return a+Number(e.cashTip||0);},0);
+    var utot   = uph+ucash;
+    // expenses this month
+    var uExpenses = (LS.get('expenses')||[]).filter(function(e){
+      var p=(e.date||'').split('/');
+      return e.barberId===u.id && parseInt(p[1])===mo && parseInt(p[2])===yr;
+    });
+    var uExpAmt = uExpenses.reduce(function(a,e){return a+Number(e.amount||0);},0);
+    var init = u.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    return '<div class="barber-report">'+
+      '<div class="br-header">'+
+        '<div class="br-ava">'+init+'</div>'+
+        '<div><div class="br-name">'+u.name+'</div>'+
+        '<div class="br-count">Customers: '+ue.length+(uExpAmt>0?' · Exp '+fmtINR(uExpAmt):'')+'</div></div>'+
+      '</div>'+
+      '<div class="br-stats">'+
+        '<div class="br-stat ph"><div class="br-stat-lbl">PhonePe</div><div class="br-stat-val">'+fmtINR(uph)+'</div></div>'+
+        '<div class="br-stat cash"><div class="br-stat-lbl">Cash</div><div class="br-stat-val">'+fmtINR(ucash)+'</div></div>'+
+        '<div class="br-stat tip"><div class="br-stat-lbl">Ph Tip</div><div class="br-stat-val">'+fmtINR(uphTip)+'</div></div>'+
+        '<div class="br-stat tip"><div class="br-stat-lbl">Cash Tip</div><div class="br-stat-val">'+fmtINR(ucashTip)+'</div></div>'+
+        '<div class="br-stat tot"><div class="br-stat-lbl">Total</div><div class="br-stat-val">'+fmtINR(utot)+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('')||'<div style="color:var(--muted);font-size:13px">No hairstylists found for this salon.</div>';
+}
+
+// ════ CUSTOMERS ════
+function syncBillingCustomers(){
+  // Fix 3: Any bill with a real name+phone creates/updates a customer record
+  var entries  = getEntries().filter(function(e){ return e.salonId===mySalonId; });
+  var customers = LS.get('customers')||[];
+  var changed   = false;
+  entries.forEach(function(e){
+    var name  = (e.customerName ||'').trim();
+    var phone = (e.customerPhone||'').trim();
+    if (!name || name==='Walk-in' || !phone || phone.length<10) return;
+    var existing = customers.find(function(c){ return c.phone===phone; });
+    if (!existing){
+      customers.push({
+        id:'cb'+e.id, phone:phone, name:name,
+        role:'customer', hairType:'', faceShape:'', density:'', growthNotes:''
+      });
+      changed=true;
+    } else if (existing.name==='Customer '+phone.slice(-4) && name) {
+      // upgrade auto-generated name if a real name was entered
+      existing.name=name; changed=true;
+    }
+  });
+  if (changed) LS.set('customers', customers);
+}
+
+function renderCustomers(){
+  syncBillingCustomers();
+  var custs  = LS.get('customers')||[];
+  var visits = LS.get('visits')||[];
+  var allE   = getEntries().filter(function(e){ return e.salonId===mySalonId; });
+
+  document.getElementById('cust-tbody').innerHTML=custs.map(function(c){
+    var cv = visits.filter(function(v){return v.customerId===c.id;})
+                   .sort(function(a,b){return b.date.localeCompare(a.date);});
+    var billCount = allE.filter(function(e){return e.customerPhone===c.phone;}).length;
+    var totalVisits = Math.max(cv.length, billCount);
+    var sc={}; cv.forEach(function(v){sc[v.styleName]=(sc[v.styleName]||0)+1;});
+    var fav=Object.entries(sc).sort(function(a,b){return b[1]-a[1];})[0];
+    var lastDate = cv[0] ? cv[0].date : (allE.filter(function(e){return e.customerPhone===c.phone;})
+      .sort(function(a,b){return b.date.localeCompare(a.date);})[0]||{}).date || '—';
+    return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'+
+      '<td style="padding:9px 12px;font-weight:600">'+c.name+'</td>'+
+      '<td style="padding:9px 12px;font-size:12px;color:var(--muted)">'+c.phone+'</td>'+
+      '<td style="padding:9px 12px;font-weight:700;color:var(--accent)">'+totalVisits+'</td>'+
+      '<td style="padding:9px 12px;font-size:12px;color:var(--muted)">'+lastDate+'</td>'+
+      '<td style="padding:9px 12px;font-size:12px">'+(fav?fav[0]:'—')+'</td>'+
+      '<td style="padding:9px 12px">'+
+        (c.loginPin?
+          '<span style="font-size:11px;color:var(--gold);font-weight:700">🔑 '+c.loginPin+'</span>':
+          '<span style="font-size:11px;color:var(--muted2)">Open ✏️</span>')+
+      '</td>'+
+      '<td style="padding:9px 12px;text-align:center">'+
+        '<button class="btn-edit" onclick="openEditCustomer(\''+c.id+'\')" title="Edit customer" style="color:var(--blue)">✏️</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('')||'<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted2)">No customers yet</td></tr>';
+}
+
+var editingCustId = null;
+function openEditCustomer(id){
+  editingCustId = id;
+  var customers = LS.get('customers')||[];
+  var c = customers.find(function(x){ return x.id===id; });
+  if(!c) return;
+  document.getElementById('ec-name').value  = c.name       || '';
+  document.getElementById('ec-phone').value = c.phone      || '';
+  document.getElementById('ec-hair').value  = c.hairType   || '';
+  document.getElementById('ec-face').value  = c.faceShape  || '';
+  document.getElementById('ec-notes').value = c.growthNotes|| '';
+  // Load or generate OTP for customer login
+  var otp = c.loginPin || String(Math.floor(1000+Math.random()*9000));
+  if(!c.loginPin){
+    customers.find(function(x){return x.id===id;}).loginPin=otp;
+    LS.set('customers',customers);
+  }
+  document.getElementById('ec-otp-val').textContent = otp;
+  openModal('editCustModal');
+}
+
+function genCustOTP(){
+  var customers = LS.get('customers')||[];
+  var c = customers.find(function(x){return x.id===editingCustId;});
+  var otp = String(Math.floor(1000+Math.random()*9000));
+  document.getElementById('ec-otp-val').textContent = otp;
+  if(c){ c.loginPin = otp; LS.set('customers',customers); }
+}
+
+function shareCustLogin(){
+  var name  = document.getElementById('ec-name').value.trim()||'Customer';
+  var phone = document.getElementById('ec-phone').value.trim();
+  var otp   = document.getElementById('ec-otp-val').textContent;
+  var msg   = 'Hi '+name+'! 👋\n\n'+
+    'Your Budget Barber login details:\n'+
+    '📱 Phone: '+phone+'\n'+
+    '🔑 OTP: '+otp+'\n'+
+    '🌐 Login at: login-customer.html\n\n'+
+    'View your style cards and visit history anytime!';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(function(){toast('✅ Login details copied! Share with customer.');}).catch(function(){toast('OTP: '+otp);});
+  } else { toast('OTP: '+otp); }
+}
+
+function saveCustomerEdit(){
+  var customers = LS.get('customers')||[];
+  var idx = customers.findIndex(function(c){ return c.id===editingCustId; });
+  if(idx===-1){ closeModal('editCustModal'); return; }
+  var newPhone = document.getElementById('ec-phone').value.trim();
+  if(newPhone.length<10){ toast('Enter a valid 10-digit phone number'); return; }
+  customers[idx].name        = document.getElementById('ec-name').value.trim() || customers[idx].name;
+  customers[idx].phone       = newPhone;
+  customers[idx].hairType    = document.getElementById('ec-hair').value;
+  customers[idx].faceShape   = document.getElementById('ec-face').value;
+  customers[idx].growthNotes = document.getElementById('ec-notes').value.trim();
+  customers[idx].loginPin    = document.getElementById('ec-otp-val').textContent;
+  LS.set('customers', customers);
+  updateRowInSheet('Customers',customers[idx],function(ok){if(!ok)toast('⚠ Saved locally');});
+  closeModal('editCustModal');
+  toast('✓ Customer updated');
+  renderCustomers();
+}
+function renderYearly(){
+  var yr=parseInt(document.getElementById('yr-year').value)||new Date().getFullYear();
+  var allE=getEntries().filter(function(e){return e.salonId===mySalonId;});
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var rows='';
+  var totPh=0,totCash=0,totPhTip=0,totCashTip=0,totSales=0,totCusts=0;
+  for(var m=1;m<=12;m++){
+    var mo=yr+'-'+(m<10?'0':'')+m;
+    var me=filterByMonth(allE,mo);
+    var ph     =me.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+    var cash   =me.reduce(function(a,e){return a+Number(e.cash||0);},0);
+    var phTip  =me.reduce(function(a,e){return a+Number(e.phTip||0);},0);
+    var cashTip=me.reduce(function(a,e){return a+Number(e.cashTip||0);},0);
+    var sal    =ph+cash;
+    var custs  =me.length;
+    totPh+=ph;totCash+=cash;totPhTip+=phTip;totCashTip+=cashTip;totSales+=sal;totCusts+=custs;
+    rows+='<tr>'+
+      '<td>'+months[m-1]+' '+yr+'</td>'+
+      '<td style="color:var(--accent)">'+custs+'</td>'+
+      '<td style="color:var(--blue)">'+fmtINR(ph)+'</td>'+
+      '<td style="color:var(--green)">'+fmtINR(cash)+'</td>'+
+      '<td style="color:var(--warn)">'+(phTip>0?fmtINR(phTip):'—')+'</td>'+
+      '<td style="color:var(--warn)">'+(cashTip>0?fmtINR(cashTip):'—')+'</td>'+
+      '<td style="color:var(--gold);font-weight:700">'+fmtINR(sal)+'</td>'+
+    '</tr>';
+  }
+  rows+='<tr>'+
+    '<td>TOTAL '+yr+'</td>'+
+    '<td style="color:var(--accent)">'+totCusts+'</td>'+
+    '<td style="color:var(--blue)">'+fmtINR(totPh)+'</td>'+
+    '<td style="color:var(--green)">'+fmtINR(totCash)+'</td>'+
+    '<td style="color:var(--warn)">'+fmtINR(totPhTip)+'</td>'+
+    '<td style="color:var(--warn)">'+fmtINR(totCashTip)+'</td>'+
+    '<td style="color:var(--gold)">'+fmtINR(totSales)+'</td>'+
+  '</tr>';
+  document.getElementById('yr-body').innerHTML=rows;
+  document.getElementById('yr-summary').innerHTML=
+    '<div class="sg">'+
+    '<div class="sc a"><div class="sc-lbl">Year Customers</div><div class="sc-val">'+totCusts+'</div></div>'+
+    '<div class="sc g"><div class="sc-lbl">Year Sales</div><div class="sc-val" style="font-size:18px">'+fmtINR(totSales)+'</div></div>'+
+    '<div class="sc b"><div class="sc-lbl">PhonePe</div><div class="sc-val" style="font-size:18px">'+fmtINR(totPh)+'</div></div>'+
+    '<div class="sc gr"><div class="sc-lbl">Cash</div><div class="sc-val" style="font-size:18px">'+fmtINR(totCash)+'</div></div>'+
+    '<div class="sc warn"><div class="sc-lbl">Ph Tips</div><div class="sc-val" style="font-size:18px">'+fmtINR(totPhTip)+'</div></div>'+
+    '<div class="sc warn"><div class="sc-lbl">Cash Tips</div><div class="sc-val" style="font-size:18px">'+fmtINR(totCashTip)+'</div></div>'+
+    '</div>';
+}
+
+// ════ STAFF ════
+function renderStaff(){
+  var myStylists=(LS.get('staff')||[]).filter(function(u){return u.salonId===mySalonId&&u.role==='barber';});
+  document.getElementById('staff-list').innerHTML=myStylists.length?
+    myStylists.map(function(b){
+      return '<div class="staff-card">'+
+        '<div class="staff-name">'+b.name+'</div>'+
+        '<div class="staff-phone">📱 +91 '+b.phone+'</div>'+
+        (b.loginPin?'<div class="staff-otp">🔑 OTP: '+b.loginPin+'</div>':'')+
+        (b.fixedSalary?'<div style="font-size:11px;color:var(--muted);margin-top:4px">Salary: '+fmtINR(b.fixedSalary)+' · Food: '+fmtINR(b.foodMoney||0)+' · Clean: '+fmtINR(b.cleaningMoney||0)+'</div>':'')+
+        '<span class="s-badge">✂️ Hairstylist</span>'+
+        '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+          '<button onclick="openEditStaff(\''+b.id+'\')" style="flex:1;padding:6px;background:rgba(91,196,240,.1);border:1px solid rgba(91,196,240,.3);color:var(--blue);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">✏️ Edit</button>'+
+          '<button onclick="openStaffSalary(\''+b.id+'\')" style="flex:1;padding:6px;background:rgba(0,196,140,.1);border:1px solid rgba(0,196,140,.3);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">💰 Salary</button>'+
+          '<button onclick="openStaffAttendance(\''+b.id+'\',\''+b.name+'\')" style="flex:1;padding:6px;background:rgba(232,166,66,.1);border:1px solid rgba(232,166,66,.3);color:var(--warn);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">📅 Attend</button>'+
+        '</div>'+
+      '</div>';
+    }).join('') :
+    '<div style="color:var(--muted);font-size:13px;padding:10px 0">No hairstylists added yet.</div>';
+}
+
+var editingStaffId=null;
+function openEditStaff(id){
+  editingStaffId=id;
+  var staff=LS.get('staff')||[];
+  var b=staff.find(function(u){return u.id===id;});
+  if(!b)return;
+  document.getElementById('es-name').value   =b.name||'';
+  document.getElementById('es-phone').value  =b.phone||'';
+  document.getElementById('es-salary').value =b.fixedSalary||0;
+  document.getElementById('es-food').value   =b.foodMoney||0;
+  document.getElementById('es-clean').value  =b.cleaningMoney||0;
+  openModal('editStaffModal');
+}
+function saveStaffEdit(){
+  var staff=LS.get('staff')||[];
+  var idx=staff.findIndex(function(u){return u.id===editingStaffId;});
+  if(idx===-1)return;
+  staff[idx].name          =document.getElementById('es-name').value.trim()||staff[idx].name;
+  staff[idx].phone         =document.getElementById('es-phone').value.trim()||staff[idx].phone;
+  staff[idx].fixedSalary   =parseFloat(document.getElementById('es-salary').value)||0;
+  staff[idx].foodMoney     =parseFloat(document.getElementById('es-food').value)||0;
+  staff[idx].cleaningMoney =parseFloat(document.getElementById('es-clean').value)||0;
+  LS.set('staff',staff);
+  updateRowInSheet('Staff',staff[idx],function(ok){if(!ok)toast('⚠ Saved locally');});
+  closeModal('editStaffModal');
+  toast('✓ Hairstylist updated');
+  renderStaff();
+}
+
+var salaryStaffId=null;
+function openStaffSalary(id){
+  salaryStaffId=id;
+  var staff=LS.get('staff')||[];
+  var b=staff.find(function(u){return u.id===id;});
+  if(!b)return;
+  document.getElementById('ss-title').textContent=b.name+' — Salary & Attendance';
+  document.getElementById('ss-month').value=new Date().toISOString().slice(0,7);
+  renderStaffSalary();
+  openModal('staffSalaryModal');
+}
+
+function renderStaffSalary(){
+  var mo=document.getElementById('ss-month').value||new Date().toISOString().slice(0,7);
+  var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
+  var staff=LS.get('staff')||[];
+  var b=staff.find(function(u){return u.id===salaryStaffId;})||{};
+  var fixedSalary   =Number(b.fixedSalary||0);
+  var foodMoney     =Number(b.foodMoney||0);
+  var cleaningMoney =Number(b.cleaningMoney||0);
+
+  // Attendance override
+  var attKey='att_'+salaryStaffId+'_'+mo;
+  var savedAtt=LS.get(attKey)||null;
+  // Compute from attendance log if no override
+  var log=LS.get('attendance')||[];
+  var present=0,half=0,absent=0;
+  var days=new Date(yr,m,0).getDate();
+  for(var d=1;d<=days;d++){
+    var ds=d+'/'+m+'/'+yr;
+    var recs=log.filter(function(r){return r.date===ds&&r.barberId===salaryStaffId;});
+    var hasIn=recs.some(function(r){return r.type==='in';});
+    var hasOut=recs.some(function(r){return r.type==='out';});
+    if(hasIn&&hasOut)present++;
+    else if(hasIn)half++;
+    else if(d<new Date().getDate()||mo<new Date().toISOString().slice(0,7))absent++;
+  }
+  if(savedAtt){present=savedAtt.present;half=savedAtt.half;absent=savedAtt.absent;}
+  document.getElementById('ss-present').value=present;
+  document.getElementById('ss-half').value=half;
+  document.getElementById('ss-absent').value=absent;
+
+  // Sales this month
+  var moEntries=filterByMonth(getEntries().filter(function(e){return e.barberId===salaryStaffId&&e.salonId===mySalonId;}),mo);
+  var moSales=moEntries.reduce(function(a,e){return a+Number(e.total||0);},0);
+
+  // Incentives = (Total Sales - Fixed Salary) * 10%
+  var incentives=Math.max(0,Math.round((moSales-fixedSalary)*0.10));
+
+  // Advances this month
+  var advances=(LS.get('advances')||[]).filter(function(r){
+    if(r.barberId!==salaryStaffId)return false;
+    var p=(r.date||'').split('/');
+    return parseInt(p[1])===m&&parseInt(p[2])===yr;
+  });
+  var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // Deductions
+  var dedKey='ded_'+salaryStaffId+'_'+mo;
+  var deductions=LS.get(dedKey)||[];
+  var totalDed=deductions.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // Deduction log
+  var dedEl=document.getElementById('ss-ded-log');
+  dedEl.innerHTML=!deductions.length?
+    '<div style="font-size:11px;color:var(--muted2);font-style:italic">No deductions this month</div>':
+    deductions.map(function(r,i){
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">'+
+        '<span>'+r.desc+'</span>'+
+        '<span style="color:var(--danger);font-weight:700">'+fmtINR(r.amount)+
+        ' <button onclick="removeDeduction('+i+')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:11px">✕</button></span>'+
+      '</div>';
+    }).join('');
+
+  var gross=fixedSalary+foodMoney+cleaningMoney+incentives;
+  var net=gross-totalAdv-totalDed;
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+
+  document.getElementById('ss-salary-breakdown').innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+mName+' · Sales: '+fmtINR(moSales)+'</div>'+
+    '<div class="sal-row inc"><span class="sal-lbl">Fixed Salary</span><span class="sal-val">'+fmtINR(fixedSalary)+'</span></div>'+
+    '<div class="sal-row inc"><span class="sal-lbl">Food Money</span><span class="sal-val">'+fmtINR(foodMoney)+'</span></div>'+
+    '<div class="sal-row inc"><span class="sal-lbl">Cleaning Money</span><span class="sal-val">'+fmtINR(cleaningMoney)+'</span></div>'+
+    '<div class="sal-row inc"><span class="sal-lbl">Incentives (Sales−Fixed)×10%</span><span class="sal-val">'+fmtINR(incentives)+'</span></div>'+
+    '<div class="sal-row ded"><span class="sal-lbl">Advances</span><span class="sal-val">− '+fmtINR(totalAdv)+'</span></div>'+
+    '<div class="sal-row ded"><span class="sal-lbl">Deductions</span><span class="sal-val">− '+fmtINR(totalDed)+'</span></div>'+
+    '<div class="sal-row net"><span class="sal-lbl">Net Salary</span><span class="sal-val">'+fmtINR(net)+'</span></div>'+
+    (fixedSalary===0?'<div style="font-size:11px;color:var(--warn);margin-top:6px">⚠ Fixed salary not set — edit hairstylist profile</div>':'');
+}
+
+function saveAttendanceOverride(){
+  var mo=document.getElementById('ss-month').value;
+  var attKey='att_'+salaryStaffId+'_'+mo;
+  LS.set(attKey,{
+    present:parseInt(document.getElementById('ss-present').value)||0,
+    half:parseInt(document.getElementById('ss-half').value)||0,
+    absent:parseInt(document.getElementById('ss-absent').value)||0
+  });
+  renderStaffSalary();
+  toast('✓ Attendance saved');
+}
+
+function addDeduction(){
+  var mo=document.getElementById('ss-month').value;
+  var desc=document.getElementById('ss-ded-desc').value.trim();
+  var amt=parseFloat(document.getElementById('ss-ded-amt').value)||0;
+  if(!desc||amt<=0){toast('Enter description and amount');return;}
+  var dedKey='ded_'+salaryStaffId+'_'+mo;
+  var deductions=LS.get(dedKey)||[];
+  deductions.push({desc:desc,amount:amt});
+  LS.set(dedKey,deductions);
+  document.getElementById('ss-ded-desc').value='';
+  document.getElementById('ss-ded-amt').value='';
+  renderStaffSalary();
+  toast('✓ Deduction added');
+}
+function removeDeduction(idx){
+  var mo=document.getElementById('ss-month').value;
+  var dedKey='ded_'+salaryStaffId+'_'+mo;
+  var deductions=LS.get(dedKey)||[];
+  deductions.splice(idx,1);
+  LS.set(dedKey,deductions);
+  renderStaffSalary();
+}
+
+var lastGeneratedOTP = '';
+function addBarber(){
+  var name   =document.getElementById('ab-name').value.trim();
+  var ph     =document.getElementById('ab-phone').value.trim();
+  var salary =parseFloat(document.getElementById('ab-salary').value)||0;
+  var food   =parseFloat(document.getElementById('ab-food').value)||0;
+  var clean  =parseFloat(document.getElementById('ab-clean').value)||0;
+  if(!name||ph.length<10){ toast('Enter full name and 10-digit phone'); return; }
+  var staff=LS.get('staff')||[];
+  if(staff.find(function(u){return u.phone===ph;})){ toast('❌ Phone already registered'); return; }
+  lastGeneratedOTP = String(Math.floor(1000+Math.random()*9000));
+  var newStylist={id:'u'+Date.now(),name:name,phone:ph,role:'barber',salonId:mySalonId,
+    loginPin:lastGeneratedOTP,fixedSalary:salary,foodMoney:food,cleaningMoney:clean};
+  staff.push(newStylist);
+  LS.set('staff',staff);
+  appendRowToSheet('Staff',newStylist,function(ok){if(!ok)toast('⚠ Saved locally');});
+  document.getElementById('generated-otp').textContent=lastGeneratedOTP;
+  document.getElementById('otp-reveal-box').style.display='block';
+  document.getElementById('add-staff-actions').style.display='none';
+  document.getElementById('add-staff-done').style.display='block';
+  toast('✅ '+name+' added! OTP: '+lastGeneratedOTP);
+}
+function copyOTP(){
+  var text='Login OTP: '+lastGeneratedOTP;
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){toast('✅ OTP copied!');}).catch(function(){toast('OTP: '+lastGeneratedOTP);}); }
+  else{ toast('OTP: '+lastGeneratedOTP); }
+}
+function doneAddBarber(){
+  document.getElementById('ab-name').value='';document.getElementById('ab-phone').value='';
+  document.getElementById('ab-salary').value='';document.getElementById('ab-food').value='';document.getElementById('ab-clean').value='';
+  document.getElementById('otp-reveal-box').style.display='none';
+  document.getElementById('add-staff-actions').style.display='flex';
+  document.getElementById('add-staff-done').style.display='none';
+  closeModal('addStaffModal');
+  renderStaff();
+}
+
+// Fix 3: populate customer datalist when edit modal opens
+function populateCustDatalist(){
+  var customers = LS.get('customers')||[];
+  var dl = document.getElementById('cust-datalist');
+  dl.innerHTML = customers.map(function(c){
+    return '<option value="'+c.name+'" data-phone="'+c.phone+'">'+c.name+' — '+c.phone+'</option>';
+  }).join('');
+}
+// Auto-fill phone when a known customer name is typed/selected
+function autofillPhone(name){
+  var customers = LS.get('customers')||[];
+  var match = customers.find(function(c){ return c.name.toLowerCase()===name.toLowerCase(); });
+  if (match) document.getElementById('edit-cust-phone').value = match.phone;
+}
+// Auto-fill name when a known phone is typed
+function autofillName(phone){
+  if (phone.length < 10) return;
+  var customers = LS.get('customers')||[];
+  var match = customers.find(function(c){ return c.phone===phone; });
+  if (match) document.getElementById('edit-cust-name').value = match.name;
+}
+
+// ════ EDIT ENTRY ════
+var editingId=null;
+function openEdit(id){
+  editingId=id;
+  var e=getEntries().find(function(x){return x.id===id;});
+  if(!e)return;
+  populateCustDatalist(); // Fix 3: load dropdown options
+  document.getElementById('edit-cust-name').value  = e.customerName  || '';
+  document.getElementById('edit-cust-phone').value = e.customerPhone || '';
+  document.getElementById('edit-services').value   = e.services || '';
+  document.getElementById('edit-ph').value          = e.phPay || 0;
+  document.getElementById('edit-cash').value        = e.cash  || 0;
+  document.getElementById('edit-tip').value         = e.tip   || 0;
+  openModal('editModal');
+}
+function saveEdit(){
+  var entries=getEntries();
+  var idx=entries.findIndex(function(e){return e.id===editingId;});
+  if(idx===-1)return;
+  var custName  = document.getElementById('edit-cust-name').value.trim()  || 'Walk-in';
+  var custPhone = document.getElementById('edit-cust-phone').value.trim() || '';
+  entries[idx].customerName  = custName;
+  entries[idx].customerPhone = custPhone;
+  entries[idx].services      = document.getElementById('edit-services').value.trim();
+  entries[idx].phPay         = parseFloat(document.getElementById('edit-ph').value)  ||0;
+  entries[idx].cash          = parseFloat(document.getElementById('edit-cash').value)||0;
+  entries[idx].tip           = parseFloat(document.getElementById('edit-tip').value) ||0;
+  // Fix 4: total = phPay + cash only (tip excluded)
+  entries[idx].total         = entries[idx].phPay + entries[idx].cash;
+  LS.set('entries',entries);
+  updateRowInSheet('Entries',entries[idx],function(ok){if(!ok)toast('⚠ Saved locally');});
+
+  // Fix 3: sync customer to directory if real name+phone given
+  if (custName && custName!=='Walk-in' && custPhone.length>=10){
+    var customers = LS.get('customers')||[];
+    var existing  = customers.find(function(c){ return c.phone===custPhone; });
+    if (!existing){
+      customers.push({id:'ce'+editingId,phone:custPhone,name:custName,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''});
+      LS.set('customers',customers);
+    }
+  }
+  closeModal('editModal');
+  toast('✓ Entry updated');
+  renderSalesTable();
+  renderDashboard();
+}
+function delEntry(id){
+  if(!confirm('Delete this entry?'))return;
+  var _mde=getEntries().filter(function(e){return e.id!==id;});LS.set('entries',_mde);deleteRowFromSheet('Entries',id,function(){});
+  toast('Entry deleted');
+  renderDashboard();
+  renderSalesTable();
+}
+
+// ── ENTRIES TABLE HELPER (dashboard) ──
+function renderEntriesTable(entries, editable){
+  if(!entries.length) return '<div class="tbl-empty">No bills today.</div>';
+  return '<div class="tbl-wrap"><div class="tbl-head cols-m">'+
+    '<span>#</span><span>Date</span><span>Stylist</span><span>Customer</span>'+
+    '<span>Phone</span><span>Services</span><span>PhPay</span><span>Cash</span><span>Ph Tip</span><span>Cash Tip</span><span>Total</span>'+
+    '<span>'+(editable?'Act':'')+'</span></div><div class="tbl-body">'+
+    entries.slice().reverse().map(function(e,i){
+      var cust   = e.customerName ||'Walk-in';
+      var phone  = e.customerPhone||'—';
+      var sales  = Number(e.phPay||0)+Number(e.cash||0);
+      var phTip  = Number(e.phTip||0);
+      var cashTip= Number(e.cashTip||0);
+      return '<div class="tbl-row cols-m">'+
+        '<span style="color:var(--muted2);font-size:11px">'+(i+1)+'</span>'+
+        '<span style="font-size:11px;color:var(--muted);line-height:1.3">'+e.date+'<br>'+e.time+'</span>'+
+        '<span style="font-size:12px;font-weight:600">'+e.barberName+'</span>'+
+        '<span style="font-size:12px;color:var(--muted)">'+cust+'</span>'+
+        '<span style="font-size:11px;color:var(--muted)">'+phone+'</span>'+
+        '<span style="font-size:12px;color:var(--muted)">'+e.services+'</span>'+
+        '<span class="tag-ph">'+(Number(e.phPay||0)>0?fmtINR(e.phPay):'—')+'</span>'+
+        '<span class="tag-cash">'+(Number(e.cash||0)>0?fmtINR(e.cash):'—')+'</span>'+
+        '<span class="tag-tip">'+(phTip>0?fmtINR(phTip):'—')+'</span>'+
+        '<span class="tag-tip">'+(cashTip>0?fmtINR(cashTip):'—')+'</span>'+
+        '<span class="tag-tot">'+fmtINR(sales)+'</span>'+
+        '<span>'+(editable?'<button class="btn-edit" onclick="openEdit('+e.id+')" title="Edit">✏️</button><button class="btn-del" onclick="delEntry('+e.id+')" title="Delete">✕</button>':'')+'</span>'+
+      '</div>';
+    }).join('')+'</div></div>';
+}
+
+// ── STAFF ATTENDANCE VIEW ──
+var attStaffId=null;
+function openStaffAttendance(id,name){
+  attStaffId=id;
+  document.getElementById('att-modal-title').textContent=name+' — Attendance';
+  document.getElementById('att-modal-month').value=new Date().toISOString().slice(0,7);
+  renderStaffAttModal();
+  openModal('staffAttModal');
+}
+function renderStaffAttModal(){
+  var mo=document.getElementById('att-modal-month').value||new Date().toISOString().slice(0,7);
+  var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
+  var days=new Date(yr,m,0).getDate();
+  var log=LS.get('attendance')||[];
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+  var now=new Date(); var curMo=now.toISOString().slice(0,7); var todayD=(mo===curMo?now.getDate():0);
+  var present=0,half=0,absent=0;
+  // Day-of-week offset
+  var firstDow=new Date(yr,m-1,1).getDay();
+  var dayHeaders='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:2px">'+
+    ['S','M','T','W','T','F','S'].map(function(d){return '<div style="text-align:center;font-size:8px;font-weight:800;color:var(--muted2)">'+d+'</div>';}).join('')+'</div>';
+  var cells='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+  for(var b=0;b<firstDow;b++) cells+='<div style="aspect-ratio:1;min-height:28px"></div>';
+  for(var d=1;d<=days;d++){
+    var ds=d+'/'+m+'/'+yr;
+    var recs=log.filter(function(r){return r.date===ds&&r.barberId===attStaffId;});
+    var hasIn=recs.some(function(r){return r.type==='in';}),hasOut=recs.some(function(r){return r.type==='out';});
+    var inRec=recs.find(function(r){return r.type==='in';}),outRec=recs.find(function(r){return r.type==='out';});
+    var bg,col,tip='';
+    if(hasIn&&hasOut){bg='rgba(0,196,140,.25)';col='var(--accent)';present++;tip=(inRec?inRec.time:'')+'–'+(outRec?outRec.time:'');}
+    else if(hasIn){bg='rgba(232,166,66,.2)';col='var(--warn)';half++;tip='In: '+(inRec?inRec.time:'');}
+    else if(d<todayD||mo<curMo){bg='rgba(224,107,91,.12)';col='var(--danger)';absent++;}
+    else{bg='var(--surface2)';col='var(--muted2)';}
+    var border=d===todayD?'outline:1.5px solid var(--accent);outline-offset:-1px;':'';
+    cells+='<div title="'+ds+(tip?' · '+tip:'')+'" style="aspect-ratio:1;min-height:28px;border-radius:4px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;'+border+'">'+d+'</div>';
+  }
+  cells+='</div>';
+  // In/Out times list for present days
+  var timeList='';
+  for(var d2=1;d2<=days;d2++){
+    var ds2=d2+'/'+m+'/'+yr;
+    var recs2=log.filter(function(r){return r.date===ds2&&r.barberId===attStaffId;});
+    if(!recs2.length) continue;
+    var inR=recs2.find(function(r){return r.type==='in';}),outR=recs2.find(function(r){return r.type==='out';});
+    if(!inR&&!outR) continue;
+    timeList+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">'+
+      '<span style="color:var(--muted)">'+ds2+'</span>'+
+      '<span>'+
+        (inR?'<span style="color:var(--accent)">In '+inR.time+'</span>':'')+
+        (inR&&outR?' &nbsp; ':'')+
+        (outR?'<span style="color:var(--danger)">Out '+outR.time+'</span>':'')+
+      '</span></div>';
+  }
+  document.getElementById('att-modal-cal-wrap').innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">'+mName+'</div>'+
+    dayHeaders+cells+
+    '<div style="display:flex;gap:8px;margin:8px 0;font-size:10px">'+
+      '<span style="color:var(--accent)">■ Present ('+present+')</span>'+
+      '<span style="color:var(--warn)">■ Half ('+half+')</span>'+
+      '<span style="color:var(--danger)">■ Absent ('+absent+')</span>'+
+    '</div>'+
+    (timeList?'<div style="margin-top:8px;max-height:160px;overflow-y:auto">'+timeList+'</div>':'');
+}
+function applyRestoredData(d){
+  var toStr=function(rec,fields){
+    if(!rec)return rec;
+    fields.forEach(function(f){if(rec[f]!==undefined&&rec[f]!==null&&rec[f]!=='')rec[f]=String(rec[f]);});
+    return rec;
+  };
+  if(d.entries&&d.entries.length)    LS.set('entries',    d.entries.map(function(r){return toStr(r,['id','barberId','salonId','customerPhone']);}));
+  if(d.staff&&d.staff.length)        LS.set('staff',      d.staff.map(function(r){return toStr(r,['id','phone','salonId','loginPin']);}));
+  if(d.salons&&d.salons.length)      LS.set('salons',     d.salons.map(function(r){return toStr(r,['id','mgrPhone']);}));
+  if(d.customers&&d.customers.length)LS.set('customers',  d.customers.map(function(r){return toStr(r,['id','phone','loginPin']);}));
+  if(d.cashIn&&d.cashIn.length)      LS.set('cashIn',     d.cashIn.map(function(r){return toStr(r,['barberId']);}));
+  if(d.expenses&&d.expenses.length)  LS.set('expenses',   d.expenses.map(function(r){return toStr(r,['barberId']);}));
+  if(d.attendance&&d.attendance.length)LS.set('attendance',d.attendance.map(function(r){return toStr(r,['barberId']);}));
+  if(d.styleCards&&d.styleCards.length)LS.set('styleCards',d.styleCards.map(function(r){return toStr(r,['id','customerId','barberId','salonId']);}));
+  if(d.visits&&d.visits.length)      LS.set('visits',     d.visits.map(function(r){return toStr(r,['id','customerId','barberId','salonId']);}));
+  if(d.advances&&d.advances.length)  LS.set('advances',   d.advances.map(function(r){return toStr(r,['barberId']);}));
+  if(d.mgrCashIn&&d.mgrCashIn.length)  LS.set('mgrCashIn',  d.mgrCashIn.map(function(r){return toStr(r,['managerId','salonId']);}));
+  if(d.mgrExpenses&&d.mgrExpenses.length)LS.set('mgrExpenses',d.mgrExpenses.map(function(r){return toStr(r,['managerId','salonId']);}));
+  if(d.deductions&&d.deductions.length){
+    var dg={};
+    d.deductions.forEach(function(r){var k='ded_'+r.staffId+'_'+r.month;if(!dg[k])dg[k]=[];dg[k].push({desc:r.desc,amount:r.amount});});
+    Object.keys(dg).forEach(function(k){LS.set(k,dg[k]);});
+  }
+  if(d.attOverrides&&d.attOverrides.length){
+    d.attOverrides.forEach(function(r){LS.set('att_'+r.staffId+'_'+r.month,{present:r.present,half:r.half,absent:r.absent});});
+  }
+}
+
+// Core JSONP fetch — works on ALL browsers including mobile
+// Google Apps Script responds with: callback({ok:true,data:{...}})
+function fetchFromSheets(url, onSuccess, onError){
+  var cbName='_bbFetch'+Date.now();
+  var script=document.createElement('script');
+  var done=false;
+  var timer=setTimeout(function(){
+    if(done)return; done=true;
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    onError('timeout after 25 seconds — check your internet');
+  }, 25000);
+  window[cbName]=function(json){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    if(json&&json.ok&&json.data) onSuccess(json.data);
+    else onError(json&&json.error?json.error:'No data returned from Sheets');
+  };
+  script.onerror=function(){
+    if(done)return; done=true;
+    clearTimeout(timer);
+    delete window[cbName];
+    if(script.parentNode)document.head.removeChild(script);
+    onError('Could not reach Google Sheets — check internet connection');
+  };
+  // Add a cache-buster so mobile browsers don't serve a cached (possibly empty) response
+  script.src=url+'?action=read&callback='+cbName+'&_='+Date.now();
+  document.head.appendChild(script);
+}
+
+// ── SHARED: apply restored data to localStorage ──
+// ── DIRECT SHEETS WRITE ──
+// Appends a single row directly to Google Sheets without touching localStorage first
+// Falls back to localStorage if Sheets unavailable (offline)
+// Replaces a row in Sheets by matching on id field
+// Deletes a row in Sheets by id
+// Fetch fresh data from Sheets and update localStorage, then call onDone
+// ── JSONP fetch from Sheets (works on all devices) ──
+async function restoreFromSheets(){
+  var url=BB_SHEET_URL||LS.get('sheetUrl')||localStorage.getItem('bb_sheetUrl');
+  if(!url){toast('⚠ No Apps Script URL configured');return;}
+  if(!confirm('Replace ALL local data with data from Google Sheets?'))return;
+  showSyncStatus('⬇ Loading from Google Sheets…','loading');
+  fetchFromSheets(url, function(d){
+    applyRestoredData(d);
+    showSyncStatus('✅ Data restored successfully!','ok');
+    toast('✅ Restored — reloading…');
+    setTimeout(function(){location.reload();},1500);
+  }, function(err){
+    showSyncStatus('❌ Restore failed: '+err+' — check internet & URL','err');
+    toast('❌ Restore failed: '+err);
+  }, 25000);
+}
+
+
+
+// ── AUTO-SYNC every 5 minutes (silent) ──
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg){var t=document.getElementById('toastEl');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
+function logout(){sessionStorage.clear();window.location.href='index.html';}
+</script>
+</div><!-- /app-content -->
+</body>
+</html>

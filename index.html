@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Budget Barber – Choose Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Black+Han+Sans&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -18,7 +19,7 @@ body {
   padding: 30px 20px 40px;
 }
 
-/* LOGO — matches app topbar style */
+/* LOGO */
 .logo-box {
   background: #F5E030;
   border-radius: 10px;
@@ -146,7 +147,6 @@ h1 {
   text-align: left;
 }
 
-
 .footer-note {
   font-size: 11px;
   color: rgba(255,255,255,0.3);
@@ -206,16 +206,14 @@ h1 {
 <div class="footer-note">© 2026 Budget Barber · Digital Men's Salon</div>
 
 <script>
-// ── SHARED CONFIG ──
-// Set your Google Apps Script URL here ONCE.
-// All apps on this site will automatically use it.
-// After deploying, paste your Apps Script URL below:
-var BB_SHEET_URL = 'https://script.google.com/macros/s/AKfycbygAEyBOyRP57tXYaHS5lVBH1gRMbmfM7Fw64iSBuh-J1_8WKe_3vFu5LhdsT7sKd1-GQ/exec'; // Apps Script URL
+// ✅ SUPABASE CONFIG (global for all pages)
+const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
 
-if(BB_SHEET_URL){
-  // Save to localStorage so all apps on this domain can use it
-  localStorage.setItem('bb_sheetUrl', BB_SHEET_URL);
-}
+// Save globally (like your old sheet URL approach)
+localStorage.setItem('bb_supabase_url', SUPABASE_URL);
+localStorage.setItem('bb_supabase_key', SUPABASE_KEY);
 </script>
+
 </body>
 </html>

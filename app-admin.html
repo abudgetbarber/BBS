@@ -7,20 +7,45 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --dark:#002B1F;--darker:#001A12;--card:#003828;--card2:#004A35;
-  --accent:#00C48C;--accent2:#00A374;--gold:#FFD100;
-  --white:#F0FAF5;--muted:#6BAFA0;--danger:#FF6B5B;--blue:#5BC8FF;--warn:#FFA94D;
-  --r:14px;--rs:8px;--BF:'Barlow',sans-serif;--HF:'Bebas Neue',sans-serif;
+  /* BACKGROUND & SURFACES */
+  --bg:#F5F5F0;
+  --surface:#FFFFFF;
+  --surface2:#F0F0EA;
+  --surface3:#E8E8E0;
+  --border:#DDDDD5;
+
+  /* BRAND */
+  --accent:#007A56;
+  --accent2:#005F42;
+  --gold:#F5E030;
+  --gold-dark:#C8A800;
+
+  /* TEXT */
+  --white:#1A1A14;
+  --muted:#666660;
+  --muted2:#999990;
+
+  /* STATUS */
+  --danger:#DC3545;
+  --green:#16A34A;
+  --blue:#1D6DB5;
+  --warn:#C2410C;
+  --purple:#6D28D9;
+
+  /* LAYOUT */
+  --r:12px;--rs:8px;
+  --BF:'Barlow',sans-serif;
+  --HF:'Bebas Neue',sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--BF);background:var(--darker);color:var(--white);font-size:15px;min-height:100vh;overflow-x:hidden}
-.topbar{background:var(--dark);border-bottom:1px solid rgba(255,255,255,.06);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15px;min-height:100vh;overflow-x:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .logo{background:var(--gold);border-radius:6px;padding:4px 10px;display:inline-flex}
-.logo span{font-family:var(--HF);font-size:18px;color:var(--dark);line-height:1;letter-spacing:1px}
+.logo span{color:#003D2B!important;font-family:var(--HF);font-size:18px;color:var(--dark);line-height:1;letter-spacing:1px}
 .tb-right{display:flex;gap:8px;align-items:center}
-.tb-role{background:rgba(255,107,91,.15);border:1px solid rgba(255,107,91,.3);color:var(--danger);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:1px;text-transform:uppercase}
+.tb-role{background:rgba(220,53,69,.10);border:1px solid rgba(255,107,91,.3);color:var(--danger);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:1px;text-transform:uppercase}
 .tb-out{background:none;border:1px solid rgba(255,107,91,.3);color:var(--danger);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:var(--BF)}
-.nav-tabs{background:var(--dark);border-bottom:1px solid rgba(255,255,255,.06);display:flex;overflow-x:auto;padding:0 4px}
+.nav-tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 4px}
 .nav-tabs::-webkit-scrollbar{display:none}
 .nt{flex-shrink:0;padding:12px 16px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--BF)}
 .nt.on{color:var(--accent);border-bottom-color:var(--accent)}
@@ -28,14 +53,14 @@ body{font-family:var(--BF);background:var(--darker);color:var(--white);font-size
 .panel.on{display:block}
 /* STATS */
 .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
-.sc{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:16px 18px}
+.sc{background:var(--surface);border:1px solid rgba(0,0,0,.06);border-radius:var(--r);padding:16px 18px}
 .sc.accent{border-color:var(--accent)}.sc.gold{border-color:var(--gold)}.sc.danger{border-color:var(--danger)}
 .sc-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .sc-val{font-family:var(--HF);font-size:28px;color:var(--white);letter-spacing:1px;line-height:1}
 .sc.accent .sc-val{color:var(--accent)}.sc.gold .sc-val{color:var(--gold)}.sc.danger .sc-val{color:var(--danger)}
 /* SALON CARDS */
 .salon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px}
-.salon-card{background:var(--card);border-radius:var(--r);padding:18px;border:1px solid rgba(255,255,255,.06);transition:border-color .2s;cursor:pointer}
+.salon-card{background:var(--surface);border-radius:var(--r);padding:18px;border:1px solid rgba(0,0,0,.06);transition:border-color .2s;cursor:pointer}
 .salon-card:hover{border-color:var(--accent)}
 .sn-name{font-weight:600;font-size:15px;margin-bottom:4px}
 .sn-loc{font-size:12px;color:var(--muted);margin-bottom:12px}
@@ -43,8 +68,8 @@ body{font-family:var(--BF);background:var(--darker);color:var(--white);font-size
 .sn-stat{font-size:12px;color:var(--muted)}
 .sn-stat b{color:var(--white);display:block;font-size:16px}
 /* TABLE */
-.tbl-wrap{background:var(--card);border-radius:var(--r);overflow:hidden;border:1px solid rgba(255,255,255,.06);overflow-x:auto}
-.tbl-head{background:var(--accent);padding:10px 14px;display:grid;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--darker);min-width:600px;text-align:center}
+.tbl-wrap{background:var(--surface);border-radius:var(--r);overflow:hidden;border:1px solid rgba(0,0,0,.06);overflow-x:auto}
+.tbl-head{background:var(--accent);padding:10px 14px;display:grid;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#FFFFFF;min-width:600px;text-align:center}
 .tbl-body .tbl-row{display:grid;padding:10px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;min-width:600px;text-align:center}
 .tbl-body .tbl-row:last-child{border-bottom:none}
 .tbl-body .tbl-row:hover{background:rgba(255,255,255,.03)}
@@ -60,34 +85,34 @@ body{font-family:var(--BF);background:var(--darker);color:var(--white);font-size
 .fr{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px}
 .fr .ifield{flex:1;min-width:130px}
 .ifield label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.ifield input,.ifield select{width:100%;padding:12px 14px;background:var(--darker);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-size:14px;outline:none;transition:border-color .2s;font-family:var(--BF);-webkit-appearance:none}
+.ifield input,.ifield select{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:14px;outline:none;transition:border-color .2s;font-family:var(--BF);-webkit-appearance:none}
 .ifield input:focus,.ifield select:focus{border-color:var(--accent)}
-.btn-sm{padding:10px 16px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--white);border-radius:var(--rs);font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:var(--BF)}
+.btn-sm{padding:10px 16px;background:var(--surface2);border:1px solid rgba(0,0,0,.10);color:var(--white);border-radius:var(--rs);font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:var(--BF)}
 .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
 .btn-sm.on{background:var(--accent);border-color:var(--accent);color:#fff}
 /* TOTALS BAR */
-.tot-bar{background:var(--card);border-radius:var(--rs);padding:12px 16px;margin-bottom:16px;display:flex;gap:18px;flex-wrap:wrap;border:1px solid rgba(0,196,140,.2)}
+.tot-bar{background:var(--surface);border-radius:var(--rs);padding:12px 16px;margin-bottom:16px;display:flex;gap:18px;flex-wrap:wrap;border:1px solid rgba(0,196,140,.2)}
 .tot-item{font-size:13px;color:var(--muted)}
 .tot-item b{color:var(--white);font-size:15px;margin-left:4px}
 /* CHART */
-.month-chart{background:var(--card);border-radius:var(--r);padding:20px;margin-bottom:20px;border:1px solid rgba(255,255,255,.06)}
+.month-chart{background:var(--surface);border-radius:var(--r);padding:20px;margin-bottom:20px;border:1px solid rgba(0,0,0,.06)}
 .chart-title{font-size:13px;color:var(--muted);margin-bottom:14px;font-weight:600}
 .bar-chart{display:flex;align-items:flex-end;gap:4px;height:120px}
 .bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
 .bar{width:100%;border-radius:4px 4px 0 0;background:var(--accent);min-height:4px;transition:height .4s;cursor:pointer;position:relative}
-.bar:hover::after{content:attr(data-tip);position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:var(--darker);color:var(--white);font-size:10px;padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none}
+.bar:hover::after{content:attr(data-tip);position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--white);font-size:10px;padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none}
 .bar-lbl{font-size:10px;color:var(--muted);text-align:center}
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-bg.open{display:flex}
-.modal-box{background:var(--card);border-radius:var(--r);padding:22px;width:100%;max-width:440px;border:1px solid rgba(255,255,255,.1);animation:mIn .2s ease}
+.modal-box{background:var(--surface);border-radius:var(--r);padding:22px;width:100%;max-width:440px;border:1px solid rgba(0,0,0,.08);animation:mIn .2s ease}
 @keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
 .modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .modal-hdr h3{font-size:15px;font-weight:600}
 .btn-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
 .modal-actions{display:flex;gap:10px;margin-top:18px}
 .btn-primary{padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--BF);flex:1}
-.btn-cancel{flex:1;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:var(--rs);font-size:14px;cursor:pointer;font-family:var(--BF)}
+.btn-cancel{flex:1;padding:12px;background:transparent;border:1px solid rgba(0,0,0,.12);color:var(--muted);border-radius:var(--rs);font-size:14px;cursor:pointer;font-family:var(--BF)}
 /* BADGE */
 .badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
 .badge-green{background:rgba(0,196,140,.12);color:var(--accent);border:1px solid rgba(0,196,140,.25)}
@@ -99,14 +124,100 @@ body{font-family:var(--BF);background:var(--darker);color:var(--white);font-size
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .sec-title{font-size:14px;font-weight:600;color:var(--white)}
 /* SHEETS */
-.sheets-box{background:var(--card);border-radius:var(--r);padding:18px;border:1px solid rgba(255,255,255,.06)}
+.sheets-box{background:var(--surface);border-radius:var(--r);padding:18px;border:1px solid rgba(0,0,0,.06)}
 details summary{cursor:pointer;font-size:13px;color:var(--muted);padding:4px 0}
 details summary:hover{color:var(--white)}
 details[open] summary{color:var(--accent)}
-pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break:break-all;background:var(--darker);border-radius:var(--rs);padding:14px;margin-top:12px}
+pre{font-size:11px;color:var(--accent);line-height:1.6;white-space:pre-wrap;word-break:break-all;background:var(--surface2);border-radius:var(--rs);padding:14px;margin-top:12px}
 /* TOAST */
-.toast-el{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--card2);color:var(--white);padding:11px 22px;border-radius:50px;font-size:13px;z-index:999;display:none;border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast-el{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--white);color:var(--white);padding:11px 22px;border-radius:50px;font-size:13px;z-index:999;display:none;border:1px solid rgba(0,0,0,.08);box-shadow:0 8px 32px rgba(0,0,0,.4)}
 @media(max-width:640px){.cols-a{grid-template-columns:28px 60px 80px 1fr 60px 60px 28px}}
+
+/* ── LIGHT THEME OVERRIDES ── */
+body { background: var(--bg) !important; color: var(--white) !important; }
+.topbar { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.nav-tabs { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; }
+.panel { background: var(--bg); }
+
+/* Cards and surfaces */
+.sc, .salon-card, .month-chart, .tbl-wrap, .modal-box,
+.sheets-box, .cash-counter, .bc-card, .tot-bar,
+.pnl-section, .role-card, .outlet-summary,
+.mgr-ci-wrap, .att-card, .br-card { background: var(--surface) !important; border-color: var(--border) !important; }
+
+/* Stat card values — keep accent colors readable on light */
+.sc-val { color: var(--white) !important; }
+.sc.accent .sc-val { color: var(--accent) !important; }
+.sc.gold   .sc-val { color: #8B6F00 !important; }
+.sc.danger .sc-val { color: var(--danger) !important; }
+.sc.b      .sc-val { color: var(--blue) !important; }
+.sc.g      .sc-val { color: var(--green) !important; }
+.sc.warn   .sc-val { color: var(--warn) !important; }
+.sc.gr     .sc-val { color: var(--green) !important; }
+
+/* Inputs */
+input, select, textarea {
+  background: var(--surface2) !important;
+  color: var(--white) !important;
+  border-color: var(--border) !important;
+}
+input::placeholder { color: var(--muted2) !important; }
+select option { background: var(--surface) !important; color: var(--white) !important; }
+
+/* Table rows */
+.tbl-head { background: var(--accent) !important; color: #fff !important; }
+.tbl-body .tbl-row { border-bottom-color: var(--border) !important; }
+.tbl-body .tbl-row:hover { background: var(--surface2) !important; }
+
+/* Modal overlay */
+.modal-bg { background: rgba(0,0,0,.4) !important; }
+.modal-box { background: var(--surface) !important; border-color: var(--border) !important; }
+
+/* Nav tab active */
+.nt { color: var(--muted) !important; }
+.nt.on { color: var(--accent) !important; border-bottom-color: var(--accent) !important; }
+
+/* Buttons */
+.btn-sm { background: var(--surface2) !important; border-color: var(--border) !important; color: var(--white) !important; }
+.btn-sm:hover { border-color: var(--accent) !important; color: var(--accent) !important; }
+.btn-sm.on { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+.btn-primary { background: var(--accent) !important; color: #fff !important; }
+.btn-cancel { border-color: var(--border) !important; color: var(--muted) !important; }
+
+/* Toast */
+.toast-el { background: var(--white) !important; color: var(--surface) !important; border-color: var(--border) !important; }
+
+/* Logo — always gold box, dark text */
+.logo { background: var(--gold) !important; }
+.logo span { color: #003D2B !important; }
+
+/* PNL section in light mode */
+.pnl-input { background: var(--surface2) !important; color: var(--white) !important; border-color: var(--border) !important; }
+.pnl-row span:first-child { color: var(--muted) !important; }
+.pnl-row.pnl-total-row { background: var(--surface2) !important; }
+.pnl-row.pnl-auto { background: rgba(0,0,0,.02) !important; }
+
+/* Muted labels */
+.sc-lbl, .ifield label, .role-lbl, .bar-lbl { color: var(--muted) !important; }
+
+/* Section headers */
+.sec-title { color: var(--white) !important; }
+
+/* Charts bars stay accent */
+.bar { background: var(--accent) !important; }
+
+/* Outlet summary boxes */
+.os-box.ci  { background: rgba(22,163,74,.08) !important; border-color: rgba(22,163,74,.2) !important; }
+.os-box.ex  { background: rgba(220,53,69,.06) !important; border-color: rgba(220,53,69,.15) !important; }
+.os-box.net { background: rgba(29,109,181,.06) !important; border-color: rgba(29,109,181,.15) !important; }
+
+/* Badges */
+.badge-green  { background: rgba(22,163,74,.10) !important; color: var(--green) !important; border-color: rgba(22,163,74,.2) !important; }
+.badge-blue   { background: rgba(29,109,181,.08) !important; color: var(--blue) !important; border-color: rgba(29,109,181,.2) !important; }
+.badge-red    { background: rgba(220,53,69,.08) !important; color: var(--danger) !important; border-color: rgba(220,53,69,.2) !important; }
+.badge-gold   { background: rgba(139,111,0,.08) !important; color: #8B6F00 !important; border-color: rgba(139,111,0,.2) !important; }
+.badge-purple { background: rgba(109,40,217,.08) !important; color: var(--purple) !important; border-color: rgba(109,40,217,.2) !important; }
+
 </style>
 </head>
 <body>
@@ -132,7 +243,7 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
   <!-- Fix 3: Monthly Salon Performance ABOVE today's -->
   <div class="sec-hdr" style="margin-bottom:8px">
     <div class="sec-title">Salon Performance — Month</div>
-    <input type="month" id="ov-month" style="background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--white);font-size:12px;padding:4px 8px;font-family:var(--BF);outline:none" onchange="renderOverview()">
+    <input type="month" id="ov-month" style="background:var(--surface);border:1px solid rgba(0,0,0,.08);border-radius:6px;color:var(--white);font-size:12px;padding:4px 8px;font-family:var(--BF);outline:none" onchange="renderOverview()">
   </div>
   <div class="salon-grid" id="ov-salons-month" style="margin-bottom:18px"></div>
 
@@ -140,8 +251,8 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
   <div class="salon-grid" id="ov-salons"></div>
   <div class="sec-hdr"><div class="sec-title">Today's All Customers</div></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-end">
-    <div class="ifield" style="flex:1;min-width:110px"><label>Salon</label><select id="ov-filter-salon" onchange="renderOvBills()" style="padding:8px 10px;background:var(--darker);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%;-webkit-appearance:none"><option value="">All Salons</option></select></div>
-    <div class="ifield" style="flex:1;min-width:110px"><label>Stylist</label><select id="ov-filter-barber" onchange="renderOvBills()" style="padding:8px 10px;background:var(--darker);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%;-webkit-appearance:none"><option value="">All Stylists</option></select></div>
+    <div class="ifield" style="flex:1;min-width:110px"><label>Salon</label><select id="ov-filter-salon" onchange="renderOvBills()" style="padding:8px 10px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%;-webkit-appearance:none"><option value="">All Salons</option></select></div>
+    <div class="ifield" style="flex:1;min-width:110px"><label>Stylist</label><select id="ov-filter-barber" onchange="renderOvBills()" style="padding:8px 10px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%;-webkit-appearance:none"><option value="">All Stylists</option></select></div>
     <button class="btn-sm" onclick="clearOvFilters()">Clear</button>
   </div>
   <div id="ov-bills"></div>
@@ -222,11 +333,11 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
   <!-- Filter bar -->
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
     <select id="mg-cust-salon-filter" onchange="renderManageCustomers()"
-      style="flex:1;min-width:130px;padding:8px 10px;background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-family:var(--BF);font-size:12px;font-weight:600">
+      style="flex:1;min-width:130px;padding:8px 10px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-family:var(--BF);font-size:12px;font-weight:600">
       <option value="">All Salons</option>
     </select>
     <input type="search" id="mg-cust-search" placeholder="Search name or phone…" oninput="renderManageCustomers()"
-      style="flex:2;min-width:150px;padding:8px 10px;background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);color:var(--white);font-family:var(--BF);font-size:12px">
+      style="flex:2;min-width:150px;padding:8px 10px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-family:var(--BF);font-size:12px">
   </div>
   <div class="tbl-wrap">
     <div class="tbl-head" style="display:grid;grid-template-columns:1fr 100px 90px 80px 70px;text-align:center">
@@ -264,7 +375,7 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
       <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:8px">🔐 Login PIN</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="stf-pin" maxlength="4" inputmode="numeric" placeholder="Set 4-digit PIN"
-          style="flex:1;padding:10px 12px;background:var(--darker);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
+          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
           oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
         <button onclick="regenStfPin()" style="padding:9px 12px;background:rgba(255,209,0,.12);border:1.5px solid rgba(255,209,0,.3);color:var(--gold);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🎲 Generate</button>
       </div>
@@ -331,7 +442,7 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
       <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:8px">🔐 Login PIN</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="est-pin" maxlength="4" inputmode="numeric" placeholder="4-digit PIN"
-          style="flex:1;padding:10px 12px;background:var(--darker);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
+          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
           oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
         <button onclick="regenPin()" style="padding:9px 12px;background:rgba(255,209,0,.12);border:1.5px solid rgba(255,209,0,.3);color:var(--gold);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🔄 New PIN</button>
       </div>
@@ -378,7 +489,7 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
       <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:8px">🔐 Customer Portal PIN</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="ecu-pin" maxlength="4" inputmode="numeric" placeholder="4-digit PIN"
-          style="flex:1;padding:10px 12px;background:var(--darker);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
+          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
           oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
         <button onclick="regenCustPin()" style="padding:9px 12px;background:rgba(255,209,0,.12);border:1.5px solid rgba(255,209,0,.3);color:var(--gold);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🔄 New PIN</button>
       </div>
@@ -401,8 +512,8 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){

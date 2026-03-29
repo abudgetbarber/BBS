@@ -8,24 +8,46 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
-  --g:#003D2B;--g2:#004F38;--g3:#006648;
-  --y:#F5E030;--yd:#C8A800;
-  --white:#F0FAF5;--ink:#1A1A14;--muted:#767668;--muted2:#9A9A8A;
-  --bg:#F4F7F4;--surface:#FFFFFF;--border:#E0E8DC;
-  --blue:#1E6FB5;--pp:#5F259F;--red:#DC2626;--orange:#C2410C;
-  --r:14px;--rs:10px;
+  /* BACKGROUND & SURFACES */
+  --bg:#F5F5F0;
+  --surface:#FFFFFF;
+  --surface2:#F0F0EA;
+  --surface3:#E8E8E0;
+  --border:#DDDDD5;
+
+  /* BRAND */
+  --accent:#007A56;
+  --accent2:#005F42;
+  --gold:#F5E030;
+  --gold-dark:#C8A800;
+
+  /* TEXT */
+  --white:#1A1A14;
+  --muted:#666660;
+  --muted2:#999990;
+
+  /* STATUS */
+  --danger:#DC3545;
+  --green:#16A34A;
+  --blue:#1D6DB5;
+  --warn:#C2410C;
+  --purple:#6D28D9;
+
+  /* LAYOUT */
+  --r:12px;--rs:8px;
+  --BF:'Barlow',sans-serif;
+  --HF:'Bebas Neue',sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);max-width:430px;margin:0 auto;min-height:100vh}
 
 /* ── TOPBAR ── */
-.topbar{background:var(--g);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--y)}
-.logo-box{background:var(--y);border-radius:6px;padding:4px 10px;display:inline-flex;align-items:center}
+.topbar{background:var(--g);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);border-radius:6px;padding:4px 10px;display:inline-flex;align-items:center}
 .logo-box span{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--g);line-height:1;letter-spacing:1px}
 .tb-r{display:flex;gap:8px;align-items:center}
 .tb-n{font-size:12px;font-weight:700;color:var(--y)}
 .tb-role{background:var(--y);color:var(--g);font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px;letter-spacing:1px;text-transform:uppercase}
-.tb-out{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:600}
+.tb-out{background:none;border:1px solid rgba(0,0,0,.20);color:rgba(0,0,0,.60);font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:600}
 
 /* ── PAGES & BOTTOM NAV ── */
 .page{display:none;padding-bottom:90px;min-height:80vh;animation:fi .2s ease}
@@ -45,8 +67,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);max-w
 .hero-name span{color:var(--y)}
 
 /* ── SPEND SUMMARY STRIP ── */
-.spend-strip{background:rgba(0,0,0,.25);padding:14px 16px 14px;display:flex;gap:0;border-top:1px solid rgba(255,255,255,.08)}
-.ss-item{flex:1;text-align:center;border-right:1px solid rgba(255,255,255,.1)}
+.spend-strip{background:rgba(0,0,0,.25);padding:14px 16px 14px;display:flex;gap:0;border-top:1px solid rgba(0,0,0,.08)}
+.ss-item{flex:1;text-align:center;border-right:1px solid rgba(0,0,0,.08)}
 .ss-item:last-child{border-right:none}
 .ss-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--y);letter-spacing:1px;line-height:1}
 .ss-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(245,224,48,.5);margin-top:3px}
@@ -212,8 +234,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);max-w
 .loyalty-card::after{content:'⭐';position:absolute;right:-10px;bottom:-16px;font-size:80px;opacity:.08}
 .lc-label{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,224,48,.6);margin-bottom:6px}
 .lc-visits{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--y);line-height:1;letter-spacing:1px}
-.lc-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:4px}
-.lc-bar-track{background:rgba(255,255,255,.15);height:6px;border-radius:3px;margin-top:12px;overflow:hidden}
+.lc-sub{font-size:12px;color:rgba(0,0,0,.40);margin-top:4px}
+.lc-bar-track{background:rgba(0,0,0,.12);height:6px;border-radius:3px;margin-top:12px;overflow:hidden}
 .lc-bar-fill{height:100%;background:var(--y);border-radius:3px;transition:width .8s ease}
 .lc-next{font-size:11px;color:rgba(245,224,48,.55);margin-top:6px}
 
@@ -230,6 +252,92 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);max-w
 .sm-track{flex:1;height:6px;background:#EEF2EE;border-radius:3px;overflow:hidden}
 .sm-fill{height:100%;border-radius:3px;transition:width .7s ease}
 .sm-val{font-size:12px;font-weight:700;color:var(--ink);min-width:44px;text-align:right}
+
+/* ── LIGHT THEME OVERRIDES ── */
+body { background: var(--bg) !important; color: var(--white) !important; }
+.topbar { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.nav-tabs { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; }
+.panel { background: var(--bg); }
+
+/* Cards and surfaces */
+.sc, .salon-card, .month-chart, .tbl-wrap, .modal-box,
+.sheets-box, .cash-counter, .bc-card, .tot-bar,
+.pnl-section, .role-card, .outlet-summary,
+.mgr-ci-wrap, .att-card, .br-card { background: var(--surface) !important; border-color: var(--border) !important; }
+
+/* Stat card values — keep accent colors readable on light */
+.sc-val { color: var(--white) !important; }
+.sc.accent .sc-val { color: var(--accent) !important; }
+.sc.gold   .sc-val { color: #8B6F00 !important; }
+.sc.danger .sc-val { color: var(--danger) !important; }
+.sc.b      .sc-val { color: var(--blue) !important; }
+.sc.g      .sc-val { color: var(--green) !important; }
+.sc.warn   .sc-val { color: var(--warn) !important; }
+.sc.gr     .sc-val { color: var(--green) !important; }
+
+/* Inputs */
+input, select, textarea {
+  background: var(--surface2) !important;
+  color: var(--white) !important;
+  border-color: var(--border) !important;
+}
+input::placeholder { color: var(--muted2) !important; }
+select option { background: var(--surface) !important; color: var(--white) !important; }
+
+/* Table rows */
+.tbl-head { background: var(--accent) !important; color: #fff !important; }
+.tbl-body .tbl-row { border-bottom-color: var(--border) !important; }
+.tbl-body .tbl-row:hover { background: var(--surface2) !important; }
+
+/* Modal overlay */
+.modal-bg { background: rgba(0,0,0,.4) !important; }
+.modal-box { background: var(--surface) !important; border-color: var(--border) !important; }
+
+/* Nav tab active */
+.nt { color: var(--muted) !important; }
+.nt.on { color: var(--accent) !important; border-bottom-color: var(--accent) !important; }
+
+/* Buttons */
+.btn-sm { background: var(--surface2) !important; border-color: var(--border) !important; color: var(--white) !important; }
+.btn-sm:hover { border-color: var(--accent) !important; color: var(--accent) !important; }
+.btn-sm.on { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+.btn-primary { background: var(--accent) !important; color: #fff !important; }
+.btn-cancel { border-color: var(--border) !important; color: var(--muted) !important; }
+
+/* Toast */
+.toast-el { background: var(--white) !important; color: var(--surface) !important; border-color: var(--border) !important; }
+
+/* Logo — always gold box, dark text */
+.logo { background: var(--gold) !important; }
+.logo span { color: #003D2B !important; }
+
+/* PNL section in light mode */
+.pnl-input { background: var(--surface2) !important; color: var(--white) !important; border-color: var(--border) !important; }
+.pnl-row span:first-child { color: var(--muted) !important; }
+.pnl-row.pnl-total-row { background: var(--surface2) !important; }
+.pnl-row.pnl-auto { background: rgba(0,0,0,.02) !important; }
+
+/* Muted labels */
+.sc-lbl, .ifield label, .role-lbl, .bar-lbl { color: var(--muted) !important; }
+
+/* Section headers */
+.sec-title { color: var(--white) !important; }
+
+/* Charts bars stay accent */
+.bar { background: var(--accent) !important; }
+
+/* Outlet summary boxes */
+.os-box.ci  { background: rgba(22,163,74,.08) !important; border-color: rgba(22,163,74,.2) !important; }
+.os-box.ex  { background: rgba(220,53,69,.06) !important; border-color: rgba(220,53,69,.15) !important; }
+.os-box.net { background: rgba(29,109,181,.06) !important; border-color: rgba(29,109,181,.15) !important; }
+
+/* Badges */
+.badge-green  { background: rgba(22,163,74,.10) !important; color: var(--green) !important; border-color: rgba(22,163,74,.2) !important; }
+.badge-blue   { background: rgba(29,109,181,.08) !important; color: var(--blue) !important; border-color: rgba(29,109,181,.2) !important; }
+.badge-red    { background: rgba(220,53,69,.08) !important; color: var(--danger) !important; border-color: rgba(220,53,69,.2) !important; }
+.badge-gold   { background: rgba(139,111,0,.08) !important; color: #8B6F00 !important; border-color: rgba(139,111,0,.2) !important; }
+.badge-purple { background: rgba(109,40,217,.08) !important; color: var(--purple) !important; border-color: rgba(109,40,217,.2) !important; }
+
 </style>
 </head>
 <body>
@@ -481,8 +589,8 @@ function monthLabel(ym) {  // "yyyy-mm" → "Mar 2026"
 // ── SUPABASE BOOTSTRAP ──
 // Pull fresh data from Supabase on every load
 // Credentials are set here — replace with your actual values
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL = 'YOUR_SUPABASE_URL';
+var SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 function _supaGet(table){
   return fetch(SUPA_URL+'/rest/v1/'+table+'?select=*',{

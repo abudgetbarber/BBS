@@ -40,8 +40,8 @@ create table if not exists customers (
 -- 4. ENTRIES  (sales / billing records)
 create table if not exists entries (
   id              text primary key,
-  date            text,         -- "d/m/yyyy" format (matches app)
-  time            text,
+  "date"          text,         -- "d/m/yyyy" format (matches app)
+  "time"          text,
   "barberId"      text,
   "barberName"    text,
   "salonId"       text,
@@ -60,18 +60,18 @@ create table if not exists entries (
 create table if not exists cash_in (
   id          bigserial primary key,
   amount      numeric,
-  time        text,
-  date        text,
+  "time"      text,
+  "date"      text,
   "barberId"  text
 );
 
 -- 6. EXPENSES  (barber expense logs)
 create table if not exists expenses (
   id          bigserial primary key,
-  desc        text,
+  "desc"      text,
   amount      numeric,
-  time        text,
-  date        text,
+  "time"      text,
+  "date"      text,
   "barberId"  text
 );
 
@@ -79,8 +79,8 @@ create table if not exists expenses (
 create table if not exists attendance (
   id          bigserial primary key,
   type        text,      -- 'in' | 'out' | 'break'
-  date        text,
-  time        text,
+  "date"      text,
+  "time"      text,
   ts          bigint,
   "barberId"  text
 );
@@ -119,14 +119,14 @@ create table if not exists visits (
   "salonId"     text,
   "salonName"   text,
   "styleName"   text,
-  date          text,
+  "date"        text,
   note          text
 );
 
 -- 10. ADVANCES
 create table if not exists advances (
   id          bigserial primary key,
-  date        text,
+  "date"      text,
   amount      numeric,
   "barberId"  text,
   ts          bigint
@@ -136,8 +136,8 @@ create table if not exists advances (
 create table if not exists mgr_cash_in (
   id            bigserial primary key,
   amount        numeric,
-  time          text,
-  date          text,
+  "time"        text,
+  "date"        text,
   "managerId"   text,
   "salonId"     text
 );
@@ -145,10 +145,10 @@ create table if not exists mgr_cash_in (
 -- 12. MANAGER EXPENSES
 create table if not exists mgr_expenses (
   id            bigserial primary key,
-  desc          text,
+  "desc"        text,
   amount        numeric,
-  time          text,
-  date          text,
+  "time"        text,
+  "date"        text,
   "managerId"   text,
   "salonId"     text
 );
@@ -158,7 +158,7 @@ create table if not exists deductions (
   id          bigserial primary key,
   staff_id    text,
   month       text,      -- "yyyy-mm"
-  desc        text,
+  "desc"      text,
   amount      numeric
 );
 

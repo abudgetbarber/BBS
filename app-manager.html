@@ -825,11 +825,11 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="pnl-sec-title" style="background:rgba(0,196,140,.15);border-color:rgba(0,196,140,.3);color:var(--accent,#00C48C)">REVENUE</div>
     <div class="pnl-row"><span>Revenue (Actual Sales)</span><span id="pnl-revenue" class="pnl-val-pos">₹0</span></div>
     <div class="pnl-auto" style="padding:10px 14px;border-bottom:1px solid rgba(0,0,0,.06)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:13px;color:var(--muted);font-weight:600">Projected Revenue</span>
         <span id="pnl-proj-rev-val-amt" style="font-size:15px;font-weight:800;color:var(--accent)">₹0</span>
       </div>
-      <div id="pnl-proj-rev-breakdown" style="font-size:11px;color:var(--muted);line-height:1.7;background:rgba(0,196,140,.05);border-radius:6px;padding:6px 10px;border:1px solid rgba(0,196,140,.15)"></div>
+      <div id="pnl-proj-rev-breakdown" style="font-size:10px;color:var(--muted);line-height:1.8;border-top:1px dashed rgba(0,0,0,.08);padding-top:6px"></div>
       <input type="hidden" id="pnl-proj-rev" value="0">
       <span id="pnl-proj-rev-val" style="display:none"></span>
     </div>
@@ -914,8 +914,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -2844,17 +2844,11 @@ function _doRenderPNL(month){
   if(prAmtEl) prAmtEl.textContent=fINR(projRev);
   var prBdEl=document.getElementById('pnl-proj-rev-breakdown');
   if(prBdEl) prBdEl.innerHTML=
-    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">'+
-      '<span>📅 Avg weekday: <b style="color:var(--accent)">'+fINR(Math.round(avgWeekday))+'</b></span>'+
-      '<span>× <b>'+monthWeekdays+' weekdays</b> in month</span>'+
-    '</div>'+
-    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-top:2px">'+
-      '<span>📅 Avg weekend: <b style="color:var(--blue)">'+fINR(Math.round(avgWeekend))+'</b></span>'+
-      '<span>× <b>'+monthWeekends+' weekends</b> in month</span>'+
-    '</div>'+
-    '<div style="border-top:1px solid rgba(0,196,140,.2);margin-top:5px;padding-top:5px;font-size:10px;color:var(--muted)">'+
-      'Based on '+elapsedWeekdays+' weekdays & '+elapsedWeekends+' weekends elapsed so far'+
-    '</div>';
+    'Avg weekday: '+fINR(Math.round(avgWeekday))+' × '+monthWeekdays+' days'
+    +'  +  Avg weekend: '+fINR(Math.round(avgWeekend))+' × '+monthWeekends+' days'
+    +'<br><span style="font-size:9px;opacity:.7">'
+    +'Avg based on '+elapsedWeekdays+' weekdays & '+elapsedWeekends+' weekends elapsed so far'
+    +'</span>';
 
   // ── Auto: Salon expenses from salon_expenses table ──
   var sxTotals  = getSalonExpenseTotals(yr, mo);

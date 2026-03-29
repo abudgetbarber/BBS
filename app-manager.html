@@ -68,19 +68,19 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .sg3{grid-template-columns:1fr 1fr 1fr}
 .sc{background:var(--surface);border:1px solid rgba(0,0,0,.06);border-radius:var(--r);padding:14px 16px}
-.sc.a{border-left:3px solid var(--accent)}.sc.g{border-left:3px solid var(--gold)}
+.sc.a{border-left:3px solid var(--accent)}.sc.g{border-left:3px solid #D97706}
 .sc.b{border-left:3px solid var(--blue)}.sc.gr{border-left:3px solid var(--green)}
 .sc.warn{border-left:3px solid var(--warn)}
 .sc-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
 .sc-val{font-family:var(--HF);font-size:26px;color:var(--white);letter-spacing:.5px;line-height:1}
-.sc.a .sc-val{color:var(--accent)}.sc.g .sc-val{color:var(--gold)}
+.sc.a .sc-val{color:var(--accent)}.sc.g .sc-val{color:#D97706}
 .sc.b .sc-val{color:var(--blue)}.sc.gr .sc-val{color:var(--green)}
 .sc.warn .sc-val{color:var(--warn)}
 
 /* Cash-in counter — compact strip, not full card */
 .cash-counter{background:var(--surface);border:1px solid rgba(245,200,66,.25);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
-.cc-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);white-space:nowrap;padding-top:2px}
-.cc-amount{font-family:var(--HF);font-size:18px;color:var(--gold);line-height:1;font-weight:700}
+.cc-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);white-space:nowrap;padding-top:2px}
+.cc-amount{font-family:var(--HF);font-size:18px;color:var(--accent);line-height:1;font-weight:700}
 .cc-entries{flex:1;min-width:180px}
 
 /* ── BARBER PERF CARDS ── */
@@ -104,7 +104,7 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .tag-ph{color:var(--blue);font-size:12px;font-weight:600}
 .tag-cash{color:var(--green);font-size:12px;font-weight:600}
 .tag-tip{color:var(--warn);font-size:12px;font-weight:600}
-.tag-tot{color:var(--gold);font-size:13px;font-weight:700}
+.tag-tot{color:var(--accent);font-size:13px;font-weight:700}
 .btn-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:0;line-height:1}
 .btn-del:hover{color:var(--danger)}
 .btn-edit{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:0;margin-right:4px}
@@ -118,11 +118,11 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .os-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
 .os-box.ci .os-lbl{color:var(--green)}
 .os-box.ex .os-lbl{color:var(--danger)}
-.os-box.net .os-lbl{color:var(--gold)}
+.os-box.net .os-lbl{color:var(--blue)}
 .os-val{font-family:var(--HF);font-size:22px;line-height:1}
 .os-box.ci .os-val{color:var(--green)}
 .os-box.ex .os-val{color:var(--danger)}
-.os-box.net .os-val{color:var(--gold)}
+.os-box.net .os-val{color:var(--blue)}
 /* Expense log in dashboard */
 .exp-log-panel{background:var(--surface2);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;border:1px solid rgba(0,0,0,.06)}
 .exp-log-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--danger);margin-bottom:10px}
@@ -159,8 +159,8 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 /* Salary row in staff modal */
 .sal-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
 .sal-row:last-child{border-bottom:none;padding-top:10px;margin-top:4px}
-.sal-row.net .sal-lbl{color:var(--gold);font-weight:800;font-size:14px}
-.sal-row.net .sal-val{font-size:20px;color:var(--gold);font-family:var(--HF)}
+.sal-row.net .sal-lbl{color:var(--accent);font-weight:800;font-size:14px}
+.sal-row.net .sal-val{font-size:20px;color:var(--accent);font-family:var(--HF)}
 .sal-row.ded .sal-val{color:var(--danger)}
 .sal-row.inc .sal-val{color:var(--green)}
 .sal-lbl{color:var(--muted)}
@@ -205,12 +205,12 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .br-stat-val{font-size:13px;font-weight:800;color:var(--white)}
 .br-stat.ph .br-stat-val{color:var(--blue)}
 .br-stat.cash .br-stat-val{color:var(--green)}
-.br-stat.tot .br-stat-val{color:var(--gold)}
+.br-stat.tot .br-stat-val{color:#D97706}
 .br-stat.cust .br-stat-val{color:var(--accent)}
 
 /* FIX 3: OTP card in staff */
-.otp-reveal{background:rgba(245,200,66,.1);border:2px solid var(--gold);border-radius:var(--r);padding:16px;text-align:center;margin-top:14px}
-.otp-code{font-family:var(--HF);font-size:48px;color:var(--gold);letter-spacing:6px;line-height:1}
+.otp-reveal{background:rgba(0,196,140,.08);border:2px solid var(--accent);border-radius:var(--r);padding:16px;text-align:center;margin-top:14px}
+.otp-code{font-family:var(--HF);font-size:48px;color:var(--accent);letter-spacing:6px;line-height:1}
 .otp-msg{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
 
 /* ── STAFF CARD ── */
@@ -218,7 +218,7 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .staff-card{background:var(--surface2);border-radius:var(--r);padding:14px;border:1px solid rgba(0,0,0,.06)}
 .staff-name{font-weight:700;font-size:14px;color:var(--white)}
 .staff-phone{font-size:12px;color:var(--muted);margin-top:3px}
-.staff-otp{font-size:11px;color:var(--gold);margin-top:5px;font-weight:600}
+.staff-otp{font-size:11px;color:var(--accent);margin-top:5px;font-weight:600}
 .s-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;margin-top:6px;font-weight:700;background:rgba(0,196,140,.12);color:var(--accent);border:1px solid rgba(0,196,140,.25)}
 
 /* ── MODAL ── */
@@ -297,7 +297,7 @@ body { background: var(--bg) !important; color: var(--white) !important; }
 /* Stat card values — keep accent colors readable on light */
 .sc-val { color: var(--white) !important; }
 .sc.accent .sc-val { color: var(--accent) !important; }
-.sc.gold   .sc-val { color: #8B6F00 !important; }
+.sc.gold   .sc-val { color: #D97706 !important; }
 .sc.danger .sc-val { color: var(--danger) !important; }
 .sc.b      .sc-val { color: var(--blue) !important; }
 .sc.g      .sc-val { color: var(--green) !important; }
@@ -364,8 +364,15 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 .badge-green  { background: rgba(22,163,74,.10) !important; color: var(--green) !important; border-color: rgba(22,163,74,.2) !important; }
 .badge-blue   { background: rgba(29,109,181,.08) !important; color: var(--blue) !important; border-color: rgba(29,109,181,.2) !important; }
 .badge-red    { background: rgba(220,53,69,.08) !important; color: var(--danger) !important; border-color: rgba(220,53,69,.2) !important; }
-.badge-gold   { background: rgba(139,111,0,.08) !important; color: #8B6F00 !important; border-color: rgba(139,111,0,.2) !important; }
+.badge-gold   { background: rgba(217,119,6,.08) !important; color: #D97706 !important; border-color: rgba(217,119,6,.2) !important; }
 .badge-purple { background: rgba(109,40,217,.08) !important; color: var(--purple) !important; border-color: rgba(109,40,217,.2) !important; }
+
+
+/* Manager billing chips */
+.mgr-svc-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.mgr-chip{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--BF);user-select:none}
+.mgr-chip.on{background:rgba(0,122,86,.15);border-color:var(--accent);color:var(--accent)}
+.mgr-chip:active{transform:scale(.95)}
 
 </style>
 </head>
@@ -402,15 +409,13 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <!-- Manager Billing Entry -->
   <div style="background:var(--surface);border-radius:var(--r);padding:16px;margin-bottom:16px;border:1px solid var(--border)">
     <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:12px">✂️ Add Billing Entry</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <div style="flex:1;min-width:130px">
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Hairstylist</label>
-        <select id="mgr-bill-barber" class="fi" style="width:100%"><option value="">Select Stylist</option></select>
-      </div>
-      <div style="flex:2;min-width:160px">
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Services</label>
-        <input type="text" id="mgr-bill-services" class="fi" placeholder="e.g. Haircut, Shave" style="width:100%">
-      </div>
+    <div style="margin-bottom:8px">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Hairstylist</label>
+      <select id="mgr-bill-barber" class="fi" style="width:100%"><option value="">Select Stylist</option></select>
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Services (tap to select)</label>
+      <div class="mgr-svc-grid" id="mgr-svc-chips"></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <div style="flex:1;min-width:90px">
@@ -522,7 +527,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div class="tbl-wrap" style="overflow-x:auto">
     <table class="yr-tbl" id="yr-table">
       <thead><tr>
-        <th>Month</th><th>Customers</th><th>PhonePe</th><th>Cash</th><th>Ph Tips</th><th>Cash Tips</th><th>Sales Total</th>
+        <th>Month</th><th>Customers</th><th>PhonePe</th><th>Cash</th><th>Ph Tips</th><th>Cash Tips</th><th>Sales Total</th><th>Avg/Cust</th>
       </tr></thead>
       <tbody id="yr-body"></tbody>
     </table>
@@ -695,7 +700,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:12px;color:var(--muted)">Login OTP</span>
         <div style="display:flex;align-items:center;gap:8px">
-          <span id="ec-otp-val" style="font-family:var(--HF);font-size:22px;color:var(--gold);letter-spacing:3px">----</span>
+          <span id="ec-otp-val" style="font-family:var(--HF);font-size:22px;color:#D97706;letter-spacing:3px">----</span>
           <button onclick="genCustOTP()" style="padding:4px 9px;background:rgba(0,196,140,.15);border:1px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">New OTP</button>
         </div>
       </div>
@@ -726,37 +731,36 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 <div class="panel" id="pn-salon">
   <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px">Salon Expense Tracker</div>
 
-  <!-- Quick entry form -->
+  <!-- Direct per-category entry -->
   <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:16px">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px">+ Add Expense</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <div style="flex:1;min-width:120px">
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Category</label>
-        <select id="sx-cat" class="fi" style="width:100%">
-          <option value="cosmetics">Cosmetics</option>
-          <option value="eb_store">EB Store (Electricity)</option>
-          <option value="eb_staff">EB Staff Room</option>
-          <option value="maid">Maid</option>
-          <option value="wifi">WiFi</option>
-          <option value="other">Other</option>
-        </select>
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:12px">+ Add Expense</div>
+    <div style="margin-bottom:8px">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Date</label>
+      <input type="date" id="sx-date" class="fi" style="width:100%">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div>
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">💄 Cosmetics ₹</label>
+        <input type="number" id="sx-cosmetics" class="fi" placeholder="0" min="0" inputmode="numeric">
       </div>
-      <div style="flex:1;min-width:100px">
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Date</label>
-        <input type="date" id="sx-date" class="fi" style="width:100%">
+      <div>
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">⚡ EB Store ₹</label>
+        <input type="number" id="sx-eb-store" class="fi" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">⚡ EB Staff Room ₹</label>
+        <input type="number" id="sx-eb-staff" class="fi" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">🧹 Maid ₹</label>
+        <input type="number" id="sx-maid" class="fi" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📶 WiFi ₹</label>
+        <input type="number" id="sx-wifi" class="fi" placeholder="0" min="0" inputmode="numeric">
       </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <div style="flex:2;min-width:140px">
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Description</label>
-        <input type="text" id="sx-desc" class="fi" placeholder="e.g. Dove shampoo" style="width:100%">
-      </div>
-      <div style="flex:1;min-width:90px">
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Amount ₹</label>
-        <input type="number" id="sx-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="width:100%">
-      </div>
-    </div>
-    <button onclick="addSalonExpense()" style="width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Add</button>
+    <button onclick="addSalonExpenseMulti()" style="width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Save Expenses</button>
   </div>
 
   <!-- Filter by month -->
@@ -789,8 +793,10 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div class="pnl-section">
     <div class="pnl-sec-title" style="background:rgba(0,196,140,.15);border-color:rgba(0,196,140,.3);color:var(--accent,#00C48C)">REVENUE</div>
     <div class="pnl-row"><span>Revenue (Actual Sales)</span><span id="pnl-revenue" class="pnl-val-pos">₹0</span></div>
-    <div class="pnl-row"><span>Projected Revenue</span>
-      <span><input type="number" id="pnl-proj-rev" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input"></span>
+    <div class="pnl-row pnl-auto">
+      <span>Projected Revenue<br><span style="font-size:10px;color:var(--muted)">(Avg weekday×weekdays + Avg weekend×weekends)</span></span>
+      <span id="pnl-proj-rev-val" style="font-weight:700;color:var(--accent)">₹0</span>
+      <input type="hidden" id="pnl-proj-rev" value="0">
     </div>
   </div>
 
@@ -809,17 +815,17 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="pnl-row"><span>Staff Rent</span>
       <span id="pnl-staff-rent-val" style="font-weight:700;color:var(--accent)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-staff-rent" value="0">
     </div>
-    <div class="pnl-row"><span>Cosmetics</span>
-      <input type="number" id="pnl-cosmetics" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    <div class="pnl-row pnl-auto"><span>Cosmetics <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
+      <span id="pnl-cosmetics-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-cosmetics" value="0">
     </div>
-    <div class="pnl-row"><span>EB Store (Electricity)</span>
-      <input type="number" id="pnl-eb-store" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    <div class="pnl-row pnl-auto"><span>EB Store (Electricity) <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
+      <span id="pnl-eb-store-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-eb-store" value="0">
     </div>
-    <div class="pnl-row"><span>EB Staff Room</span>
-      <input type="number" id="pnl-eb-staff" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    <div class="pnl-row pnl-auto"><span>EB Staff Room <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
+      <span id="pnl-eb-staff-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-eb-staff" value="0">
     </div>
-    <div class="pnl-row"><span>Maid</span>
-      <input type="number" id="pnl-maid" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    <div class="pnl-row pnl-auto"><span>Maid <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
+      <span id="pnl-maid-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-maid" value="0">
     </div>
     <div class="pnl-row"><span>Ads</span>
       <input type="number" id="pnl-ads" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
@@ -829,11 +835,13 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       <span id="pnl-extra-food-val" style="font-weight:700;color:var(--accent)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-extra-food" value="0">
     </div>
     <div class="pnl-row pnl-auto"><span>Actual Incentives (paid out)</span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
-    <div class="pnl-row"><span>WiFi</span>
-      <input type="number" id="pnl-wifi" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    <div class="pnl-row pnl-auto"><span>WiFi <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
+      <span id="pnl-wifi-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-wifi" value="0">
     </div>
-    <div class="pnl-row"><span>Misc (Water + Trash + Gas etc)</span>
-      <input type="number" id="pnl-misc" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    <div class="pnl-row pnl-auto">
+      <span>Expenses (all daily expenses this month)</span>
+      <span id="pnl-misc-val" style="font-weight:700;color:var(--danger)">₹0</span>
+      <input type="hidden" id="pnl-misc" value="0">
     </div>
 
     <!-- TOTALS -->
@@ -846,7 +854,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 
   <!-- PROFIT / LOSS -->
   <div class="pnl-section">
-    <div class="pnl-sec-title" style="background:rgba(255,209,0,.1);border-color:rgba(255,209,0,.25);color:var(--gold,#FFD100)">PROFIT / LOSS</div>
+    <div class="pnl-sec-title" style="background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.25);color:#D97706">PROFIT / LOSS</div>
     <div class="pnl-row pnl-total-row"><span>Profit / Loss</span><span id="pnl-profit" style="font-size:16px;font-weight:900">₹0</span></div>
     <div class="pnl-row pnl-muted-row"><span>Projected Profit / Loss</span><span id="pnl-proj-profit">₹0</span></div>
     <!-- Ads Revenue removed -->
@@ -871,8 +879,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';;
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1279,8 +1287,58 @@ function showTab(tab){
 
 // ════ MANAGER OWN CASH-IN ════
 
+// ══ MANAGER BILLING CHIPS ══
+var MGR_SERVICES = [
+  {code:'H',  label:'Haircut'},{code:'S',  label:'Shave'},{code:'T',  label:'Trim'},
+  {code:'CB', label:'Combo'}, {code:'HM', label:'Head Massage'},{code:'F',  label:'Facial'},
+  {code:'C',  label:'Colour'},{code:'B',  label:'Beard'},{code:'D',  label:'Detan'},
+  {code:'HSpa',label:'Hair Spa'},{code:'FS',label:'Face Scrub'},{code:'HS',label:'Hair Styling'},
+  {code:'Oth',label:'Others'}
+];
+var mgrSelectedSvcs = [];
+function initMgrChips(){
+  var el = document.getElementById('mgr-svc-chips');
+  if(!el) return;
+  el.innerHTML = '';
+  MGR_SERVICES.forEach(function(s){
+    var btn = document.createElement('button');
+    btn.className = 'mgr-chip';
+    btn.setAttribute('data-code', s.code);
+    btn.innerHTML = '<span style="font-size:9px;font-weight:800;opacity:.7;margin-right:2px">'+s.code+'</span>'+s.label;
+    btn.onclick = function(){ toggleMgrSvc(this); };
+    el.appendChild(btn);
+  });
+}
+function toggleMgrSvc(btn){
+  var code = typeof btn==="string" ? btn : btn.getAttribute("data-code");
+  var s = MGR_SERVICES.find(function(x){return x.code===code;});
+  if(!s) return;
+  var idx = -1; mgrSelectedSvcs.forEach(function(x,i){if(x.code===code) idx=i;});
+  if(idx>-1) mgrSelectedSvcs.splice(idx,1); else mgrSelectedSvcs.push(s);
+  document.querySelectorAll('#mgr-svc-chips .mgr-chip').forEach(function(btn){
+    btn.classList.toggle('on', !!mgrSelectedSvcs.find(function(x){return x.code===btn.getAttribute('data-code');}));
+  });
+}
+// quickEditCust: inline prompt to set customer name/phone on an entry
+function quickEditCust(entryId, field){
+  var entries = getEntries();
+  var e = entries.find(function(x){return x.id===entryId;});
+  if(!e) return;
+  var cur = field==='name' ? (e.customerName||'') : (e.customerPhone||'');
+  var label = field==='name' ? 'Customer Name' : 'Customer Phone';
+  var val = prompt(label+':', cur);
+  if(val===null) return;
+  if(field==='name')  e.customerName  = val.trim()||'Walk-in';
+  if(field==='phone') e.customerPhone = val.trim().replace(/\D/g,'').slice(0,10);
+  LS.set('entries', entries);
+  updateRowInSheet('Entries', e, function(){});
+  renderDashboard();
+  toast('✅ Customer updated');
+}
+
 // ══ MANAGER BILLING ENTRY ══
 function populateMgrBillBarbers(){
+  initMgrChips();
   var sel = document.getElementById('mgr-bill-barber');
   if(!sel) return;
   var myBarbers = (LS.get('staff')||[]).filter(function(u){return u.salonId===mySalonId&&u.role==='barber';});
@@ -1289,12 +1347,12 @@ function populateMgrBillBarbers(){
 }
 function addMgrBill(){
   var barberId = document.getElementById('mgr-bill-barber').value;
-  var services = document.getElementById('mgr-bill-services').value.trim();
+  var services = mgrSelectedSvcs.map(function(s){return s.label;}).join(', ');
   var ph       = parseFloat(document.getElementById('mgr-bill-ph').value)||0;
   var cash     = parseFloat(document.getElementById('mgr-bill-cash').value)||0;
   var phone    = document.getElementById('mgr-bill-phone').value.trim();
   if(!barberId){ toast('Select a hairstylist'); return; }
-  if(!services){ toast('Enter services'); return; }
+  if(!services){ toast('Select at least one service'); return; }
   if(ph<=0 && cash<=0){ toast('Enter PhonePe or Cash amount'); return; }
   var staff = LS.get('staff')||[];
   var barber = staff.find(function(u){return u.id===barberId;});
@@ -1320,7 +1378,8 @@ function addMgrBill(){
   LS.set('entries', entries);
   appendRowToSheet('Entries', entry, function(ok){ if(!ok) toast('⚠ Saved locally'); });
   // Clear form
-  document.getElementById('mgr-bill-services').value = '';
+  mgrSelectedSvcs=[];
+  document.querySelectorAll('#mgr-svc-chips .mgr-chip').forEach(function(b){b.classList.remove('on');});
   document.getElementById('mgr-bill-ph').value = '';
   document.getElementById('mgr-bill-cash').value = '';
   document.getElementById('mgr-bill-phone').value = '';
@@ -1570,11 +1629,16 @@ function renderDashboard(){
       '<div class="bc-name">'+u.name+'</div>'+
       '<div class="bc-total">'+fmtINR(tot)+'</div>'+
       '<div class="bc-count">'+ue.length+' customers'+(tip>0?' · Tip '+fmtINR(tip):'')+'</div>'+
+      '<div style="font-size:10px;color:var(--blue);margin-top:2px">Avg: '+fmtINR(ue.length?Math.round(tot/ue.length):0)+' /customer</div>'+
       attHtml+
     '</div>';
   }).join('')||'<div style="color:var(--muted);font-size:13px;padding:10px 0">No hairstylists yet. Add from Staff tab.</div>';
 
-  document.getElementById('dash-bills').innerHTML=renderEntriesTable(todayE,true);
+  var todayTot=todayE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+  var todaySummary='<div style="font-size:12px;color:var(--muted);padding:6px 0 8px;font-weight:600">'+
+    todayE.length+' customer'+(todayE.length!==1?'s':'')+
+    (todayE.length?(' · Total: <b style="color:var(--accent)">'+fmtINR(todayTot)+'</b> · Avg: <b style="color:var(--blue)">'+fmtINR(todayE.length?Math.round(todayTot/todayE.length):0)+'</b> per customer'):'')+'</div>';
+  document.getElementById('dash-bills').innerHTML=todaySummary+renderEntriesTable(todayE,true);
 }
 function goToBarber(uid){
   showTab('sales');
@@ -1615,7 +1679,7 @@ function renderSalesTable(){
     '<div class="tot-item">PhonePe: <b style="color:var(--blue)">'+fmtINR(totPh)+'</b></div>'+
     '<div class="tot-item">Cash: <b style="color:var(--green)">'+fmtINR(totCash)+'</b></div>'+
     '<div class="tot-item">Tips: <b style="color:var(--warn)">'+fmtINR(totTip)+'</b></div>'+
-    '<div class="tot-item">Sales Total: <b style="color:var(--gold)">'+fmtINR(totSales)+'</b></div>';
+    '<div class="tot-item">Sales Total: <b style="color:#D97706">'+fmtINR(totSales)+'</b></div>';
   document.getElementById('sal-body').innerHTML=entries.length===0?
     '<div class="tbl-empty">No entries found.</div>':
     entries.map(function(e,i){
@@ -1790,7 +1854,7 @@ function renderCustomers(){
       '<td style="padding:9px 12px;font-size:12px">'+(fav?fav[0]:'—')+'</td>'+
       '<td style="padding:9px 12px">'+
         (c.loginPin?
-          '<span style="font-size:11px;color:var(--gold);font-weight:700">🔑 '+c.loginPin+'</span>':
+          '<span style="font-size:11px;color:#D97706;font-weight:700">🔑 '+c.loginPin+'</span>':
           '<span style="font-size:11px;color:var(--muted2)">Open ✏️</span>')+
       '</td>'+
       '<td style="padding:9px 12px;text-align:center">'+
@@ -1878,6 +1942,7 @@ function renderYearly(){
     var sal    =ph+cash;
     var custs  =me.length;
     totPh+=ph;totCash+=cash;totPhTip+=phTip;totCashTip+=cashTip;totSales+=sal;totCusts+=custs;
+    var avgBill=custs?Math.round(sal/custs):0;
     rows+='<tr>'+
       '<td>'+months[m-1]+' '+yr+'</td>'+
       '<td style="color:var(--accent)">'+custs+'</td>'+
@@ -1885,17 +1950,19 @@ function renderYearly(){
       '<td style="color:var(--green)">'+fmtINR(cash)+'</td>'+
       '<td style="color:var(--warn)">'+(phTip>0?fmtINR(phTip):'—')+'</td>'+
       '<td style="color:var(--warn)">'+(cashTip>0?fmtINR(cashTip):'—')+'</td>'+
-      '<td style="color:var(--gold);font-weight:700">'+fmtINR(sal)+'</td>'+
+      '<td style="color:#D97706;font-weight:700">'+fmtINR(sal)+'</td>'+
+      '<td style="color:var(--blue);font-weight:600">'+(avgBill?fmtINR(avgBill):'—')+'</td>'+
     '</tr>';
   }
-  rows+='<tr>'+
+  rows+='<tr style="font-weight:800">'+
     '<td>TOTAL '+yr+'</td>'+
     '<td style="color:var(--accent)">'+totCusts+'</td>'+
     '<td style="color:var(--blue)">'+fmtINR(totPh)+'</td>'+
     '<td style="color:var(--green)">'+fmtINR(totCash)+'</td>'+
     '<td style="color:var(--warn)">'+fmtINR(totPhTip)+'</td>'+
     '<td style="color:var(--warn)">'+fmtINR(totCashTip)+'</td>'+
-    '<td style="color:var(--gold)">'+fmtINR(totSales)+'</td>'+
+    '<td style="color:#D97706">'+fmtINR(totSales)+'</td>'+
+    '<td style="color:var(--blue)">'+fmtINR(totCusts?Math.round(totSales/totCusts):0)+'</td>'+
   '</tr>';
   document.getElementById('yr-body').innerHTML=rows;
   document.getElementById('yr-summary').innerHTML=
@@ -2219,8 +2286,8 @@ function renderEntriesTable(entries, editable){
         '<span style="color:var(--muted2);font-size:11px">'+(i+1)+'</span>'+
         '<span style="font-size:11px;color:var(--muted);line-height:1.3">'+e.date+'<br>'+e.time+'</span>'+
         '<span style="font-size:12px;font-weight:600">'+e.barberName+'</span>'+
-        '<span style="font-size:12px;color:var(--muted)">'+cust+'</span>'+
-        '<span style="font-size:11px;color:var(--muted)">'+phone+'</span>'+
+        '<span style="font-size:12px;color:var(--muted);cursor:pointer" onclick="quickEditCust('+e.id+',\'name\')">'+cust+(cust==='Walk-in'?' ✏️':'')+'</span>'+
+        '<span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="quickEditCust('+e.id+',\'phone\')">'+phone+(phone==='—'?' ✏️':'')+'</span>'+
         '<span style="font-size:12px;color:var(--muted)">'+e.services+'</span>'+
         '<span class="tag-ph">'+(Number(e.phPay||0)>0?fmtINR(e.phPay):'—')+'</span>'+
         '<span class="tag-cash">'+(Number(e.cash||0)>0?fmtINR(e.cash):'—')+'</span>'+
@@ -2434,43 +2501,46 @@ var SX_CATS = {
   maid:'Maid', wifi:'WiFi', other:'Other'
 };
 
-function addSalonExpense(){
-  var cat  = document.getElementById('sx-cat').value;
+function addSalonExpenseMulti(){
   var date = document.getElementById('sx-date').value;
-  var desc = document.getElementById('sx-desc').value.trim();
-  var amt  = parseFloat(document.getElementById('sx-amt').value)||0;
   if(!date){ toast('Select date'); return; }
-  if(amt<=0){ toast('Enter amount'); return; }
-  // Convert ISO date to en-IN format
   var p=date.split('-');
   var dateIN=parseInt(p[2])+'/'+parseInt(p[1])+'/'+p[0];
-  var row = {
-    salon_id: mySalonId,
-    category: cat,
-    "date":   dateIN,
-    "desc":   desc||SX_CATS[cat],
-    amount:   amt
-  };
-  // Save to Supabase
-  sbInsert('salon_expenses', row).then(function(saved){
-    // Cache locally
-    var local = LS.get('salonExpenses')||[];
-    local.push(saved||row);
-    LS.set('salonExpenses', local);
-    document.getElementById('sx-desc').value='';
-    document.getElementById('sx-amt').value='';
-    renderSalonExpenses();
-    toast('✅ '+SX_CATS[cat]+' ₹'+amt+' recorded');
-  }).catch(function(err){
-    console.error('[BB] salon expense save:', err);
-    // Save locally anyway
-    var local = LS.get('salonExpenses')||[];
-    local.push(row);
-    LS.set('salonExpenses', local);
-    renderSalonExpenses();
-    toast('⚠ Saved locally');
+  var cats=[
+    {id:'sx-cosmetics', cat:'cosmetics'},
+    {id:'sx-eb-store',  cat:'eb_store'},
+    {id:'sx-eb-staff',  cat:'eb_staff'},
+    {id:'sx-maid',      cat:'maid'},
+    {id:'sx-wifi',      cat:'wifi'}
+  ];
+  var toSave=[];
+  cats.forEach(function(c){
+    var amt=parseFloat((document.getElementById(c.id)||{}).value)||0;
+    if(amt>0) toSave.push({salon_id:mySalonId,category:c.cat,"date":dateIN,"desc":SX_CATS[c.cat],amount:amt});
+  });
+  if(!toSave.length){ toast('Enter at least one amount'); return; }
+  var saved=0;
+  toSave.forEach(function(row){
+    sbInsert('salon_expenses',row).then(function(r){
+      var local=LS.get('salonExpenses')||[];
+      local.push(r||row);
+      LS.set('salonExpenses',local);
+      saved++;
+      if(saved===toSave.length){
+        cats.forEach(function(c){ var el=document.getElementById(c.id); if(el) el.value=''; });
+        renderSalonExpenses();
+        toast('✅ '+toSave.length+' expense'+(toSave.length>1?'s':'')+' saved');
+      }
+    }).catch(function(){
+      var local=LS.get('salonExpenses')||[];
+      local.push(row); LS.set('salonExpenses',local);
+      saved++;
+      if(saved===toSave.length){ renderSalonExpenses(); toast('⚠ Saved locally'); }
+    });
   });
 }
+// Keep old function name as alias for any remaining references
+function addSalonExpense(){ addSalonExpenseMulti(); }
 
 function deleteSalonExpense(btn){
   var id = btn && btn.getAttribute ? btn.getAttribute("data-id") : btn;
@@ -2635,23 +2705,55 @@ function _doRenderPNL(month){
   var staffRent = val('pnl-staff-rent'); // from franchise_inputs
   var extraFood = val('pnl-extra-food'); // from franchise_inputs
   var ads       = val('pnl-ads');        // manual
-  var projRev   = val('pnl-proj-rev');   // manual
 
-  // Auto from salon_expenses table
+  // ── Auto: Projected Revenue = Avg weekday × weekdays + Avg weekend × weekends ──
+  var daysInMo = new Date(yr, mo, 0).getDate();
+  var weekdayRevs=[], weekendRevs=[];
+  for(var di=1;di<=daysInMo;di++){
+    var ds=di+'/'+mo+'/'+yr;
+    var dayEntries=entries.filter(function(e){return e.date===ds;});
+    var dayRev=dayEntries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    var dow=new Date(yr,mo-1,di).getDay(); // 0=Sun,6=Sat
+    if(dow===0||dow===6) weekendRevs.push(dayRev);
+    else weekdayRevs.push(dayRev);
+  }
+  // Count total weekdays/weekends in month
+  var totalWeekdays=weekdayRevs.length, totalWeekends=weekendRevs.length;
+  var avgWeekday=totalWeekdays?(weekdayRevs.reduce(function(a,v){return a+v;},0)/totalWeekdays):0;
+  var avgWeekend=totalWeekends?(weekendRevs.reduce(function(a,v){return a+v;},0)/totalWeekends):0;
+  var projRev = Math.round(avgWeekday*totalWeekdays + avgWeekend*totalWeekends);
+  // Update hidden input and display
+  var prEl=document.getElementById('pnl-proj-rev'); if(prEl) prEl.value=projRev;
+  var prVEl=document.getElementById('pnl-proj-rev-val'); if(prVEl) prVEl.textContent=fINR(projRev);
+
+  // ── Auto: Salon expenses from salon_expenses table ──
   var sxTotals  = getSalonExpenseTotals(yr, mo);
   var cosmetics = sxTotals.cosmetics;
   var ebStore   = sxTotals.eb_store;
   var ebStaff   = sxTotals.eb_staff;
   var maid      = sxTotals.maid;
   var wifi      = sxTotals.wifi;
-  var misc      = sxTotals.other;
 
-  // Manager expenses (mgrExpenses for this month)
+  // Update hidden inputs and display spans for auto-fetched salon expenses
+  function setAutoVal(inputId, spanId, amt){
+    var inp=document.getElementById(inputId); if(inp) inp.value=amt;
+    var sp=document.getElementById(spanId); if(sp) sp.textContent=fINR(amt);
+  }
+  setAutoVal('pnl-cosmetics','pnl-cosmetics-val',cosmetics);
+  setAutoVal('pnl-eb-store','pnl-eb-store-val',ebStore);
+  setAutoVal('pnl-eb-staff','pnl-eb-staff-val',ebStaff);
+  setAutoVal('pnl-maid','pnl-maid-val',maid);
+  setAutoVal('pnl-wifi','pnl-wifi-val',wifi);
+
+  // ── Auto: Expenses = sum of ALL manager expenses for this month ──
   var allMgrExp = (LS.get('mgrExpenses')||[]).filter(function(r){
     var p=(r["date"]||r.date||'').split('/');
     return r.salonId===mySalonId && parseInt(p[1])===mo && parseInt(p[2])===yr;
   });
   var mgrExpTotal = allMgrExp.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var misc = mgrExpTotal; // misc is now total daily expenses
+  var mMiscEl=document.getElementById('pnl-misc'); if(mMiscEl) mMiscEl.value=misc;
+  var mMiscVEl=document.getElementById('pnl-misc-val'); if(mMiscVEl) mMiscVEl.textContent=fINR(misc);
 
   var actualOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
                    ebStaff + maid + ads + totalFood + extraFood +

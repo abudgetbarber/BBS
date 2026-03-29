@@ -589,8 +589,8 @@ function monthLabel(ym) {  // "yyyy-mm" → "Mar 2026"
 // ── SUPABASE BOOTSTRAP ──
 // Pull fresh data from Supabase on every load
 // Credentials are set here — replace with your actual values
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL = 'YOUR_SUPABASE_URL';
+var SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 function _supaGet(table){
   return fetch(SUPA_URL+'/rest/v1/'+table+'?select=*',{

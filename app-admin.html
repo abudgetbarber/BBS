@@ -512,8 +512,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -814,18 +814,14 @@ function filterByMonth(e,mo){if(!mo)return e;var p=mo.split('-');return e.filter
 // Runs every time the app loads. If staff data is missing or stale,
 // silently pulls latest from Google Sheets — no manual action needed.
 (function autoLoad(){
-  var banner=document.getElementById('restoreBanner');
-  if(banner)banner.style.display='flex';
   supaBootstrap(
     function(data){
-      if(banner)banner.style.display='none';
       try{ renderOverview(); } catch(e){}
       try{ renderManage();   } catch(e){}
       try{ renderDashboard();} catch(e){}
       try{ init();           } catch(e){}
     },
     function(err){
-      if(banner)banner.style.display='none';
       console.warn('[BB] Auto-load failed:',err);
       // App still works with cached localStorage data
     }
@@ -834,12 +830,6 @@ function filterByMonth(e,mo){if(!mo)return e;var p=mo.split('-');return e.filter
 
 // ── INIT ──
 (function(){
-  // Show setup banner if Google Sheets not configured yet
-  
-      }
-  document.getElementById('settingsName').textContent='Admin · '+SESSION_PHONE;
-  
-  
   var salons=LS.get('salons')||[];
   var staff=(LS.get('staff')||[]).filter(function(u){return u.role==='barber';});
   // populate filter selects for both day and month modes
@@ -1451,9 +1441,7 @@ function downloadCSV(type){
   a.download='BB_'+type+'_'+month+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
   toast('✅ CSV downloaded');
 }
-async function syncAllData(){
-  toast('✅ All writes go directly to Supabase in real-time — no manual sync needed.');
-}  
+function syncAllData(){ toast('✅ All writes go directly to Supabase in real-time.'); }
 function applyRestoredData(d){
   var toStr=function(rec,fields){
     if(!rec)return rec;
@@ -1482,40 +1470,7 @@ function applyRestoredData(d){
   }
 }
 
-// Core JSONP fetch — works on ALL browsers including mobile
-// Google Apps Script responds with: callback({ok:true,data:{...}})
-function fetchFromSheets(url, onSuccess, onError){
-  var cbName='_bbFetch'+Date.now();
-  var script=document.createElement('script');
-  var done=false;
-  var timer=setTimeout(function(){
-    if(done)return; done=true;
-    delete window[cbName];
-    if(script.parentNode)document.head.removeChild(script);
-    onError('timeout after 25 seconds — check your internet');
-  }, 25000);
-  window[cbName]=function(json){
-    if(done)return; done=true;
-    clearTimeout(timer);
-    delete window[cbName];
-    if(script.parentNode)document.head.removeChild(script);
-    if(json&&json.ok&&json.data) onSuccess(json.data);
-    else onError(json&&json.error?json.error:'No data returned from Sheets');
-  };
-  script.onerror=function(){
-    if(done)return; done=true;
-    clearTimeout(timer);
-    delete window[cbName];
-    if(script.parentNode)document.head.removeChild(script);
-    onError('Could not reach Google Sheets — check internet connection');
-  };
-  // Add a cache-buster so mobile browsers don't serve a cached (possibly empty) response
-  script.src=url+'?action=read&callback='+cbName+'&_='+Date.now();
-  document.head.appendChild(script);
-}
 
-// ── SHARED: apply restored data to localStorage ──
-// ── JSONP fetch from Sheets (works on all devices) ──
 function restoreFromSheets(){
   if(!confirm('Replace ALL local data with latest data from Supabase?'))return;
   showSyncStatus('⬇ Loading from Supabase…','loading');

@@ -356,6 +356,22 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="ifield" style="margin-bottom:12px"><label>Salon Name</label><input type="text" id="sal-name" placeholder="Budget Barber – City Name"></div>
     <div class="ifield" style="margin-bottom:12px"><label>Location</label><input type="text" id="sal-loc" placeholder="Area, City"></div>
     <div class="ifield" style="margin-bottom:12px"><label>Manager Phone</label><input type="tel" id="sal-mgr" placeholder="10-digit phone" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div class="ifield" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="sal-company" onchange="toggleSalonPartners()" style="width:16px;height:16px">
+        <span>Company Managed Salon</span>
+      </label>
+    </div>
+    <div id="sal-partners-section" style="display:none;background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Partners & Profit Share %</div>
+      <div id="sal-partners-list"></div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input type="text" id="sal-p-name" placeholder="Partner name" style="flex:2;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--white);font-family:var(--BF);font-size:12px;outline:none">
+        <input type="number" id="sal-p-pct" placeholder="%" min="0" max="100" style="flex:1;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--white);font-family:var(--BF);font-size:12px;outline:none">
+        <button onclick="addSalonPartner()" style="padding:8px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">+</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px">Company gets the remaining % after all partners</div>
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('addSalonModal')">Cancel</button>
       <button class="btn-primary" onclick="saveSalon()">Save Salon</button>
@@ -512,8 +528,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1304,21 +1320,62 @@ function saveEditStaff(){
   renderManage();
 }
 
+var _salonPartners = [];
+function toggleSalonPartners(){
+  var checked = document.getElementById('sal-company').checked;
+  document.getElementById('sal-partners-section').style.display = checked ? 'block' : 'none';
+}
+function addSalonPartner(){
+  var name = document.getElementById('sal-p-name').value.trim();
+  var pct  = parseFloat(document.getElementById('sal-p-pct').value)||0;
+  if(!name||pct<=0){ toast('Enter name and %'); return; }
+  _salonPartners.push({name:name, pct:pct});
+  document.getElementById('sal-p-name').value='';
+  document.getElementById('sal-p-pct').value='';
+  renderSalonPartnersList();
+}
+function removeSalonPartner(i){
+  _salonPartners.splice(i,1);
+  renderSalonPartnersList();
+}
+function renderSalonPartnersList(){
+  var total = _salonPartners.reduce(function(a,p){return a+p.pct;},0);
+  var company = Math.max(0, 100-total);
+  document.getElementById('sal-partners-list').innerHTML =
+    _salonPartners.map(function(p,i){
+      return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px">'+
+        '<span style="flex:1">'+p.name+'</span>'+
+        '<span style="color:var(--accent);font-weight:700">'+p.pct+'%</span>'+
+        '<button onclick="removeSalonPartner('+i+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px">✕</button>'+
+      '</div>';
+    }).join('')+
+    '<div style="font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:4px;margin-top:4px">Company: <b style="color:var(--accent)">'+company+'%</b> (auto)</div>';
+}
 function saveSalon(){
   var name=document.getElementById('sal-name').value.trim();
   var loc=document.getElementById('sal-loc').value.trim();
   var mgr=document.getElementById('sal-mgr').value.trim();
+  var isCompany=document.getElementById('sal-company').checked;
   if(!name){toast('Enter salon name');return;}
   var salons=LS.get('salons')||[];
   var sid='s'+Date.now();
-  salons.push({id:sid,name:name,location:loc||'',mgrPhone:mgr||''});
+  var partnerTotal=_salonPartners.reduce(function(a,p){return a+p.pct;},0);
+  var companyPct=Math.max(0,100-partnerTotal);
+  var newSalon={id:sid,name:name,location:loc||'',mgrPhone:mgr||'',
+    companyManaged:isCompany?1:0,
+    partners:isCompany?JSON.stringify(_salonPartners):'[]',
+    companyPct:isCompany?companyPct:0};
+  salons.push(newSalon);
   LS.set('salons',salons);
-  appendRowToSheet('Salons',salons[salons.length-1],function(ok){if(!ok)toast('⚠ Saved locally');});
+  appendRowToSheet('Salons',newSalon,function(ok){if(!ok)toast('⚠ Saved locally');});
   if(mgr){
     var staff=LS.get('staff')||[];
     if(!staff.find(function(u){return u.phone===mgr;})){staff.push({id:'u'+Date.now(),name:'Manager '+mgr.slice(-4),phone:mgr,role:'manager',salonId:sid});LS.set('staff',staff);}
   }
-  document.getElementById('sal-name').value='';document.getElementById('sal-loc').value='';document.getElementById('sal-mgr').value='';
+  document.getElementById('sal-name').value='';document.getElementById('sal-loc').value='';
+  document.getElementById('sal-mgr').value='';document.getElementById('sal-company').checked=false;
+  _salonPartners=[];
+  document.getElementById('sal-partners-section').style.display='none';
   closeModal('addSalonModal');toast('✓ Salon added');renderManage();
 }
 

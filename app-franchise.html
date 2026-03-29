@@ -668,6 +668,33 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 
 </div>
 
+<!-- FRANCHISE INPUTS PANEL -->
+<div class="panel" id="pn-finputs">
+  <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px">Rent & Monthly Costs</div>
+  <div style="background:var(--surface);border-radius:var(--r);padding:16px;border:1px solid var(--border);margin-bottom:14px">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:12px">📅 Select Month</div>
+    <input type="month" id="fi-month" class="fi" style="width:100%;margin-bottom:12px" onchange="loadFranchiseInputsLocal()">
+    <div class="ifield" style="margin-bottom:10px">
+      <label>Rent (₹)</label>
+      <input type="number" id="fi-rent" class="fi" placeholder="0" min="0" inputmode="numeric">
+    </div>
+    <div class="ifield" style="margin-bottom:10px">
+      <label>Staff Rent (₹)</label>
+      <input type="number" id="fi-staff-rent" class="fi" placeholder="0" min="0" inputmode="numeric">
+    </div>
+    <div class="ifield" style="margin-bottom:16px">
+      <label>Extra Sunday Food (₹)</label>
+      <input type="number" id="fi-extra-food" class="fi" placeholder="0" min="0" inputmode="numeric">
+    </div>
+    <button onclick="saveFranchiseInputs()" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--BF)">💾 Save for Month</button>
+    <div id="fi-status" style="display:none;margin-top:10px;padding:9px 12px;border-radius:var(--rs);font-size:12px;font-weight:700;text-align:center"></div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);line-height:1.6;padding:10px">
+    These figures are used in the manager's PNL calculation for the selected month.
+    Enter them once per month. Changes take effect immediately in PNL.
+  </div>
+</div>
+
 <div class="toast-el" id="toastEl"></div>
 
 <script>
@@ -678,8 +705,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1833,6 +1860,39 @@ function initPNL(){
     }, 100);
   };
 })();
+
+
+// ══ FRANCHISE INPUTS (Rent, Staff Rent, Extra Food) ══
+function loadFranchiseInputsLocal(){
+  var month = document.getElementById('fi-month').value;
+  if(!month) return;
+  sbSelect('franchise_inputs', 'salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(month))
+    .then(function(rows){
+      var d = rows&&rows.length ? rows[0] : {};
+      var r=document.getElementById('fi-rent'); if(r) r.value=d.rent||'';
+      var s=document.getElementById('fi-staff-rent'); if(s) s.value=d.staff_rent||'';
+      var e=document.getElementById('fi-extra-food'); if(e) e.value=d.extra_food||'';
+    }).catch(function(){});
+}
+function saveFranchiseInputs(){
+  var month = document.getElementById('fi-month').value;
+  if(!month){ toast('Select a month'); return; }
+  var rent      = parseFloat(document.getElementById('fi-rent').value)||0;
+  var staffRent = parseFloat(document.getElementById('fi-staff-rent').value)||0;
+  var extraFood = parseFloat(document.getElementById('fi-extra-food').value)||0;
+  var row = { salon_id: mySalonId, month: month, rent: rent, staff_rent: staffRent, extra_food: extraFood };
+  var statusEl = document.getElementById('fi-status');
+  // Upsert: delete then insert
+  _supaFetch('franchise_inputs?salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(month),{method:'DELETE'})
+    .then(function(){ return sbInsert('franchise_inputs', row); })
+    .then(function(){
+      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,196,140,.12)'; statusEl.style.color='var(--accent)'; statusEl.textContent='✅ Saved for '+month; }
+      toast('✅ Costs saved for '+month);
+    }).catch(function(err){
+      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(220,53,69,.1)'; statusEl.style.color='var(--danger)'; statusEl.textContent='❌ Save failed: '+err; }
+      toast('❌ Save failed');
+    });
+}
 
 </script>
 </div><!-- /app-content -->

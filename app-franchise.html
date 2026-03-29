@@ -683,8 +683,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1936,17 +1936,18 @@ function initPNL(){
 // row where effective_from <= that month.
 
 function loadSalonCostsUI(){
-  // Load ALL franchise_inputs for this salon and show current values + history
-  sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(mySalonId)+'&order=effective_from.desc')
-    .then(function(rows){
-      LS.set('franchiseInputs', rows||[]);
-      _renderSalonCostsCurrent(rows||[]);
-    }).catch(function(){
-      _renderSalonCostsCurrent(LS.get('franchiseInputs')||[]);
-    });
-  // Set default effective_from for extra food
   var efEl=document.getElementById('fi-extra-food-from');
   if(efEl && !efEl.value) efEl.value=new Date().toISOString().slice(0,7);
+  fetch(SUPA_URL+'/rest/v1/franchise_inputs?salon_id=eq.'+encodeURIComponent(mySalonId)+'&order=effective_from.desc',{
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  })
+  .then(function(r){ return r.ok ? r.json() : []; })
+  .then(function(rows){
+    LS.set('franchiseInputs', rows||[]);
+    _renderSalonCostsCurrent(rows||[]);
+  }).catch(function(){
+    _renderSalonCostsCurrent(LS.get('franchiseInputs')||[]);
+  });
 }
 
 function _latestValue(rows, field){
@@ -1994,35 +1995,56 @@ function _renderSalonCostsCurrent(rows){
 
 function saveField(field){
   var statusEl=document.getElementById('fi-status');
-  var amount, effectiveFrom, elId;
+  var amount, effectiveFrom;
   if(field==='rent'){
     amount=parseFloat(document.getElementById('fi-rent').value)||0;
-    effectiveFrom=new Date().toISOString().slice(0,7); // from this month
-    elId='fi-rent';
+    effectiveFrom=new Date().toISOString().slice(0,7);
   } else if(field==='staff_rent'){
     amount=parseFloat(document.getElementById('fi-staff-rent').value)||0;
     effectiveFrom=new Date().toISOString().slice(0,7);
-    elId='fi-staff-rent';
   } else if(field==='extra_food'){
     amount=parseFloat(document.getElementById('fi-extra-food').value)||0;
     var fromEl=document.getElementById('fi-extra-food-from');
     effectiveFrom=fromEl&&fromEl.value ? fromEl.value : new Date().toISOString().slice(0,7);
-    elId='fi-extra-food';
   }
   if(!amount||amount<=0){ toast('Enter a valid amount'); return; }
+
+  // Build row — only set the field being saved (not all three)
   var row={salon_id:mySalonId, effective_from:effectiveFrom};
   row[field]=amount;
-  if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,0,0,.05)'; statusEl.style.color='var(--muted)'; statusEl.textContent='Saving…'; }
-  _supaFetch('franchise_inputs', {method:'POST', body:JSON.stringify(row)})
-    .then(function(){
-      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,196,140,.12)'; statusEl.style.color='var(--accent)'; statusEl.textContent='✅ Saved — effective from '+effectiveFrom; }
-      toast('✅ Saved');
-      loadSalonCostsUI();
-    })
-    .catch(function(err){
-      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(220,53,69,.1)'; statusEl.style.color='var(--danger)'; statusEl.textContent='❌ Failed: '+err; }
-      toast('❌ Save failed');
-    });
+
+  if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,0,0,.06)'; statusEl.style.color='var(--muted)'; statusEl.textContent='Saving…'; }
+
+  // Direct fetch with explicit headers (avoid any header merge issues)
+  fetch(SUPA_URL+'/rest/v1/franchise_inputs', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'apikey':SUPA_KEY,
+      'Authorization':'Bearer '+SUPA_KEY,
+      'Prefer':'return=representation'
+    },
+    body:JSON.stringify(row)
+  })
+  .then(function(resp){
+    if(!resp.ok){
+      return resp.text().then(function(t){
+        throw new Error(resp.status+' — '+t);
+      });
+    }
+    return resp.json();
+  })
+  .then(function(){
+    if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,196,140,.12)'; statusEl.style.color='var(--accent)'; statusEl.textContent='✅ Saved — effective from '+effectiveFrom; }
+    toast('✅ Saved');
+    loadSalonCostsUI();
+  })
+  .catch(function(err){
+    var msg = err && err.message ? err.message : String(err);
+    console.error('[BB] saveField error:', msg);
+    if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(220,53,69,.1)'; statusEl.style.color='var(--danger)'; statusEl.textContent='❌ '+msg; }
+    toast('❌ Save failed — see status above');
+  });
 }
 
 // Legacy alias

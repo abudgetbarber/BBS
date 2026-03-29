@@ -5,8 +5,8 @@
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'YOUR_SUPABASE_URL';
-var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
+var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
+var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){

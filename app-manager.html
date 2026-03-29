@@ -747,18 +747,17 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 <div class="panel" id="pn-salon">
   <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px">Salon Expense Tracker</div>
 
-  <!-- Direct per-category entry -->
-  <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:16px">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:12px">+ Add Expense</div>
-    <div style="margin-bottom:8px">
-      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Date</label>
-      <input type="date" id="sx-date" class="fi" style="width:100%">
-    </div>
+  <!-- Month picker -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <label style="font-size:11px;color:var(--muted);font-weight:700">Month:</label>
+    <input type="month" id="sx-month" class="fi" style="flex:1" onchange="renderSalonExpenses()">
+  </div>
+
+  <!-- SECTION A: One-time monthly entries (EB Store, EB Staff, Maid, WiFi) -->
+  <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:14px">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px">Monthly Fixed Expenses</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Enter once per month. Will replace previous entry if re-saved.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div>
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">💄 Cosmetics ₹</label>
-        <input type="number" id="sx-cosmetics" class="fi" placeholder="0" min="0" inputmode="numeric">
-      </div>
       <div>
         <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">⚡ EB Store ₹</label>
         <input type="number" id="sx-eb-store" class="fi" placeholder="0" min="0" inputmode="numeric">
@@ -775,25 +774,37 @@ select option { background: var(--surface) !important; color: var(--white) !impo
         <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📶 WiFi ₹</label>
         <input type="number" id="sx-wifi" class="fi" placeholder="0" min="0" inputmode="numeric">
       </div>
-      <div>
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📢 Marketing ₹</label>
-        <input type="number" id="sx-marketing" class="fi" placeholder="0" min="0" inputmode="numeric">
-      </div>
     </div>
-    <button onclick="addSalonExpenseMulti()" style="width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Save Expenses</button>
+    <button onclick="saveFixedExpenses()" style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">💾 Save Fixed Expenses</button>
+    <div id="sx-fixed-status" style="display:none;margin-top:8px;font-size:12px;text-align:center;padding:7px;border-radius:var(--rs)"></div>
   </div>
 
-  <!-- Filter by month -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-    <label style="font-size:11px;color:var(--muted);font-weight:700">Month:</label>
-    <input type="month" id="sx-month" class="fi" style="flex:1" onchange="renderSalonExpenses()">
+  <!-- SECTION B: Multiple entries — Cosmetics -->
+  <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:14px">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px">💄 Cosmetics Purchases</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <input type="date" id="sx-cos-date" class="fi" style="flex:1;min-width:120px">
+      <input type="text" id="sx-cos-desc" class="fi" placeholder="Description e.g. Dove shampoo" style="flex:2;min-width:140px">
+      <input type="number" id="sx-cos-amt" class="fi" placeholder="₹" min="0" inputmode="numeric" style="flex:1;min-width:80px">
+      <button onclick="addMultiExpense('cosmetics')" style="padding:9px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Add</button>
+    </div>
+    <div id="sx-cosmetics-list" style="font-size:12px"></div>
   </div>
 
-  <!-- Monthly totals by category -->
+  <!-- SECTION C: Multiple entries — Marketing -->
+  <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:14px">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px">📢 Marketing Expenses</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <input type="date" id="sx-mkt-date" class="fi" style="flex:1;min-width:120px">
+      <input type="text" id="sx-mkt-desc" class="fi" placeholder="Description e.g. Instagram ads" style="flex:2;min-width:140px">
+      <input type="number" id="sx-mkt-amt" class="fi" placeholder="₹" min="0" inputmode="numeric" style="flex:1;min-width:80px">
+      <button onclick="addMultiExpense('marketing')" style="padding:9px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Add</button>
+    </div>
+    <div id="sx-marketing-list" style="font-size:12px"></div>
+  </div>
+
+  <!-- Monthly totals -->
   <div id="sx-totals" style="margin-bottom:14px"></div>
-
-  <!-- All entries list -->
-  <div id="sx-list"></div>
 </div>
 
 <!-- P&L PANEL -->
@@ -899,8 +910,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1277,7 +1288,7 @@ function showTab(tab){
   if(tab==='yearly')   renderYearly();
   if(tab==='customers')renderCustomers();
   if(tab==='staff')    renderStaff();
-  if(tab==='salon'){ document.getElementById('sx-date').value=todayISO(); document.getElementById('sx-month').value=new Date().toISOString().slice(0,7); supaBootstrap(function(){ renderSalonExpenses(); }, function(){ renderSalonExpenses(); }); }
+  if(tab==='salon'){ document.getElementById('sx-month').value=new Date().toISOString().slice(0,7); supaBootstrap(function(){ renderSalonExpenses(); }, function(){ renderSalonExpenses(); }); }
   if(tab==='pnl'){ initPNL(); renderPNL(); }
   if(tab==='dashboard'){
     supaBootstrap(function(){
@@ -2495,54 +2506,113 @@ var SX_CATS = {
   maid:'Maid', wifi:'WiFi', marketing:'Marketing', other:'Other'
 };
 
-function addSalonExpenseMulti(){
-  var date = document.getElementById('sx-date').value;
-  if(!date){ toast('Select date'); return; }
-  var p=date.split('-');
-  var dateIN=parseInt(p[2])+'/'+parseInt(p[1])+'/'+p[0];
-  var cats=[
-    {id:'sx-cosmetics',  cat:'cosmetics'},
-    {id:'sx-eb-store',   cat:'eb_store'},
-    {id:'sx-eb-staff',   cat:'eb_staff'},
-    {id:'sx-maid',       cat:'maid'},
-    {id:'sx-wifi',       cat:'wifi'},
-    {id:'sx-marketing',  cat:'marketing'}
+// ONE-TIME fixed expenses: delete existing for month then insert new ones
+function saveFixedExpenses(){
+  var mo = document.getElementById('sx-month').value;
+  if(!mo){ toast('Select a month'); return; }
+  var p=mo.split('-');
+  var yr=parseInt(p[0]), m=parseInt(p[1]);
+  // Use 1st of the month as the date for fixed expenses
+  var dateIN='1/'+m+'/'+yr;
+  var fixedCats=[
+    {id:'sx-eb-store', cat:'eb_store'},
+    {id:'sx-eb-staff', cat:'eb_staff'},
+    {id:'sx-maid',     cat:'maid'},
+    {id:'sx-wifi',     cat:'wifi'}
   ];
   var toSave=[];
-  cats.forEach(function(c){
+  fixedCats.forEach(function(c){
     var amt=parseFloat((document.getElementById(c.id)||{}).value)||0;
     if(amt>0) toSave.push({salon_id:mySalonId,category:c.cat,"date":dateIN,"desc":SX_CATS[c.cat],amount:amt});
   });
+  var statusEl=document.getElementById('sx-fixed-status');
   if(!toSave.length){ toast('Enter at least one amount'); return; }
-  var saved=0;
-  toSave.forEach(function(row){
-    sbInsert('salon_expenses',row).then(function(r){
-      var local=LS.get('salonExpenses')||[];
-      local.push(r||row);
-      LS.set('salonExpenses',local);
-      saved++;
-      if(saved===toSave.length){
-        cats.forEach(function(c){ var el=document.getElementById(c.id); if(el) el.value=''; });
-        renderSalonExpenses();
-        toast('✅ '+toSave.length+' expense'+(toSave.length>1?'s':'')+' saved');
-      }
-    }).catch(function(){
-      var local=LS.get('salonExpenses')||[];
-      local.push(row); LS.set('salonExpenses',local);
-      saved++;
-      if(saved===toSave.length){ renderSalonExpenses(); toast('⚠ Saved locally'); }
+  // Delete existing fixed entries for this month, then insert fresh
+  var deletePromises = ['eb_store','eb_staff','maid','wifi'].map(function(cat){
+    return _supaFetch('salon_expenses?salon_id=eq.'+encodeURIComponent(mySalonId)+'&category=eq.'+cat+'&date=eq.'+encodeURIComponent(dateIN),{method:'DELETE'}).catch(function(){});
+  });
+  Promise.all(deletePromises).then(function(){
+    var inserts = toSave.map(function(row){ return sbInsert('salon_expenses',row).catch(function(){ return row; }); });
+    return Promise.all(inserts);
+  }).then(function(results){
+    // Update local cache
+    var local=(LS.get('salonExpenses')||[]).filter(function(r){
+      if(['eb_store','eb_staff','maid','wifi'].indexOf(r.category)===-1) return true;
+      var rp=(r["date"]||'').split('/');
+      return !(parseInt(rp[1])===m && parseInt(rp[2])===yr);
     });
+    results.forEach(function(r){ local.push(r); });
+    LS.set('salonExpenses',local);
+    fixedCats.forEach(function(c){ var el=document.getElementById(c.id); if(el) el.value=''; });
+    if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,196,140,.1)'; statusEl.style.color='var(--accent)'; statusEl.textContent='✅ Fixed expenses saved for '+mo; }
+    renderSalonExpenses();
+    toast('✅ Fixed expenses saved');
+  }).catch(function(){
+    if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(220,53,69,.08)'; statusEl.style.color='var(--danger)'; statusEl.textContent='⚠ Saved locally only'; }
+    toast('⚠ Saved locally');
   });
 }
-// Keep old function name as alias for any remaining references
-function addSalonExpense(){ addSalonExpenseMulti(); }
+
+// MULTIPLE entries: Cosmetics and Marketing
+function addMultiExpense(cat){
+  var isCosmetics = (cat==='cosmetics');
+  var prefix = isCosmetics ? 'sx-cos' : 'sx-mkt';
+  var dateEl = document.getElementById(prefix+'-date');
+  var descEl = document.getElementById(prefix+'-desc');
+  var amtEl  = document.getElementById(prefix+'-amt');
+  var mo = document.getElementById('sx-month').value;
+  if(!dateEl.value && !mo){ toast('Select date'); return; }
+  var amt = parseFloat(amtEl.value)||0;
+  if(amt<=0){ toast('Enter amount'); return; }
+  var dateISO = dateEl.value || (mo+'-01');
+  var p=dateISO.split('-');
+  var dateIN=parseInt(p[2])+'/'+parseInt(p[1])+'/'+p[0];
+  var row={salon_id:mySalonId,category:cat,"date":dateIN,"desc":(descEl.value.trim()||SX_CATS[cat]),amount:amt};
+  sbInsert('salon_expenses',row).then(function(r){
+    var local=LS.get('salonExpenses')||[];
+    local.push(r||row); LS.set('salonExpenses',local);
+    dateEl.value=''; descEl.value=''; amtEl.value='';
+    renderSalonExpenses();
+    toast('✅ '+SX_CATS[cat]+' entry added');
+  }).catch(function(){
+    var local=LS.get('salonExpenses')||[];
+    local.push(row); LS.set('salonExpenses',local);
+    amtEl.value=''; descEl.value='';
+    renderSalonExpenses();
+    toast('⚠ Saved locally');
+  });
+}
+
+function editSalonExpense(btn){
+  var id = btn.getAttribute('data-id');
+  var local = LS.get('salonExpenses')||[];
+  var entry = local.find(function(r){return String(r.id)===id;});
+  if(!entry) return;
+  var newAmt = prompt('Edit amount for '+SX_CATS[entry.category]+':', entry.amount);
+  if(newAmt===null) return;
+  var amt = parseFloat(newAmt)||0;
+  if(amt<=0){ toast('Invalid amount'); return; }
+  entry.amount = amt;
+  LS.set('salonExpenses',local);
+  if(id) sbUpdate('salon_expenses',id,{amount:amt}).catch(function(){});
+  renderSalonExpenses();
+  toast('✅ Updated');
+}
 
 function deleteSalonExpense(btn){
-  var id = btn && btn.getAttribute ? btn.getAttribute("data-id") : btn;
-  if(!confirm('Delete this expense?'))return;
+  var id = btn && btn.getAttribute ? btn.getAttribute('data-id') : btn;
+  if(!confirm('Delete this expense?')) return;
   var local = LS.get('salonExpenses')||[];
-  LS.set('salonExpenses', local.filter(function(r){return (r.id||r._lid)!==id;}));
-  sbDelete('salon_expenses', id).catch(function(){});
+  if(id && id.startsWith('_li_')){
+    var ridx=parseInt(id.replace('_li_',''));
+    var rev=local.slice().reverse();
+    var target=rev[ridx];
+    if(target) local=local.filter(function(r){return r!==target;});
+  } else {
+    local=local.filter(function(r){return String(r.id||'')!==String(id);});
+    if(id && !id.startsWith('_')) sbDelete('salon_expenses',id).catch(function(){});
+  }
+  LS.set('salonExpenses',local);
   renderSalonExpenses();
   toast('Deleted');
 }
@@ -2551,8 +2621,7 @@ function renderSalonExpenses(){
   var mo = document.getElementById('sx-month').value;
   if(!mo) return;
   var yr=parseInt(mo.split('-')[0]), m=parseInt(mo.split('-')[1]);
-
-  // Fetch fresh from Supabase
+  // Always fetch fresh from Supabase
   sbSelect('salon_expenses','salon_id=eq.'+encodeURIComponent(mySalonId))
     .then(function(rows){
       LS.set('salonExpenses', rows||[]);
@@ -2560,24 +2629,40 @@ function renderSalonExpenses(){
     }).catch(function(){
       _renderSalonList(LS.get('salonExpenses')||[], yr, m);
     });
+  // Pre-fill fixed expense inputs with current month values
+  _loadFixedInputs(yr, m);
+}
+
+function _loadFixedInputs(yr, m){
+  var all=LS.get('salonExpenses')||[];
+  var dateIN='1/'+m+'/'+yr;
+  ['eb_store','eb_staff','maid','wifi'].forEach(function(cat){
+    var entry=all.find(function(r){return r.category===cat && r["date"]===dateIN && r.salon_id===mySalonId;});
+    var elId = {eb_store:'sx-eb-store',eb_staff:'sx-eb-staff',maid:'sx-maid',wifi:'sx-wifi'}[cat];
+    var el=document.getElementById(elId);
+    if(el) el.value = entry ? entry.amount : '';
+  });
 }
 
 function _renderSalonList(all, yr, m){
   var entries = all.filter(function(r){
-    var p=(r["date"]||'').split('/');
-    return parseInt(p[1])===m && parseInt(p[2])===yr;
+    var rp=(r["date"]||'').split('/');
+    return parseInt(rp[1])===m && parseInt(rp[2])===yr;
   });
 
   // Category totals
-  var totals={};
-  entries.forEach(function(r){ totals[r.category]=(totals[r.category]||0)+Number(r.amount||0); });
+  var totals={cosmetics:0,eb_store:0,eb_staff:0,maid:0,wifi:0,marketing:0};
+  entries.forEach(function(r){
+    if(totals[r.category]!==undefined) totals[r.category]+=Number(r.amount||0);
+  });
 
   var totEl=document.getElementById('sx-totals');
   if(totEl){
-    var cats=Object.keys(totals);
-    totEl.innerHTML=!cats.length?'<div style="color:var(--muted);font-size:12px">No expenses this month</div>':
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">'+
-      cats.map(function(c){
+    var hasTotals=Object.keys(totals).some(function(k){return totals[k]>0;});
+    totEl.innerHTML=!hasTotals?'<div style="color:var(--muted);font-size:12px">No expenses this month</div>':
+      '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Monthly Totals</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">'+
+      Object.keys(totals).filter(function(c){return totals[c]>0;}).map(function(c){
         return '<div style="background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">'+
           '<div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">'+SX_CATS[c]+'</div>'+
           '<div style="font-size:16px;font-weight:800;color:var(--accent);margin-top:3px">'+fmtINR(totals[c])+'</div>'+
@@ -2585,25 +2670,30 @@ function _renderSalonList(all, yr, m){
       }).join('')+'</div>';
   }
 
-  var listEl=document.getElementById('sx-list');
-  if(listEl){
-    listEl.innerHTML=!entries.length?'<div style="color:var(--muted);font-size:12px;padding:10px 0">No entries this month</div>':
-      entries.slice().reverse().map(function(r,i){
-        var delId = r.id ? String(r.id) : ('_li_'+i);
-        return '<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">'+
-          '<div style="flex:1">'+
-            '<div style="font-weight:600">'+SX_CATS[r.category]+(r["desc"]&&r["desc"]!==SX_CATS[r.category]?' — '+r["desc"]:'')+'</div>'+
-            '<div style="font-size:11px;color:var(--muted)">'+r["date"]+'</div>'+
-          '</div>'+
-          '<div style="font-weight:700;color:var(--danger);margin-right:4px">'+fmtINR(r.amount)+'</div>'+
-          '<button onclick="deleteSalonExpense(this)" data-id="'+delId+'" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;padding:0 4px;line-height:1">✕</button>'+
-        '</div>';
-      }).join('');
+  // Render Cosmetics list
+  var cosList=document.getElementById('sx-cosmetics-list');
+  var mktList=document.getElementById('sx-marketing-list');
+  function makeList(catEntries, listEl){
+    if(!listEl) return;
+    if(!catEntries.length){ listEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:6px 0">No entries this month</div>'; return; }
+    listEl.innerHTML=catEntries.slice().reverse().map(function(r,i){
+      var delId=r.id?String(r.id):('_li_'+i);
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
+        '<div style="flex:1">'+
+          '<div style="font-weight:600">'+(r["desc"]&&r["desc"]!==SX_CATS[r.category]?r["desc"]:SX_CATS[r.category])+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">'+r["date"]+'</div>'+
+        '</div>'+
+        '<div style="font-weight:700;color:var(--danger);margin-right:2px">'+fmtINR(r.amount)+'</div>'+
+        (r.id?'<button onclick="editSalonExpense(this)" data-id="'+delId+'" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--blue);cursor:pointer;font-size:11px;padding:2px 6px">✏</button>':'')+
+        '<button onclick="deleteSalonExpense(this)" data-id="'+delId+'" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;padding:0 2px">✕</button>'+
+      '</div>';
+    }).join('');
   }
+  makeList(entries.filter(function(r){return r.category==='cosmetics';}), cosList);
+  makeList(entries.filter(function(r){return r.category==='marketing';}), mktList);
 }
 
 function getSalonExpenseTotals(yr, m){
-  // Returns totals by category for use in PNL
   var all = LS.get('salonExpenses')||[];
   var entries = all.filter(function(r){
     var p=(r["date"]||'').split('/');
@@ -2616,6 +2706,8 @@ function getSalonExpenseTotals(yr, m){
   });
   return totals;
 }
+function addSalonExpense(){ toast('Use the Salon tab sections above'); }
+function addSalonExpenseMulti(){ toast('Use the Salon tab sections above'); }
 
 // ══ FRANCHISE INPUTS (rent, staff_rent, extra_food) ══
 // Fetched from franchise_inputs table
@@ -2707,7 +2799,7 @@ function _doRenderPNL(month){
   var rent      = val('pnl-rent');       // from franchise_inputs (hidden field)
   var staffRent = val('pnl-staff-rent'); // from franchise_inputs
   var extraFood = val('pnl-extra-food'); // from franchise_inputs
-  var ads       = sxTotals.marketing||0; // from salon tab (marketing)
+  // ads will be set after sxTotals is defined below
 
   // ── Auto: Projected Revenue = Avg weekday × weekdays + Avg weekend × weekends ──
   // Avgs calculated from days with data up to today; projection uses full month day counts
@@ -2736,6 +2828,7 @@ function _doRenderPNL(month){
 
   // ── Auto: Salon expenses from salon_expenses table ──
   var sxTotals  = getSalonExpenseTotals(yr, mo);
+  var ads       = sxTotals.marketing||0; // from salon tab
   var cosmetics = sxTotals.cosmetics;
   var ebStore   = sxTotals.eb_store;
   var ebStaff   = sxTotals.eb_staff;

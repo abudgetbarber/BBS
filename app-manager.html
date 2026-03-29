@@ -910,8 +910,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -2801,30 +2801,45 @@ function _doRenderPNL(month){
   var extraFood = val('pnl-extra-food'); // from franchise_inputs
   // ads will be set after sxTotals is defined below
 
-  // ── Auto: Projected Revenue = Avg weekday × weekdays + Avg weekend × weekends ──
-  // Avgs calculated from days with data up to today; projection uses full month day counts
+  // ── Projected Revenue = Avg weekday revenue × total monthly weekdays
+  //                      + Avg weekend revenue × total monthly weekends
+  // Avg weekday/weekend = based on days elapsed so far (up to today)
+  // Multipliers         = TOTAL weekdays/weekends in the full month
   var daysInMo = new Date(yr, mo, 0).getDate();
   var now_date = new Date();
   var isCurrentMonth = (now_date.getFullYear()===yr && now_date.getMonth()+1===mo);
   var todayDay = isCurrentMonth ? now_date.getDate() : daysInMo;
+  // Step 1: count elapsed days and collect revenues (for averages)
   var weekdayRevs=[], weekendRevs=[];
-  var totalMonthWeekdays=0, totalMonthWeekends=0;
+  var elapsedWeekdays=0, elapsedWeekends=0;
+  // Step 2: count full-month totals (for multipliers)
+  var monthWeekdays=0, monthWeekends=0;
   for(var di=1;di<=daysInMo;di++){
     var dow=new Date(yr,mo-1,di).getDay();
     var isWeekend=(dow===0||dow===6);
-    if(isWeekend) totalMonthWeekends++; else totalMonthWeekdays++;
+    // Full-month counts (multiplier)
+    if(isWeekend) monthWeekends++; else monthWeekdays++;
+    // Elapsed counts + revenues (for avg calculation)
     if(di<=todayDay){
       var ds=di+'/'+mo+'/'+yr;
       var dayRev=entries.filter(function(e){return e.date===ds;})
         .reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-      if(isWeekend) weekendRevs.push(dayRev); else weekdayRevs.push(dayRev);
+      if(isWeekend){ weekendRevs.push(dayRev); elapsedWeekends++; }
+      else         { weekdayRevs.push(dayRev); elapsedWeekdays++; }
     }
   }
-  var avgWeekday=weekdayRevs.length?(weekdayRevs.reduce(function(a,v){return a+v;},0)/weekdayRevs.length):0;
-  var avgWeekend=weekendRevs.length?(weekendRevs.reduce(function(a,v){return a+v;},0)/weekendRevs.length):0;
-  var projRev = Math.round(avgWeekday*totalMonthWeekdays + avgWeekend*totalMonthWeekends);
+  // Avg per weekday / per weekend day (only from elapsed days)
+  var avgWeekday=elapsedWeekdays?(weekdayRevs.reduce(function(a,v){return a+v;},0)/elapsedWeekdays):0;
+  var avgWeekend=elapsedWeekends?(weekendRevs.reduce(function(a,v){return a+v;},0)/elapsedWeekends):0;
+  // Projection uses full-month counts as multipliers
+  var projRev = Math.round(avgWeekday*monthWeekdays + avgWeekend*monthWeekends);
   var prEl=document.getElementById('pnl-proj-rev'); if(prEl) prEl.value=projRev;
-  var prVEl=document.getElementById('pnl-proj-rev-val'); if(prVEl) prVEl.textContent=fINR(projRev);
+  var prVEl=document.getElementById('pnl-proj-rev-val');
+  if(prVEl) prVEl.textContent=fINR(projRev)+
+    '<span style="font-size:10px;color:var(--muted);display:block;margin-top:2px">'+
+    'Avg wd: '+fINR(Math.round(avgWeekday))+' × '+monthWeekdays+' days'
+    +' + Avg we: '+fINR(Math.round(avgWeekend))+' × '+monthWeekends+' days'
+    +'</span>';
 
   // ── Auto: Salon expenses from salon_expenses table ──
   var sxTotals  = getSalonExpenseTotals(yr, mo);

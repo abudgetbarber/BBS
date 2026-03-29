@@ -353,8 +353,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <button class="nt"    id="nt-yearly"    onclick="showTab('yearly')">📅 Yearly</button>
   <button class="nt"    id="nt-staff"     onclick="showTab('staff')">👥 Staff</button>
   <button class="nt"    id="nt-customers" onclick="showTab('customers')">👤 Customers</button>
-  <button class="nt" id="nt-pnl" onclick="showTab('pnl')">📊 P&L</button>
   <button class="nt" id="nt-salon" onclick="showTab('salon')">🏪 Salon</button>
+  <button class="nt" id="nt-pnl" onclick="showTab('pnl')">📊 P&L</button>
 </div>
 
 <!-- ════ DASHBOARD ════ -->
@@ -560,6 +560,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div style="font-size:15px;font-weight:700;color:var(--white)">Profit &amp; Loss Statement</div>
     <div style="display:flex;gap:8px;align-items:center">
       <input type="month" id="pnl-month" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:12px;padding:5px 9px;font-family:var(--BF);outline:none" onchange="renderPNL()">
+      <button onclick="exportPNL()" style="padding:6px 12px;background:rgba(0,196,140,.12);border:1px solid var(--accent);color:var(--accent);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">⬇ Export</button>
     </div>
   </div>
 
@@ -618,34 +619,60 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   </div>
 </div>
 
-<!-- FRANCHISE INPUTS PANEL -->
+<!-- FRANCHISE SALON TAB -->
 <div class="panel" id="pn-salon">
-  <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px">Rent & Monthly Costs</div>
-  <div style="background:var(--surface);border-radius:var(--r);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:12px">📅 Select Month</div>
-    <input type="month" id="fi-month" class="fi" style="width:100%;margin-bottom:12px" onchange="loadFranchiseInputsLocal()">
-    <div class="ifield" style="margin-bottom:10px">
-      <label>Rent (₹)</label>
-      <input type="number" id="fi-rent" class="fi" placeholder="0" min="0" inputmode="numeric">
-    </div>
-    <div class="ifield" style="margin-bottom:10px">
-      <label>Staff Room Rent (₹)</label>
-      <input type="number" id="fi-staff-rent" class="fi" placeholder="0" min="0" inputmode="numeric">
-    </div>
-    <div class="ifield" style="margin-bottom:16px">
-      <label>Extra Sunday Food (₹)</label>
-      <input type="number" id="fi-extra-food" class="fi" placeholder="0" min="0" inputmode="numeric">
-    </div>
-    <button onclick="saveFranchiseInputs()" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--BF)">💾 Save for Month</button>
-    <div id="fi-status" style="display:none;margin-top:10px;padding:9px 12px;border-radius:var(--rs);font-size:12px;font-weight:700;text-align:center"></div>
-  </div>
-  <div style="font-size:11px;color:var(--muted);line-height:1.6;padding:10px">
-    These figures feed directly into the PNL calculation for the selected month.
-    Enter once per month — changes take effect immediately.
-  </div>
-  </div><!-- end salon-input-section -->
-</div>
+  <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:12px">🏪 Salon Costs</div>
 
+  <div id="salon-company-notice" style="display:none;background:rgba(29,109,181,.08);border:1px solid rgba(29,109,181,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);margin-bottom:14px">
+    🏢 <b>Company Managed Salon</b> — Rent and costs are managed by Admin.
+  </div>
+
+  <div id="salon-input-section">
+
+    <!-- SALON RENT -->
+    <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:3px">🏠 Salon Rent</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Changes once a year usually. Effective from current month onwards when saved.</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <input type="number" id="fi-rent" class="fi" placeholder="₹ Amount" min="0" inputmode="numeric" style="flex:1">
+        <div id="fi-rent-current" style="font-size:11px;color:var(--muted);min-width:80px;text-align:right"></div>
+      </div>
+      <button onclick="saveField('rent')" style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">💾 Save Salon Rent</button>
+    </div>
+
+    <!-- STAFF ROOM RENT -->
+    <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:3px">🛋️ Staff Room Rent</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Changes once a year usually. Effective from current month onwards when saved.</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <input type="number" id="fi-staff-rent" class="fi" placeholder="₹ Amount" min="0" inputmode="numeric" style="flex:1">
+        <div id="fi-staff-rent-current" style="font-size:11px;color:var(--muted);min-width:80px;text-align:right"></div>
+      </div>
+      <button onclick="saveField('staff_rent')" style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">💾 Save Staff Room Rent</button>
+    </div>
+
+    <!-- EXTRA SUNDAY FOOD -->
+    <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border);margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:3px">🍱 Extra Sunday Food</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">One-time amount. Choose effective month — months before that keep the old value.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Amount ₹</label>
+          <input type="number" id="fi-extra-food" class="fi" placeholder="0" min="0" inputmode="numeric">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Effective From</label>
+          <input type="month" id="fi-extra-food-from" class="fi">
+        </div>
+      </div>
+      <div id="fi-extra-food-current" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
+      <button onclick="saveField('extra_food')" style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">💾 Save Sunday Food</button>
+    </div>
+
+    <div id="fi-status" style="display:none;margin-top:8px;padding:9px 12px;border-radius:var(--rs);font-size:12px;font-weight:700;text-align:center"></div>
+    <div id="fi-history" style="margin-top:14px"></div>
+  </div>
+</div>
 <div class="toast-el" id="toastEl"></div>
 
 <script>
@@ -656,8 +683,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1034,6 +1061,13 @@ function showTab(tab){
   if(tab==='yearly')    renderYearly();
   if(tab==='staff')     renderStaff();
   if(tab==='customers') renderCustomers();
+  if(tab==='salon'){
+    var salon=(LS.get('salons')||[]).find(function(s){return s.id===mySalonId;});
+    var isCo=salon&&(salon.companyManaged==1||salon.companyManaged==='1');
+    var ne=document.getElementById('salon-company-notice'); if(ne) ne.style.display=isCo?'block':'none';
+    var ie=document.getElementById('salon-input-section'); if(ie) ie.style.display=isCo?'none':'block';
+    if(!isCo){ document.getElementById('fi-extra-food-from').value=document.getElementById('fi-extra-food-from').value||new Date().toISOString().slice(0,7); loadSalonCostsUI(); }
+  }
   if(tab==='pnl'){ initPNL(); renderPNL(); }
 }
 function applyRestoredData(d){
@@ -1895,35 +1929,185 @@ function initPNL(){
 
 
 // ══ FRANCHISE INPUTS (Rent, Staff Rent, Extra Food) ══
-function loadFranchiseInputsLocal(){
-  var month = document.getElementById('fi-month').value;
-  if(!month) return;
-  sbSelect('franchise_inputs', 'salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(month))
+
+// ══ FRANCHISE SALON COSTS ══
+// Each field (rent, staff_rent, extra_food) stored as separate rows with effective_from month.
+// Latest row per field = current value. When PNL loads a month, it finds the most recent
+// row where effective_from <= that month.
+
+function loadSalonCostsUI(){
+  // Load ALL franchise_inputs for this salon and show current values + history
+  sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(mySalonId)+'&order=effective_from.desc')
     .then(function(rows){
-      var d = rows&&rows.length ? rows[0] : {};
-      var r=document.getElementById('fi-rent'); if(r) r.value=d.rent||'';
-      var s=document.getElementById('fi-staff-rent'); if(s) s.value=d.staff_rent||'';
-      var e=document.getElementById('fi-extra-food'); if(e) e.value=d.extra_food||'';
-    }).catch(function(){});
+      LS.set('franchiseInputs', rows||[]);
+      _renderSalonCostsCurrent(rows||[]);
+    }).catch(function(){
+      _renderSalonCostsCurrent(LS.get('franchiseInputs')||[]);
+    });
+  // Set default effective_from for extra food
+  var efEl=document.getElementById('fi-extra-food-from');
+  if(efEl && !efEl.value) efEl.value=new Date().toISOString().slice(0,7);
 }
-function saveFranchiseInputs(){
-  var month = document.getElementById('fi-month').value;
-  if(!month){ toast('Select a month'); return; }
-  var rent      = parseFloat(document.getElementById('fi-rent').value)||0;
-  var staffRent = parseFloat(document.getElementById('fi-staff-rent').value)||0;
-  var extraFood = parseFloat(document.getElementById('fi-extra-food').value)||0;
-  var row = { salon_id: mySalonId, month: month, rent: rent, staff_rent: staffRent, extra_food: extraFood };
-  var statusEl = document.getElementById('fi-status');
-  // Upsert: delete then insert
-  _supaFetch('franchise_inputs?salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(month),{method:'DELETE'})
-    .then(function(){ return sbInsert('franchise_inputs', row); })
+
+function _latestValue(rows, field){
+  // Get the most recent row that has a value for this field
+  for(var i=0;i<rows.length;i++){
+    if(rows[i][field] && Number(rows[i][field])>0) return rows[i];
+  }
+  return null;
+}
+
+function _renderSalonCostsCurrent(rows){
+  function showCurrent(elId, field, label){
+    var el=document.getElementById(elId);
+    if(!el) return;
+    var rec=_latestValue(rows, field);
+    if(rec) el.innerHTML='<span style="color:var(--accent);font-weight:700">₹'+Number(rec[field]).toLocaleString('en-IN')+'</span><br><span style="font-size:10px;color:var(--muted)">since '+rec.effective_from+'</span>';
+    else el.textContent='Not set';
+  }
+  showCurrent('fi-rent-current',       'rent',       'Rent');
+  showCurrent('fi-staff-rent-current', 'staff_rent', 'Staff Rent');
+  showCurrent('fi-extra-food-current', 'extra_food', 'Sunday Food');
+
+  // Pre-fill inputs with latest values
+  var rentRec=_latestValue(rows,'rent');
+  var staffRec=_latestValue(rows,'staff_rent');
+  var foodRec=_latestValue(rows,'extra_food');
+  var rEl=document.getElementById('fi-rent'); if(rEl&&rentRec) rEl.value=rentRec.rent||'';
+  var sEl=document.getElementById('fi-staff-rent'); if(sEl&&staffRec) sEl.value=staffRec.staff_rent||'';
+  var eEl=document.getElementById('fi-extra-food'); if(eEl&&foodRec) eEl.value=foodRec.extra_food||'';
+
+  // History
+  var histEl=document.getElementById('fi-history');
+  if(histEl && rows.length){
+    histEl.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Change History</div>'+
+      rows.map(function(r){
+        return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">'+
+          '<span>'+r.effective_from+'</span>'+
+          (r.rent?'<span style="color:var(--muted)">Rent: <b>₹'+Number(r.rent).toLocaleString('en-IN')+'</b></span>':'')+
+          (r.staff_rent?'<span style="color:var(--muted)">Staff Rent: <b>₹'+Number(r.staff_rent).toLocaleString('en-IN')+'</b></span>':'')+
+          (r.extra_food?'<span style="color:var(--muted)">Sun Food: <b>₹'+Number(r.extra_food).toLocaleString('en-IN')+'</b></span>':'')+
+        '</div>';
+      }).join('');
+  }
+}
+
+function saveField(field){
+  var statusEl=document.getElementById('fi-status');
+  var amount, effectiveFrom, elId;
+  if(field==='rent'){
+    amount=parseFloat(document.getElementById('fi-rent').value)||0;
+    effectiveFrom=new Date().toISOString().slice(0,7); // from this month
+    elId='fi-rent';
+  } else if(field==='staff_rent'){
+    amount=parseFloat(document.getElementById('fi-staff-rent').value)||0;
+    effectiveFrom=new Date().toISOString().slice(0,7);
+    elId='fi-staff-rent';
+  } else if(field==='extra_food'){
+    amount=parseFloat(document.getElementById('fi-extra-food').value)||0;
+    var fromEl=document.getElementById('fi-extra-food-from');
+    effectiveFrom=fromEl&&fromEl.value ? fromEl.value : new Date().toISOString().slice(0,7);
+    elId='fi-extra-food';
+  }
+  if(!amount||amount<=0){ toast('Enter a valid amount'); return; }
+  var row={salon_id:mySalonId, effective_from:effectiveFrom};
+  row[field]=amount;
+  if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,0,0,.05)'; statusEl.style.color='var(--muted)'; statusEl.textContent='Saving…'; }
+  _supaFetch('franchise_inputs', {method:'POST', body:JSON.stringify(row)})
     .then(function(){
-      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,196,140,.12)'; statusEl.style.color='var(--accent)'; statusEl.textContent='✅ Saved for '+month; }
-      toast('✅ Costs saved for '+month);
-    }).catch(function(err){
-      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(220,53,69,.1)'; statusEl.style.color='var(--danger)'; statusEl.textContent='❌ Save failed: '+err; }
+      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(0,196,140,.12)'; statusEl.style.color='var(--accent)'; statusEl.textContent='✅ Saved — effective from '+effectiveFrom; }
+      toast('✅ Saved');
+      loadSalonCostsUI();
+    })
+    .catch(function(err){
+      if(statusEl){ statusEl.style.display='block'; statusEl.style.background='rgba(220,53,69,.1)'; statusEl.style.color='var(--danger)'; statusEl.textContent='❌ Failed: '+err; }
       toast('❌ Save failed');
     });
+}
+
+// Legacy alias
+
+function loadFranchiseInputs(month, cb){
+  // Fetch all records up to requested month, ordered desc — latest per field wins
+  sbSelect('franchise_inputs',
+    'salon_id=eq.'+encodeURIComponent(mySalonId)+
+    '&effective_from=lte.'+encodeURIComponent(month)+
+    '&order=effective_from.desc'
+  ).then(function(rows){
+    rows = rows||[];
+    function latestVal(field){
+      for(var i=0;i<rows.length;i++){
+        if(rows[i][field] && Number(rows[i][field])>0) return Number(rows[i][field]);
+      }
+      return 0;
+    }
+    var rent=latestVal('rent'), staffRent=latestVal('staff_rent'), extraFood=latestVal('extra_food');
+    var rEl=document.getElementById('pnl-rent'); if(rEl) rEl.value=rent;
+    var sEl=document.getElementById('pnl-staff-rent'); if(sEl) sEl.value=staffRent;
+    var eEl=document.getElementById('pnl-extra-food'); if(eEl) eEl.value=extraFood;
+    var rv=document.getElementById('pnl-rent-val'); if(rv) rv.textContent=fmtINR(rent);
+    var sv=document.getElementById('pnl-staff-rent-val'); if(sv) sv.textContent=fmtINR(staffRent);
+    var ev=document.getElementById('pnl-extra-food-val'); if(ev) ev.textContent=fmtINR(extraFood);
+    if(cb) cb();
+  }).catch(function(){ if(cb) cb(); });
+}
+
+function loadFranchiseInputsLocal(){ loadSalonCostsUI(); }
+function saveFranchiseInputs(){ toast('Use the individual Save buttons above'); }
+
+
+function exportPNL(){
+  var month = document.getElementById('pnl-month').value || 'unknown';
+  function txt(id){ var el=document.getElementById(id); return el?(el.textContent||el.value||'0').replace(/[,₹−]/g,'').trim():'0'; }
+  function val(id){ var el=document.getElementById(id); return el?(el.value||'0'):'0'; }
+  var rows = [
+    ['Budget Barber P&L — '+mySalonName, ''],
+    ['Month', month],
+    ['Salon', mySalonName],
+    [''],
+    ['REVENUE', ''],
+    ['Actual Revenue',     txt('pnl-revenue')],
+    ['Projected Revenue',  val('pnl-proj-rev')],
+    [''],
+    ['OPEX', ''],
+    ['Salaries',           txt('pnl-salaries')],
+    ['Rent',               val('pnl-rent')],
+    ['Staff Room Rent',    val('pnl-staff-rent')],
+    ['Cosmetics',          val('pnl-cosmetics')],
+    ['EB Store',           val('pnl-eb-store')],
+    ['EB Staff Room',      val('pnl-eb-staff')],
+    ['Maid',               val('pnl-maid')],
+    ['Marketing',          val('pnl-ads')],
+    ['Food Money',         txt('pnl-food')],
+    ['Extra Sunday Food',  val('pnl-extra-food')],
+    ['Actual Incentives',  txt('pnl-incentives')],
+    ['WiFi',               val('pnl-wifi')],
+    ['Expenses',           val('pnl-misc')],
+    ['Actual Total Opex',  txt('pnl-total-opex')],
+    ['Projected Total Opex', txt('pnl-proj-opex')],
+    [''],
+    ['PROFIT / LOSS', ''],
+    ['Profit / Loss',      txt('pnl-profit')],
+    ['Projected P/L',      txt('pnl-proj-profit')],
+  ];
+  // Add profit share if visible
+  var shareRows = document.querySelectorAll('#pnl-share-rows .pnl-share-row');
+  if(shareRows.length){
+    rows.push(['']);
+    rows.push(['PROFIT SHARE','']);
+    shareRows.forEach(function(r){
+      var cols = r.querySelectorAll('span');
+      if(cols.length>=2) rows.push([cols[0].textContent.trim(), cols[1].textContent.replace(/[₹,−]/g,'').trim()]);
+    });
+  }
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+(c||'').replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'PNL_'+mySalonName.replace(/\s+/g,'_')+'_'+month+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('✅ PNL exported for '+month);
 }
 
 </script>

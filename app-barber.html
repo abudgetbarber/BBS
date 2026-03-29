@@ -453,10 +453,10 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div id="bill-body"><div style="padding:24px;text-align:center;color:var(--muted2);font-size:13px;font-style:italic">No customers yet today</div></div>
 
   <!-- Fix 1: Cash-In Counter moved to bottom -->
-  <div class="sec">Cash In Counter as of Today</div>
+  <div class="sec">Cash In Counter as of Yesterday</div>
   <div class="counter-box cash-in">
     <div class="counter-title cash-in">
-      <span>💵 Cash In Counter as of Today</span>
+      <span>💵 Cash In Counter as of Yesterday</span>
       <span class="counter-total" id="ci-total">₹0</span>
     </div>
     <div class="counter-row">
@@ -630,14 +630,18 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 
   <div class="form-section">
     <div class="form-section-title">Reference Photos <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(tap to capture)</span></div>
-    <div class="ph-row">
-      <div class="ps" id="ps-front" onclick="openCam('front')"><span style="font-size:20px">📷</span><span>Front</span></div>
-      <div class="ps" id="ps-side"  onclick="openCam('side')"><span style="font-size:20px">📷</span><span>Side</span></div>
-      <div class="ps" id="ps-back"  onclick="openCam('back')"><span style="font-size:20px">📷</span><span>Back</span></div>
+    <div class="ph-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="ps" id="ps-front"     onclick="openCam('front')"><span style="font-size:20px">📷</span><span>Front</span></div>
+      <div class="ps" id="ps-back"      onclick="openCam('back')"><span style="font-size:20px">📷</span><span>Back</span></div>
+      <div class="ps" id="ps-left"      onclick="openCam('left')"><span style="font-size:20px">📷</span><span>Left Side</span></div>
+      <div class="ps" id="ps-right"     onclick="openCam('right')"><span style="font-size:20px">📷</span><span>Right Side</span></div>
+      <div class="ps" id="ps-top"       onclick="openCam('top')"><span style="font-size:20px">📷</span><span>Top</span></div>
     </div>
     <input type="file" id="fi-front" accept="image/*" style="display:none" onchange="handleFile(this,'front')">
-    <input type="file" id="fi-side"  accept="image/*" style="display:none" onchange="handleFile(this,'side')">
     <input type="file" id="fi-back"  accept="image/*" style="display:none" onchange="handleFile(this,'back')">
+    <input type="file" id="fi-left"  accept="image/*" style="display:none" onchange="handleFile(this,'left')">
+    <input type="file" id="fi-right" accept="image/*" style="display:none" onchange="handleFile(this,'right')">
+    <input type="file" id="fi-top"   accept="image/*" style="display:none" onchange="handleFile(this,'top')">
   </div>
   <div id="card-save-status" style="display:none;margin-bottom:10px"></div>
   <button class="btn-primary" id="saveCardBtn" onclick="saveCard()">✓ Save Style Card</button>
@@ -753,8 +757,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1287,7 +1291,8 @@ function addCashIn(){
   toast('💵 Cash-in ₹'+amt+' recorded');
 }
 function renderCashInCounter(){
-  var log=(LS.get('cashIn')||[]).filter(function(e){return e.date===today()&&e.barberId===ME.id;});
+  var yd=new Date();yd.setDate(yd.getDate()-1);var yesterday=yd.toLocaleDateString('en-IN');
+  var log=(LS.get('cashIn')||[]).filter(function(e){return e.date===yesterday&&e.barberId===ME.id;});
   var total=log.reduce(function(a,e){return a+Number(e.amount||0);},0);
   document.getElementById('ci-total').textContent=fmtINR(total);
   var el=document.getElementById('ci-log');
@@ -1572,7 +1577,7 @@ function saveNote(){
 }
 
 // ── STYLE CARD ──
-var photos={front:null,side:null,back:null}, activeZoneKey='';
+var photos={front:null,back:null,left:null,right:null,top:null}, activeZoneKey='';
 
 // Fix 9: autofill customer name from phone
 function autoFillCustName(phone){
@@ -1588,7 +1593,7 @@ function openZone(key,label){activeZoneKey=key;document.getElementById('zoneName
 function saveZone(){var v=document.getElementById('zoneInput').value.trim();if(v&&activeZoneKey){document.getElementById('zv-'+activeZoneKey).textContent=v;document.querySelector('.zc[data-z="'+activeZoneKey+'"]').classList.add('lit');}closeModal('zoneModal');}
 
 var camStream=null,camFacing='environment',camTarget='front';
-function openCam(target){camTarget=target;var labels={front:'FRONT VIEW',side:'SIDE VIEW',back:'BACK VIEW'};document.getElementById('camLbl').textContent=labels[target];document.getElementById('camModal').classList.add('open');startCam();}
+function openCam(target){camTarget=target;var labels={front:'FRONT VIEW',back:'BACK VIEW',left:'LEFT SIDE',right:'RIGHT SIDE',top:'TOP VIEW'};document.getElementById('camLbl').textContent=labels[target]||target.toUpperCase();document.getElementById('camModal').classList.add('open');startCam();}
 function startCam(){if(camStream)camStream.getTracks().forEach(function(t){t.stop();});navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:false}).then(function(s){camStream=s;document.getElementById('camVideo').srcObject=s;}).catch(function(){closeCam();document.getElementById('fi-'+camTarget).click();});}
 function flipCam(){camFacing=(camFacing==='environment'?'user':'environment');startCam();}
 function closeCam(){if(camStream){camStream.getTracks().forEach(function(t){t.stop();});camStream=null;}document.getElementById('camModal').classList.remove('open');}
@@ -1624,18 +1629,19 @@ function saveCard(){
       topLength:document.getElementById('csTop').value,texture:cv('cg-tex'),fade:cv('cg-fade'),guard:cv('cg-grd'),
       neckline:cv('cg-nck'),beard:cv('cg-brd'),product:document.getElementById('csProduct').value,
       notes:document.getElementById('csNotes').value.trim(),zones:zones,
-      photos:{front:photos.front,side:photos.side,back:photos.back},createdAt:today(),isDefault:false};
+      photos:{front:photos.front,back:photos.back,left:photos.left,right:photos.right,top:photos.top},createdAt:today(),isDefault:false};
     var cards=LS.get('styleCards')||[];
     cards.push(newCard);
-    if(!LS.set('styleCards',cards)){newCard.photos={front:null,side:null,back:null};cards[cards.length-1]=newCard;if(!LS.set('styleCards',cards)){cards.pop();btn.disabled=false;btn.textContent='✓ Save Style Card';toast('❌ Storage full');return;}}
+    if(!LS.set('styleCards',cards)){newCard.photos={front:null,back:null,left:null,right:null,top:null};cards[cards.length-1]=newCard;if(!LS.set('styleCards',cards)){cards.pop();btn.disabled=false;btn.textContent='✓ Save Style Card';toast('❌ Storage full');return;}}
     var visits=LS.get('visits')||[];
     visits.push({id:ts+1,customerId:custId,barberId:ME.id,barberName:ME.name,salonId:ME.salonId,salonName:'Budget Barber',styleName:name,date:today(),note:''});
     LS.set('visits',visits);
     // reset
     document.getElementById('csPhone').value='';document.getElementById('csCustName').value='';
     document.getElementById('csName').value='';document.getElementById('csNotes').value='';
-    photos={front:null,side:null,back:null};
-    ['front','side','back'].forEach(function(s){var el=document.getElementById('ps-'+s);if(el){el.classList.remove('has');el.innerHTML='<span style="font-size:20px">📷</span><span>'+s.charAt(0).toUpperCase()+s.slice(1)+'</span>';}});
+    photos={front:null,back:null,left:null,right:null,top:null};
+    var photoLabels={front:'Front',back:'Back',left:'Left Side',right:'Right Side',top:'Top'};
+    ['front','back','left','right','top'].forEach(function(s){var el=document.getElementById('ps-'+s);if(el){el.classList.remove('has');el.innerHTML='<span style="font-size:20px">📷</span><span>'+(photoLabels[s]||s)+'</span>';}});
     var zd={fr:'2"',to:'2"',cr:'1.5"',le:'#2',ri:'#2',ba:'#1.5'};
     Object.keys(zd).forEach(function(k){var el=document.getElementById('zv-'+k);if(el)el.textContent=zd[k];var zc=document.querySelector('.zc[data-z="'+k+'"]');if(zc)zc.classList.remove('lit');});
     function rg(gid,di){var chips=document.querySelectorAll('#'+gid+' .cchip');chips.forEach(function(c,i){c.classList.toggle('on',i===di);});}
@@ -1851,11 +1857,10 @@ function renderSalary(){
   });
   var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
 
-  // Deductions from manager (from bb_deductions key)
+  // Deductions from manager — read flat array stored by supaBootstrap
   var deductions=(LS.get('deductions')||[]).filter(function(r){
-    if(r.barberId!==ME.id)return false;
-    var p=(mo.split('-'));
-    return r.month===mo;
+    var sid=String(r.staff_id||r.staffId||r.barberId||'');
+    return sid===String(ME.id) && r.month===mo;
   });
   var totalDed=deductions.reduce(function(a,r){return a+Number(r.amount||0);},0);
 
@@ -1896,8 +1901,23 @@ function applyRestoredData(d){
   if(d.mgrCashIn&&d.mgrCashIn.length)  LS.set('mgrCashIn',  d.mgrCashIn.map(function(r){return toStr(r,['managerId','salonId']);}));
   if(d.mgrExpenses&&d.mgrExpenses.length)LS.set('mgrExpenses',d.mgrExpenses.map(function(r){return toStr(r,['managerId','salonId']);}));
   if(d.deductions&&d.deductions.length){
+    // Store flat array for barber profile view
+    LS.set('deductions', d.deductions.map(function(r){
+      return {
+        staffId: String(r.staff_id||r.staffId||''),
+        month:   r.month||'',
+        desc:    r.desc||r['desc']||'',
+        amount:  Number(r.amount||0)
+      };
+    }));
+    // Also store per-key for manager salary modal
     var dg={};
-    d.deductions.forEach(function(r){var k='ded_'+r.staffId+'_'+r.month;if(!dg[k])dg[k]=[];dg[k].push({desc:r.desc,amount:r.amount});});
+    d.deductions.forEach(function(r){
+      var sid=String(r.staff_id||r.staffId||'');
+      var k='ded_'+sid+'_'+r.month;
+      if(!dg[k])dg[k]=[];
+      dg[k].push({desc:r.desc||r['desc']||'',amount:Number(r.amount||0)});
+    });
     Object.keys(dg).forEach(function(k){LS.set(k,dg[k]);});
   }
   if(d.attOverrides&&d.attOverrides.length){

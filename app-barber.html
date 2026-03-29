@@ -30,6 +30,7 @@
   /* STATUS */
   --danger:#DC3545;
   --green:#16A34A;
+  --orange:#F97316;
   --blue:#1D6DB5;
   --warn:#C2410C;
   --purple:#6D28D9;
@@ -67,10 +68,10 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 /* STAT GRID */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
 .sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
-.sc.a{border-left:3px solid var(--accent)}.sc.g{border-left:3px solid var(--gold)}.sc.b{border-left:3px solid var(--blue)}.sc.gr{border-left:3px solid var(--green)}.sc.w{border-left:3px solid var(--warn)}.sc.p{border-left:3px solid var(--purple)}
+.sc.a{border-left:3px solid var(--accent)}.sc.g{border-left:3px solid #D97706}.sc.b{border-left:3px solid var(--blue)}.sc.gr{border-left:3px solid var(--green)}.sc.w{border-left:3px solid var(--warn)}.sc.p{border-left:3px solid var(--purple)}
 .sc-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
 .sc-val{font-family:var(--HF);font-size:22px;color:var(--white);letter-spacing:.5px;line-height:1}
-.sc.a .sc-val{color:var(--accent)}.sc.g .sc-val{color:var(--gold)}.sc.b .sc-val{color:var(--blue)}.sc.gr .sc-val{color:var(--green)}.sc.w .sc-val{color:var(--warn)}.sc.p .sc-val{color:var(--purple)}
+.sc.a .sc-val{color:var(--accent)}.sc.g .sc-val{color:#D97706}.sc.b .sc-val{color:var(--blue)}.sc.gr .sc-val{color:var(--green)}.sc.w .sc-val{color:var(--warn)}.sc.p .sc-val{color:var(--purple)}
 
 /* SERVICE CHIPS */
 .svc-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
@@ -105,17 +106,17 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .cust-card-svc{font-size:13px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cust-card-meta{font-size:11px;color:var(--muted);margin-top:2px}
 .cust-card-right{text-align:right;flex-shrink:0}
-.cust-card-total{font-size:14px;font-weight:800;color:var(--gold)}
+.cust-card-total{font-size:14px;font-weight:800;color:var(--accent)}
 .cust-card-tip{font-size:11px;color:var(--warn);margin-top:2px}
 
 /* SUMMARY BOX */
-.summary-box{background:var(--surface);border-radius:var(--r);padding:13px 15px;margin-bottom:12px;border-left:3px solid var(--gold)}
+.summary-box{background:var(--surface);border-radius:var(--r);padding:13px 15px;margin-bottom:12px;border-left:3px solid var(--accent)}
 .sb-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
 .sb-row:last-child{border-bottom:none;padding-top:7px;margin-top:3px}
 .sb-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 .sb-val{font-size:13px;font-weight:800}
-.sb-total .sb-lbl{color:var(--gold);font-size:12px}
-.sb-total .sb-val{font-size:17px;color:var(--gold);font-family:var(--HF)}
+.sb-total .sb-lbl{color:var(--accent);font-size:12px}
+.sb-total .sb-val{font-size:17px;color:var(--accent);font-family:var(--HF)}
 
 /* COUNTER BOX */
 .counter-box{border-radius:var(--r);padding:13px 14px;margin-bottom:12px;border:2px solid}
@@ -152,14 +153,14 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .entry-tbl tbody td.ph{color:var(--blue);font-weight:600}
 .entry-tbl tbody td.ca{color:var(--green);font-weight:600}
 .entry-tbl tbody td.tp{color:var(--warn);font-weight:600}
-.entry-tbl tbody td.tot{color:var(--gold);font-weight:700}
+.entry-tbl tbody td.tot{color:var(--accent);font-weight:700}
 .tbl-scroll{overflow-x:auto;border-radius:var(--r);margin-bottom:2px}
 
 /* ATTENDANCE CALENDAR — compact, half-screen */
 .att-mini-cal{display:grid;grid-template-columns:repeat(7,24px);gap:3px;margin-top:5px}
 .att-mini-day{width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--bg);color:var(--muted2)}
 .att-mini-day.in{background:rgba(46,196,160,.3);color:var(--accent)}
-.att-mini-day.half{background:rgba(232,166,66,.25);color:var(--warn)}
+.att-mini-day.half{background:rgba(249,115,22,.18);color:#F97316}
 .att-mini-day.off{background:rgba(224,112,112,.12);color:var(--danger)}
 .att-mini-day.today{outline:1.5px solid var(--accent);outline-offset:-1px;font-weight:800}
 .att-stat-row{display:flex;gap:6px;margin-top:7px}
@@ -284,14 +285,14 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .salary-row:last-child{border-bottom:none;padding-top:10px;margin-top:4px}
 .salary-lbl{color:var(--muted)}
 .salary-val{font-weight:700;color:var(--white)}
-.salary-row.net .salary-lbl{color:var(--gold);font-size:14px;font-weight:800}
-.salary-row.net .salary-val{font-size:20px;color:var(--gold);font-family:var(--HF)}
+.salary-row.net .salary-lbl{color:var(--accent);font-size:14px;font-weight:800}
+.salary-row.net .salary-val{font-size:20px;color:var(--accent);font-family:var(--HF)}
 .salary-row.deduct .salary-val{color:var(--danger)}
 .salary-row.add .salary-val{color:var(--green)}
 .att-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
 .att-day{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--surface2);color:var(--muted2)}
 .att-day.in{background:rgba(46,196,160,.2);border:1.5px solid var(--accent);color:var(--accent)}
-.att-day.half{background:rgba(232,166,66,.2);border:1.5px solid var(--warn);color:var(--warn)}
+.att-day.half{background:rgba(249,115,22,.15);border:1.5px solid #F97316;color:#F97316}
 .att-day.off{background:rgba(224,112,112,.1);border:1.5px solid var(--danger);color:var(--danger)}
 .advance-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
 .advance-row:last-child{border-bottom:none}
@@ -331,7 +332,7 @@ body { background: var(--bg) !important; color: var(--white) !important; }
 /* Stat card values — keep accent colors readable on light */
 .sc-val { color: var(--white) !important; }
 .sc.accent .sc-val { color: var(--accent) !important; }
-.sc.gold   .sc-val { color: #8B6F00 !important; }
+.sc.gold   .sc-val { color: #D97706 !important; }
 .sc.danger .sc-val { color: var(--danger) !important; }
 .sc.b      .sc-val { color: var(--blue) !important; }
 .sc.g      .sc-val { color: var(--green) !important; }
@@ -398,7 +399,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 .badge-green  { background: rgba(22,163,74,.10) !important; color: var(--green) !important; border-color: rgba(22,163,74,.2) !important; }
 .badge-blue   { background: rgba(29,109,181,.08) !important; color: var(--blue) !important; border-color: rgba(29,109,181,.2) !important; }
 .badge-red    { background: rgba(220,53,69,.08) !important; color: var(--danger) !important; border-color: rgba(220,53,69,.2) !important; }
-.badge-gold   { background: rgba(139,111,0,.08) !important; color: #8B6F00 !important; border-color: rgba(139,111,0,.2) !important; }
+.badge-gold   { background: rgba(217,119,6,.08) !important; color: #D97706 !important; border-color: rgba(217,119,6,.2) !important; }
 .badge-purple { background: rgba(109,40,217,.08) !important; color: var(--purple) !important; border-color: rgba(109,40,217,.2) !important; }
 
 </style>
@@ -673,7 +674,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="att-mini-cal" id="att-calendar"></div>
     <div class="att-stat-row">
       <div class="att-stat-pill"><div class="asp-num" style="color:var(--accent)" id="att-present">0</div><div class="asp-lbl" style="color:var(--accent)">Present</div></div>
-      <div class="att-stat-pill"><div class="asp-num" style="color:var(--warn)"   id="att-half">0</div><div class="asp-lbl" style="color:var(--warn)">Half Day</div></div>
+      <div class="att-stat-pill"><div class="asp-num" style="color:#F97316"        id="att-half">0</div><div class="asp-lbl" style="color:#F97316">Half Day</div></div>
       <div class="att-stat-pill"><div class="asp-num" style="color:var(--danger)" id="att-absent">0</div><div class="asp-lbl" style="color:var(--danger)">Absent</div></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:5px;font-size:8px">
@@ -757,8 +758,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1162,13 +1163,46 @@ function showTab(tab){
   document.querySelectorAll('.nt').forEach(function(b){b.classList.remove('on');});
   document.getElementById('pn-'+tab).classList.add('on');
   document.getElementById('nt-'+tab).classList.add('on');
-  // Refresh from Sheets on every tab open so data is always current
-  refreshFromSheets(function(){
-    if(tab==='billing'){ renderBilling(); renderCashInCounter(); renderExpenseCounter(); renderAttBtnWrapBilling(); }
-    if(tab==='mysales'){ renderMySales(); }
+  if(tab==='billing'){
+      supaBootstrap(function(){
+        renderBilling(); renderCashInCounter(); renderExpenseCounter(); renderAttBtnWrapBilling();
+      }, function(){
+        renderBilling(); renderCashInCounter(); renderExpenseCounter(); renderAttBtnWrapBilling();
+      });
+    }
+    if(tab==='mysales'){
+      // Always reset to today when opening tab
+      var fromEl = document.getElementById('ms-from');
+      var toEl   = document.getElementById('ms-to');
+      if(fromEl) fromEl.value = todayISO();
+      if(toEl)   toEl.value   = todayISO();
+      // Fetch fresh from Supabase then render
+      supaBootstrap(function(){
+        renderMySales();
+      }, function(){
+        renderMySales();
+      });
+    }
     if(tab==='scan'){ stopQRScan(); document.getElementById('scanResult').innerHTML=''; document.getElementById('scanCode').value=''; }
-    if(tab==='profile'){ renderAttendance(); renderAdvanceLog(); renderSalary(); }
-  });
+    if(tab==='profile'){
+      var curMo = new Date().toISOString().slice(0,7);
+      // Ensure month pickers show current month
+      var salEl = document.getElementById('sal-month');
+      var attEl = document.getElementById('att-month');
+      if(salEl && !salEl.value) salEl.value = curMo;
+      if(attEl && !attEl.value) attEl.value = curMo;
+      // Fetch fresh from Supabase then render
+      supaBootstrap(function(){
+        renderAttendance();
+        renderAdvanceLog();
+        renderSalary();
+      }, function(){
+        // Fallback: render from cache anyway
+        renderAttendance();
+        renderAdvanceLog();
+        renderSalary();
+      });
+    }
 }
 
 // ── BILLING ──
@@ -1187,7 +1221,7 @@ function renderBilling(){
     '<div class="tot-item">PhonePe: <b style="color:var(--blue)">'+fmtINR(totPh)+'</b></div>'+
     '<div class="tot-item">Cash: <b style="color:var(--green)">'+fmtINR(totCash)+'</b></div>'+
     '<div class="tot-item">Tips: <b style="color:var(--warn)">'+fmtINR(totTip)+'</b></div>'+
-    '<div class="tot-item">Sales: <b style="color:var(--gold)">'+fmtINR(totSales)+'</b></div>';
+    '<div class="tot-item">Sales: <b style="color:var(--accent)">'+fmtINR(totSales)+'</b></div>';
 
   var sel=document.getElementById('sel-area');
   sel.innerHTML=selectedSvcs.length ?
@@ -1721,6 +1755,51 @@ function renderAttBtnWrapBilling(){
   html+='</div>';
   el.innerHTML=html;
 }
+
+// ── ATTENDANCE HELPERS ──
+function parseTimeToMins(timeStr){
+  // timeStr is "HH:MM" or "H:MM AM/PM" from toLocaleTimeString
+  if(!timeStr) return null;
+  // Handle 12-hour format (e.g., "09:30 am" or "9:30 AM")
+  var ampm = timeStr.match(/([ap]m)/i);
+  var parts = timeStr.replace(/[^0-9:]/g,'').split(':');
+  if(parts.length < 2) return null;
+  var h = parseInt(parts[0]), mn = parseInt(parts[1]);
+  if(isNaN(h)||isNaN(mn)) return null;
+  if(ampm){
+    var ap = ampm[1].toLowerCase();
+    if(ap==='pm' && h!==12) h+=12;
+    if(ap==='am' && h===12) h=0;
+  }
+  return h*60+mn;
+}
+
+function calcHoursWorked(recs){
+  // recs: attendance records for one day for one barber
+  var inRecs  = recs.filter(function(r){return r.type==='in';});
+  var outRecs = recs.filter(function(r){return r.type==='out';});
+  if(!inRecs.length) return 0;
+  // Use earliest in and latest out
+  var inMins  = inRecs.map(function(r){return parseTimeToMins(r.time);}).filter(function(v){return v!==null;});
+  var outMins = outRecs.map(function(r){return parseTimeToMins(r.time);}).filter(function(v){return v!==null;});
+  if(!inMins.length) return 0;
+  var minIn  = Math.min.apply(null, inMins);
+  if(!outMins.length) return -1; // -1 = clocked in but not out yet
+  var maxOut = Math.max.apply(null, outMins);
+  if(maxOut <= minIn) return -1; // out before in — data issue, treat as incomplete
+  return (maxOut - minIn) / 60; // hours worked as decimal
+}
+
+function getAttStatus(recs){
+  // Returns: 'present' | 'half' | 'incomplete' | 'absent'
+  if(!recs || !recs.length) return 'absent';
+  var hours = calcHoursWorked(recs);
+  if(hours === -1) return 'half';   // clocked in but no valid out = half
+  if(hours === 0)  return 'absent';
+  if(hours >= 6)   return 'present'; // 6+ hours = full day
+  return 'half';                     // < 6 hours = half day
+}
+
 function renderAttendance(){
   // Use selected month from hidden field (default = current month)
   var now=new Date();
@@ -1753,14 +1832,16 @@ function renderAttendance(){
   for(var d=1;d<=days;d++){
     var ds=d+'/'+m+'/'+yr;
     var recs=log.filter(function(r){return r.date===ds&&r.barberId===ME.id;});
-    var hasIn =recs.some(function(r){return r.type==='in';});
-    var hasOut=recs.some(function(r){return r.type==='out';});
+    var status = getAttStatus(recs);
     var cls='att-mini-day';
     if(d===todayD) cls+=' today';
-    if(hasIn&&hasOut){cls+=' in';present++;}
-    else if(hasIn){cls+=' half';half++;}
+    if(status==='present'){cls+=' in';present++;}
+    else if(status==='half'){cls+=' half';half++;}
     else if(d<todayD||!isCurrent){cls+=' off';absent++;}
-    html+='<div class="'+cls+'" onclick="showAttDayDetail(\''+ds+'\')" style="cursor:pointer">'+d+'</div>';
+    // Add hours tooltip for days with records
+    var hoursWorked = recs.length ? calcHoursWorked(recs) : 0;
+    var hoursLabel = hoursWorked>0 ? Math.round(hoursWorked*10)/10+'h' : '';
+    html+='<div class="'+cls+'" onclick="showAttDayDetail(\''+ds+'\')" style="cursor:pointer" title="'+(hoursLabel?hoursLabel+' worked':'')+'" data-tip="'+hoursLabel+'">'+d+'</div>';
   }
 
   document.getElementById('att-calendar').innerHTML=html;
@@ -1781,10 +1862,16 @@ function showAttDayDetail(ds){
   dd.innerHTML='<div style="background:var(--surface2);border-radius:var(--rs);padding:9px 12px;margin-top:7px;font-size:12px">'+
     '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">'+ds+'</div>'+
     recs.map(function(r){
-      return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
+      return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
         '<span style="color:'+(r.type==='in'?'var(--accent)':'var(--danger)')+'">'+r.type.toUpperCase()+'</span>'+
         '<span>'+r.time+'</span></div>';
     }).join('')+
+    (function(){
+      var h=calcHoursWorked(recs);
+      if(h===-1) return '<div style="font-size:11px;color:#F97316;margin-top:5px">⏱ Still clocked in (half day)</div>';
+      if(h>0) return '<div style="font-size:11px;color:'+(h>=6?'var(--accent)':'#F97316')+';margin-top:5px">⏱ '+Math.round(h*10)/10+' hrs worked — '+(h>=6?'Full Day':'Half Day (< 6 hrs)')+'</div>';
+      return '';
+    })()+
   '</div>';
 }
 

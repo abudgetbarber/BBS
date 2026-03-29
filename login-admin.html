@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Barber – Admin Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:#F0F0EA;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px}
+.card{background:white;border-radius:16px;padding:32px 24px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.10);border:1px solid #E0E0D8}
+.logo-wrap{text-align:center;margin-bottom:24px}
+.logo-box{display:inline-block;background:#F5E030;border-radius:10px;padding:12px 28px}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#003D2B;display:block;line-height:1;letter-spacing:2px}
+.role-banner{background:#4C1D95;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.role-icon{font-size:26px}
+.role-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:white;display:block}
+.role-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;display:block}
+h2{font-size:22px;font-weight:800;color:#1A1A14;margin-bottom:4px}
+.sub{font-size:13px;color:#767668;margin-bottom:22px}
+label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#767668;margin-bottom:8px}
+input[type="tel"],input[type="password"]{width:100%;background:#F8F8F4;border:2px solid #E0E0D8;border-radius:8px;padding:14px 15px;font-family:'Barlow',sans-serif;font-size:17px;font-weight:500;color:#1A1A14;outline:none;transition:border-color .2s;-webkit-appearance:none}
+input:focus{border-color:#4C1D95}
+input::placeholder{color:#AAAAAA}
+.fg{margin-bottom:18px}
+.btn{width:100%;padding:15px;border-radius:8px;border:none;cursor:pointer;font-family:'Barlow',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;display:block;text-align:center;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:#4C1D95;color:white}
+.btn-primary:hover{background:#5B21B6}
+.btn-secondary{background:transparent;border:2px solid #E0E0D8;color:#767668;margin-top:10px}
+.btn-secondary:hover{border-color:#4C1D95;color:#4C1D95}
+.err{color:#DC2626;font-size:13px;font-weight:600;text-align:center;margin-bottom:12px;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo-box"><span class="logo-text">BUDGET BARBER</span></div>
+  </div>
+  <div class="role-banner">
+    <span class="role-icon">🛡️</span>
+    <div><span class="role-title">Admin Login</span><span class="role-sub">Full system access · All salons</span></div>
+  </div>
+
+  <h2>Admin Portal</h2>
+  <p class="sub">Enter your phone number and secret PIN</p>
+
+  <div id="errMsg" class="err">Please check your phone number and PIN</div>
+
+  <div class="fg">
+    <label>Admin Mobile Number</label>
+    <input type="tel" id="phoneInput" placeholder="10-digit phone number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+  </div>
+
+  <div class="fg">
+    <label>Admin PIN</label>
+    <input type="password" id="pinInput" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
+  </div>
+
+  <button class="btn btn-primary" onclick="doLogin()">Login →</button>
+  <a href="index.html" class="btn btn-secondary">← Back to Portals</a>
+</div>
+
+<script>
+var SUPA_URL = 'YOUR_SUPABASE_URL';
+var SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+function supaFetch(path, opts){
+  return fetch(SUPA_URL + '/rest/v1/' + path, Object.assign({
+    headers:{
+      'Content-Type':'application/json',
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY
+    }
+  }, opts)).then(function(r){
+    if(!r.ok) return r.text().then(function(t){ throw new Error(t); });
+    return r.json();
+  });
+}
+
+function doLogin(){
+  var phone = document.getElementById('phoneInput').value.trim();
+  var pin   = document.getElementById('pinInput').value.trim();
+  var errEl = document.getElementById('errMsg');
+
+  if(phone.length < 8){ errEl.textContent='Enter valid phone number'; errEl.style.display='block'; return; }
+  if(pin.length < 4){   errEl.textContent='Enter 4-digit PIN';        errEl.style.display='block'; return; }
+
+  var btn = document.querySelector('.btn-primary');
+  btn.textContent = 'Checking…'; btn.disabled = true;
+  errEl.style.display = 'none';
+
+  // Query Supabase staff table for admin role
+  supaFetch('staff?phone=eq.' + encodeURIComponent(phone) + '&role=eq.admin&select=*')
+    .then(function(rows){
+      btn.textContent = 'Login →'; btn.disabled = false;
+      if(!rows || !rows.length){
+        errEl.textContent = 'Phone not registered as Admin';
+        errEl.style.display = 'block';
+        return;
+      }
+      var admin = rows[0];
+      if(String(admin.loginPin || admin.login_pin || '') !== String(pin)){
+        errEl.textContent = 'Invalid phone or PIN';
+        errEl.style.display = 'block';
+        return;
+      }
+      sessionStorage.clear();
+      sessionStorage.setItem('bb_role',  'admin');
+      sessionStorage.setItem('bb_phone', phone);
+      sessionStorage.setItem('bb_name',  admin.name || 'Admin');
+      window.location.href = 'app-admin.html';
+    })
+    .catch(function(err){
+      btn.textContent = 'Login →'; btn.disabled = false;
+      errEl.textContent = 'Connection error — check internet';
+      errEl.style.display = 'block';
+      console.error(err);
+    });
+}
+
+document.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+
+</script>
+
+  
+</body>
+</html>

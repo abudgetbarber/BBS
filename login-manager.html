@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Barber – Manager Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:#F0F0EA;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px}
+.card{background:white;border-radius:16px;padding:32px 24px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.10);border:1px solid #E0E0D8}
+.logo-wrap{text-align:center;margin-bottom:24px}
+.logo-box{display:inline-block;background:#F5E030;border-radius:10px;padding:10px 24px}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:32px;color:#003D2B;line-height:1;letter-spacing:2px;display:block}
+.role-banner{background:#1E3A5F;color:white;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.role-icon{font-size:26px}
+.role-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;display:block}
+.role-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;display:block}
+h2{font-size:22px;font-weight:800;color:#1A1A14;margin-bottom:4px}
+.sub{font-size:13px;color:#767668;margin-bottom:22px}
+label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#767668;margin-bottom:8px}
+input[type="tel"],input[type="password"]{width:100%;background:#F8F8F4;border:2px solid #E0E0D8;border-radius:8px;padding:14px 15px;font-family:'Barlow',sans-serif;font-size:17px;font-weight:500;color:#1A1A14;outline:none;transition:border-color .2s;-webkit-appearance:none}
+input:focus{border-color:#1E3A5F}
+input::placeholder{color:#AAAAAA}
+.fg{margin-bottom:18px}
+.btn{width:100%;padding:15px;border-radius:8px;border:none;cursor:pointer;font-family:'Barlow',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;display:block;text-align:center;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:#1E3A5F;color:white}
+.btn-primary:hover{background:#2a4f82}
+.btn-secondary{background:transparent;border:2px solid #E0E0D8;color:#767668;margin-top:10px}
+.btn-secondary:hover{border-color:#1E3A5F;color:#1E3A5F}
+.err{color:#DC2626;font-size:13px;font-weight:600;text-align:center;margin-bottom:12px;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo-box"><span class="logo-text">BUDGET BARBER</span></div>
+  </div>
+  <div class="role-banner">
+    <span class="role-icon">🏪</span>
+    <div><span class="role-title">Manager Login</span><span class="role-sub">Run your salon smarter</span></div>
+  </div>
+  <h2>Manager Portal</h2>
+  <p class="sub">Enter your phone number and 4-digit PIN</p>
+  <div id="errMsg" class="err">Wrong phone or PIN. Please try again.</div>
+  <div class="fg">
+    <label>Mobile Number</label>
+    <input type="tel" id="phoneInput" placeholder="Your 10-digit mobile number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+  </div>
+  <div class="fg">
+    <label>PIN</label>
+    <input type="password" id="pinInput" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
+  </div>
+
+  <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Login →</button>
+  <a href="index.html" class="btn btn-secondary">← Back to Portals</a>
+</div>
+<script>
+var SUPA_URL = 'YOUR_SUPABASE_URL';
+var SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+function supaFetch(path, opts){
+  return fetch(SUPA_URL + '/rest/v1/' + path, Object.assign({
+    headers:{
+      'Content-Type':'application/json',
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY
+    }
+  }, opts)).then(function(r){
+    if(!r.ok) return r.text().then(function(t){ throw new Error(t); });
+    return r.json();
+  });
+}
+
+function disableLogin(msg){
+  var btn = document.getElementById('loginBtn');
+  if(btn){ btn.disabled = true; btn.textContent = msg; }
+}
+function enableLogin(){
+  var btn = document.getElementById('loginBtn');
+  if(btn){ btn.disabled = false; btn.textContent = 'Login →'; }
+}
+
+(function loadFromSupabase(){
+  disableLogin('⏳ Loading…');
+  supaFetch('staff?select=*')
+    .then(function(staff){
+      staff = staff.map(function(s){
+        if(s.loginPin !== undefined && s.loginPin !== null) s.loginPin = String(s.loginPin);
+        if(s.login_pin !== undefined && s.login_pin !== null){ s.loginPin = String(s.login_pin); }
+        return s;
+      });
+      localStorage.setItem('bb_staff', JSON.stringify(staff));
+      return supaFetch('customers?select=*');
+    })
+    .then(function(customers){
+      customers = customers.map(function(c){
+        if(c.loginPin !== undefined && c.loginPin !== null) c.loginPin = String(c.loginPin);
+        if(c.login_pin !== undefined && c.login_pin !== null){ c.loginPin = String(c.login_pin); }
+        return c;
+      });
+      localStorage.setItem('bb_customers', JSON.stringify(customers));
+      return supaFetch('salons?select=*');
+    })
+    .then(function(salons){
+      localStorage.setItem('bb_salons', JSON.stringify(salons));
+      enableLogin();
+    })
+    .catch(function(err){
+      console.warn('[BB] Supabase load failed, using cache:', err);
+      enableLogin();
+    });
+})();
+
+function doLogin(){
+  var phone = document.getElementById('phoneInput').value.trim();
+  var pin   = document.getElementById('pinInput').value.trim();
+  var errEl = document.getElementById('errMsg');
+  if(phone.length < 8){ errEl.textContent='Enter a valid phone number'; errEl.style.display='block'; return; }
+  if(pin.length < 4){   errEl.textContent='Enter your 4-digit PIN';    errEl.style.display='block'; return; }
+  errEl.style.display = 'none';
+  var staffList = JSON.parse(localStorage.getItem('bb_staff') || '[]');
+  var sm = staffList.find(function(u){ return u.phone===phone && u.role==='manager'; });
+  if(!sm){ errEl.textContent='Phone not registered as Manager — contact admin'; errEl.style.display='block'; return; }
+  if(!sm.loginPin || String(sm.loginPin) !== String(pin)){ errEl.textContent='Wrong PIN. Try again.'; errEl.style.display='block'; document.getElementById('pinInput').value=''; return; }
+  sessionStorage.setItem('bb_role','manager');
+  sessionStorage.setItem('bb_phone', phone);
+  sessionStorage.setItem('bb_name', sm.name||'Manager');
+  window.location.href = 'app-manager.html';
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !document.getElementById('loginBtn').disabled) doLogin();
+});
+
+</script>
+</body>
+</html>

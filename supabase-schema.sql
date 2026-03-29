@@ -1,3 +1,28 @@
+
+-- 15. PNL INPUTS (manager-entered monthly P&L data)
+create table if not exists pnl_inputs (
+  id          bigserial primary key,
+  salon_id    text,
+  month       text,           -- "yyyy-mm"
+  proj_rev    numeric default 0,
+  rent        numeric default 0,
+  staff_rent  numeric default 0,
+  cosmetics   numeric default 0,
+  eb_store    numeric default 0,
+  eb_staff    numeric default 0,
+  maid        numeric default 0,
+  ads         numeric default 0,
+  extra_food  numeric default 0,
+  wifi        numeric default 0,
+  misc        numeric default 0,
+  ads_rev     numeric default 0,
+  shares      text default '[]'   -- JSON array of {name, pct}
+);
+
+alter table pnl_inputs enable row level security;
+create policy "anon_all_pnl_inputs" on pnl_inputs
+  for all to anon using (true) with check (true);
+
 -- ═══════════════════════════════════════════════════════════════════
 --  BUDGET BARBER — SUPABASE SCHEMA
 --  Run this in: Supabase Dashboard → SQL Editor → Run

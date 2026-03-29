@@ -123,7 +123,6 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
   <button class="nt"    id="nt-allsales"  onclick="showTab('allsales')">📋 All Sales</button>
   <button class="nt"    id="nt-reports"   onclick="showTab('reports')">📈 Reports</button>
   <button class="nt"    id="nt-manage"    onclick="showTab('manage')">👥 Manage</button>
-  <button class="nt"    id="nt-settings"  onclick="showTab('settings')">⚙️ Settings</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -238,268 +237,6 @@ pre{font-size:11px;color:#90EE90;line-height:1.6;white-space:pre-wrap;word-break
 </div>
 
 <!-- SETTINGS -->
-<div class="panel" id="pn-settings">
-  <div style="background:var(--card);border-radius:var(--r);padding:18px;margin-bottom:16px;border:1px solid rgba(255,255,255,.06)">
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Logged In As</div>
-    <div style="font-size:15px;font-weight:600" id="settingsName">—</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:3px">🛡️ Admin · All Salons</div>
-  </div>
-  <div class="sheets-box">
-    <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:12px">☁ Supabase Sync</div>
-    <div class="ifield" style="margin-bottom:10px"><label>Supabase Project URL</label><input type="url" id="sh-url" placeholder="YOUR_SUPABASE_URL"></div>
-    <div class="ifield" style="margin-bottom:10px"><label>Sheet Name</label><input type="text" id="sh-name" placeholder="Sheet1"></div>
-    <button class="btn-sm" onclick="saveSheetConfig()" style="width:100%;margin-bottom:10px">💾 Save Config</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <button class="btn-sm" onclick="syncAllData()" style="background:rgba(0,196,140,.15);border-color:var(--accent);color:var(--accent);text-align:center">⬆ Sync to Supabase</button>
-      <button class="btn-sm" onclick="restoreFromSheets()" style="background:rgba(91,200,255,.1);border-color:var(--blue);color:var(--blue);text-align:center">⬇ Refresh from Supabase</button>
-    </div>
-    <div id="sync-status" style="display:none;border-radius:var(--rs);padding:9px 12px;font-size:12px;font-weight:600;text-align:center;margin-bottom:10px"></div>
-    <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:14px">
-      <b style="color:var(--white)">⬆ Sync to Supabase</b> — pushes all data (salons, staff, entries, customers) to your Google Sheet.<br>
-      <b style="color:var(--white)">⬇ Refresh from Supabase</b> — pulls all data back from the sheet to this device.
-    </div>
-    <details>
-      <summary style="color:var(--muted);font-size:12px;cursor:pointer">📋 View Apps Script code to paste</summary>
-      <pre id="gs-code" style="margin-top:10px">// ── BUDGET BARBER APPS SCRIPT v9 ──
-// Handles single-row writes via JSONP GET (appendRow, updateRow, deleteRow)
-// and full restore via JSONP GET (read all sheets)
-//
-// SETUP:
-// 1. Google Sheets → Extensions → Apps Script → delete all → paste this → Save
-// 2. Deploy → New deployment → Web app → Anyone → Deploy → Authorize
-// 3. Copy Web App URL → paste in each app → Settings → Save Config
-
-const SS = SpreadsheetApp.getActiveSpreadsheet();
-
-const HEADERS = {
-  Entries:      ['id','date','time','barberId','barberName','salonId','services',
-                 'phPay','cash','tip','phTip','cashTip','total','customerName','customerPhone'],
-  Staff:        ['id','name','phone','role','salonId','loginPin','fixedSalary','foodMoney','cleaningMoney'],
-  Salons:       ['id','name','location','mgrPhone'],
-  Customers:    ['id','phone','name','role','hairType','faceShape','density','growthNotes','loginPin'],
-  CashIn:       ['amount','time','date','barberId'],
-  Expenses:     ['desc','amount','time','date','barberId'],
-  Attendance:   ['type','date','time','ts','barberId'],
-  StyleCards:   ['id','cardId','customerId','barberId','salonId','name','createdAt',
-                 'topLength','texture','fade','guard','neckline','beard','product','notes',
-                 'zoneFront','zoneTop','zoneCrown','zoneLeft','zoneRight','zoneBack'],
-  Visits:       ['id','customerId','barberId','barberName','salonId','salonName','styleName','date','note'],
-  Advances:     ['date','amount','barberId','ts'],
-  MgrCashIn:    ['amount','time','date','managerId','salonId'],
-  MgrExpenses:  ['desc','amount','time','date','managerId','salonId'],
-  Deductions:   ['staffId','month','desc','amount'],
-  AttOverrides: ['staffId','month','present','half','absent']
-};
-
-// ── ALL requests come in as GET (JSONP) ──
-function doGet(e) {
-  var p        = e.parameter || {};
-  var callback = p.callback  || '';
-
-  try {
-    // ── Single-row write via ?payload=JSON&callback=fn ──
-    if (p.payload) {
-      var body     = JSON.parse(decodeURIComponent(p.payload));
-      var action   = body.action || '';
-
-      if (action === 'appendRow') {
-        appendOneRow(body.sheet, body.data);
-        return jsonOut({ ok: true }, callback);
-      }
-      if (action === 'updateRow') {
-        updateOneRow(body.sheet, body.data, body.idField || 'id');
-        return jsonOut({ ok: true }, callback);
-      }
-      if (action === 'deleteRow') {
-        deleteOneRow(body.sheet, body.id, body.idField || 'id');
-        return jsonOut({ ok: true }, callback);
-      }
-      if (action === 'syncSheet') {
-        var rows = body.data || [];
-        if (body.replace === 1 || body.replace === '1' || body.replace === true) {
-          writeSheet(body.sheet, rows);
-        } else {
-          appendRows(body.sheet, rows);
-        }
-        return jsonOut({ ok: true }, callback);
-      }
-    }
-
-    // ── Old-style GET sync (action=syncSheet in params) ──
-    if (p.action === 'syncSheet') {
-      var rows2 = JSON.parse(decodeURIComponent(p.data || '[]'));
-      if (p.replace === '1') writeSheet(p.sheet, rows2);
-      else appendRows(p.sheet, rows2);
-      return jsonOut({ ok: true }, callback);
-    }
-
-    // ── Read all sheets (Restore) ──
-    if (p.action === 'getRows') {
-      var rows3 = readSheet(p.sheet || '');
-      var filterKeys = Object.keys(p).filter(function(k){
-        return k !== 'action' && k !== 'sheet' && k !== 'callback' && k !== 'payload';
-      });
-      if (filterKeys.length) {
-        rows3 = rows3.filter(function(row){
-          return filterKeys.every(function(k){ return String(row[k]) === String(p[k]); });
-        });
-      }
-      return jsonOut({ ok: true, rows: rows3 }, callback);
-    }
-
-    // Default: read ALL sheets for full Restore
-    var result = {};
-    Object.keys(HEADERS).forEach(function(name) {
-      result[name.charAt(0).toLowerCase() + name.slice(1)] = readSheet(name);
-    });
-    return jsonOut({ ok: true, data: result }, callback);
-
-  } catch(err) {
-    return jsonOut({ ok: false, error: err.message }, callback);
-  }
-}
-
-// ── doPost kept for backward compatibility ──
-function doPost(e) {
-  try {
-    var body   = JSON.parse(e.postData.contents);
-    var action = body.action || '';
-    if (action === 'appendRow')  { appendOneRow(body.sheet, body.data); return jsonOut({ok:true},''); }
-    if (action === 'updateRow')  { updateOneRow(body.sheet, body.data, body.idField||'id'); return jsonOut({ok:true},''); }
-    if (action === 'deleteRow')  { deleteOneRow(body.sheet, body.id, body.idField||'id'); return jsonOut({ok:true},''); }
-    if (action === 'syncSheet')  {
-      if (body.replace===1||body.replace==='1'||body.replace===true) writeSheet(body.sheet,body.data||[]);
-      else appendRows(body.sheet,body.data||[]);
-      return jsonOut({ok:true},'');
-    }
-    return jsonOut({ok:true,message:'no-op'},'');
-  } catch(err) { return jsonOut({ok:false,error:err.message},''); }
-}
-
-function appendOneRow(sheetName, rowObj) {
-  if (!sheetName || !rowObj) return;
-  var sheet   = getOrCreateSheet(sheetName);
-  var headers = HEADERS[sheetName] || Object.keys(rowObj);
-  var vals    = headers.map(function(k) {
-    var v = rowObj[k];
-    if (v === null || v === undefined || v === '') return '';
-    return typeof v === 'object' ? JSON.stringify(v) : v;
-  });
-  sheet.appendRow(vals);
-}
-
-function updateOneRow(sheetName, rowObj, idField) {
-  if (!sheetName || !rowObj) return;
-  var sheet = getOrCreateSheet(sheetName);
-  if (sheet.getLastRow() < 2) { appendOneRow(sheetName, rowObj); return; }
-  var data    = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var idCol   = headers.indexOf(idField);
-  if (idCol === -1) { appendOneRow(sheetName, rowObj); return; }
-  var targetId = String(rowObj[idField]);
-  for (var r = 1; r < data.length; r++) {
-    if (String(data[r][idCol]) === targetId) {
-      var newRow = headers.map(function(h) {
-        var v = rowObj[h];
-        if (v === null || v === undefined || v === '') return '';
-        return typeof v === 'object' ? JSON.stringify(v) : v;
-      });
-      sheet.getRange(r + 1, 1, 1, newRow.length).setValues([newRow]);
-      return;
-    }
-  }
-  appendOneRow(sheetName, rowObj);  // not found → append
-}
-
-function deleteOneRow(sheetName, id, idField) {
-  if (!sheetName || !id) return;
-  var sheet = getOrCreateSheet(sheetName);
-  if (sheet.getLastRow() < 2) return;
-  var data    = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var idCol   = headers.indexOf(idField);
-  if (idCol === -1) return;
-  for (var r = data.length - 1; r >= 1; r--) {
-    if (String(data[r][idCol]) === String(id)) { sheet.deleteRow(r + 1); return; }
-  }
-}
-
-function writeSheet(name, rows) {
-  var sheet = getOrCreateSheet(name);
-  ensureHeaders(sheet, name);
-  var lastRow = sheet.getLastRow();
-  if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
-  if (rows && rows.length) writeRowsToSheet(sheet, name, rows, 2);
-}
-
-function appendRows(name, rows) {
-  if (!rows || !rows.length) return;
-  var sheet = getOrCreateSheet(name);
-  writeRowsToSheet(sheet, name, rows, sheet.getLastRow() + 1);
-}
-
-function writeRowsToSheet(sheet, name, rows, startRow) {
-  var headers = HEADERS[name] || Object.keys(rows[0]);
-  var data    = rows.map(function(row) {
-    return headers.map(function(k) {
-      var v = row[k];
-      if (v === null || v === undefined || v === '') return '';
-      return typeof v === 'object' ? JSON.stringify(v) : v;
-    });
-  });
-  if (data.length) sheet.getRange(startRow, 1, data.length, headers.length).setValues(data);
-}
-
-function readSheet(name) {
-  var sheet = SS.getSheetByName(name);
-  if (!sheet || sheet.getLastRow() < 2) return [];
-  var values  = sheet.getDataRange().getValues();
-  var headers = values[0];
-  return values.slice(1)
-    .filter(function(row){ return !row.every(function(c){ return c === ''; }); })
-    .map(function(row){
-      var obj = {};
-      headers.forEach(function(h, i){ obj[String(h)] = row[i]; });
-      return obj;
-    });
-}
-
-function getOrCreateSheet(name) {
-  var sheet = SS.getSheetByName(name);
-  if (!sheet) { sheet = SS.insertSheet(name); ensureHeaders(sheet, name); }
-  return sheet;
-}
-
-function ensureHeaders(sheet, name) {
-  if (sheet.getLastRow() === 0) {
-    var h = HEADERS[name];
-    if (h) sheet.getRange(1, 1, 1, h.length).setValues([h]);
-  }
-}
-
-function jsonOut(obj, callback) {
-  var text = JSON.stringify(obj);
-  if (callback) text = callback + '(' + text + ')';
-  return ContentService.createTextOutput(text)
-    .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
-}</pre>
-      <button onclick="copyGS()" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--muted);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--BF)" id="copy-gs-btn">📋 Copy Script</button>
-    </details>
-  </div>
-
-  <!-- DANGER ZONE -->
-  <div style="background:rgba(224,107,91,.07);border:1.5px solid rgba(224,107,91,.3);border-radius:var(--r);padding:18px;margin-bottom:16px">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--danger);margin-bottom:10px">⚠️ Danger Zone</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px">
-      <b style="color:var(--white)">Clear All Data</b> — permanently wipes all salon data from this device (entries, staff, customers, salons, attendance, expenses, style cards, everything). Google Sheets data is <b style="color:var(--white)">not affected</b>. Use Restore after clearing to pull data back.
-    </div>
-    <button onclick="clearAllData()" style="width:100%;padding:12px;background:rgba(224,107,91,.12);border:1.5px solid var(--danger);color:var(--danger);border-radius:var(--rs);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--BF);text-transform:uppercase;letter-spacing:.5px">
-      🗑 Clear All Data on This Device
-    </button>
-  </div>
-
-  <button onclick="logout()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--BF)">Logout</button>
-</div>
 
 <!-- ADD SALON MODAL -->
 <div class="modal-bg" id="addSalonModal" onclick="if(event.target===this)closeModal('addSalonModal')">
@@ -664,8 +401,8 @@ function jsonOut(obj, callback) {
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -831,10 +568,14 @@ var SB = {
 // This is called once on app load. Supabase is source of truth.
 function supaBootstrap(onDone, onError){
   SB.readAll().then(function(data){
+    ['entries','staff','salons','customers','cashIn','expenses',
+     'attendance','styleCards','visits','advances','mgrCashIn','mgrExpenses'].forEach(function(k){
+      localStorage.removeItem('bb_'+k);
+    });
     applyRestoredData(data);
     if(onDone) onDone(data);
   }).catch(function(err){
-    console.warn('[BB] Supabase bootstrap failed:', err);
+    console.warn('[BB] Supabase fetch failed, using cached data:', err);
     if(onError) onError(err);
   });
 }
@@ -983,14 +724,11 @@ function filterByMonth(e,mo){if(!mo)return e;var p=mo.split('-');return e.filter
 // ── INIT ──
 (function(){
   // Show setup banner if Google Sheets not configured yet
-  if(!LS.get('sheetUrl')){
-    document.getElementById('setup-banner').style.display='flex';
-    document.getElementById('setup-banner').classList.add('show');
-    return;
-  }
+  
+      }
   document.getElementById('settingsName').textContent='Admin · '+SESSION_PHONE;
-  document.getElementById('sh-url').value=LS.get('sheetUrl')||'';
-  document.getElementById('sh-name').value=LS.get('sheetName')||'Sheet1';
+  
+  
   var salons=LS.get('salons')||[];
   var staff=(LS.get('staff')||[]).filter(function(u){return u.role==='barber';});
   // populate filter selects for both day and month modes

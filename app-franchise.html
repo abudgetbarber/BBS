@@ -203,6 +203,23 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .sb-status{font-size:12px;margin-top:10px;min-height:20px;color:var(--muted)}
 
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── PNL TAB ── */
+.pnl-section{background:var(--card,#003828);border:1px solid rgba(255,255,255,.07);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.pnl-sec-title{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.pnl-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;gap:8px}
+.pnl-row:last-child{border-bottom:none}
+.pnl-row span:first-child{color:rgba(255,255,255,.75);flex:1}
+.pnl-val-pos{color:#00C48C;font-weight:700}
+.pnl-val-neg{color:#FF6B5B;font-weight:700}
+.pnl-auto{background:rgba(255,255,255,.02)}
+.pnl-total-row{background:rgba(255,255,255,.04);font-weight:700}
+.pnl-muted-row{opacity:.7;font-size:12px}
+.pnl-input{background:var(--surface2,var(--darker,#001A12));border:1px solid rgba(255,255,255,.12);border-radius:6px;color:var(--white);font-family:var(--BF);font-size:13px;padding:5px 9px;width:110px;text-align:right;outline:none}
+.pnl-input:focus{border-color:var(--accent,#00C48C)}
+.pnl-share-row{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04)}
+.pnl-share-row:last-child{border-bottom:none}
+
 </style>
 </head>
 <body>
@@ -210,9 +227,7 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
   <span style="animation:spin 1s linear infinite;display:inline-block">⟳</span>
   Loading your salon data from Google Sheets…
 </div>
-<!-- SETUP BANNER (shown when localStorage is empty / no staff record found) -->
-<div id="setup-banner" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">
-  <div class="sb-logo"><span class="sb-logo-text">BB</span></div>
+
   <div class="sb-title">Device Setup Required</div>
   <div class="sb-sub">This device doesn't have salon data yet.<br>Paste your Google Sheets sync URL below and tap Restore to get all data.</div>
   <div class="sb-card">
@@ -247,7 +262,7 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
   <button class="nt"    id="nt-yearly"    onclick="showTab('yearly')">📅 Yearly</button>
   <button class="nt"    id="nt-staff"     onclick="showTab('staff')">👥 Staff</button>
   <button class="nt"    id="nt-customers" onclick="showTab('customers')">👤 Customers</button>
-  <button class="nt"    id="nt-settings"  onclick="showTab('settings')">⚙️ Settings</button>
+  <button class="nt" id="nt-pnl" onclick="showTab('pnl')">📊 P&L</button>
 </div>
 
 <!-- ════ DASHBOARD ════ -->
@@ -426,29 +441,6 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 
 <!-- FRANCHISE SALARY MODAL -->
 <!-- ════ SETTINGS ════ -->
-<div class="panel" id="pn-settings">
-  <div style="background:var(--surface2);border-radius:var(--r);padding:16px;margin-bottom:14px;border:1px solid rgba(255,255,255,.06)">
-    <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Logged In As</div>
-    <div style="font-size:15px;font-weight:700;color:var(--white)" id="fr-settings-name">—</div>
-    <div style="font-size:12px;color:var(--muted2);margin-top:3px">🏢 Franchise Owner</div>
-  </div>
-  <div style="background:var(--surface2);border-radius:var(--r);padding:16px;border:1px solid rgba(255,255,255,.06);margin-bottom:14px">
-    <div style="font-size:12px;font-weight:700;color:var(--white);margin-bottom:12px">☁ Supabase Sync</div>
-    <div class="mfield"><label class="mlbl">Supabase URL</label><input type="url" class="mfi" id="fr-sh-url" placeholder="YOUR_SUPABASE_URL"></div>
-    <div class="mfield"><label class="mlbl">Sheet Name</label><input type="text" class="mfi" id="fr-sh-name" placeholder="Sheet1"></div>
-    <button class="btn-primary" onclick="frSaveSheetConfig()" style="margin-bottom:10px">💾 Save Config</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <button class="btn-primary" onclick="frSyncAllData()" style="background:rgba(0,196,140,.15);border:1.5px solid var(--accent);color:var(--accent)">⬆ Sync to Supabase</button>
-      <button class="btn-primary" onclick="frRestoreFromSheets()" style="background:rgba(91,196,240,.1);border:1.5px solid var(--blue);color:var(--blue)">⬇ Refresh from Supabase</button>
-    </div>
-    <div id="fr-sync-status" style="display:none;border-radius:var(--rs);padding:9px 12px;font-size:12px;font-weight:600;text-align:center;margin-bottom:8px"></div>
-    <div style="font-size:10px;color:var(--muted2);line-height:1.5">
-      <b style="color:var(--muted)">Sync to Sheets</b> — pushes all data up to Google Sheets.<br>
-      <b style="color:var(--muted)">Restore from Sheets</b> — pulls data from Sheets to this device.
-    </div>
-  </div>
-  <button onclick="logout()" style="width:100%;padding:13px;background:rgba(255,107,91,.08);border:1.5px solid rgba(255,107,91,.25);color:var(--danger);border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--BF)">Logout</button>
-</div>
 
 <div class="modal-bg" id="frSalaryModal" onclick="if(event.target===this)closeModal('frSalaryModal')">
   <div class="modal-box" style="max-width:460px">
@@ -469,6 +461,103 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
   </div>
 </div>
 
+
+<!-- P&L PANEL -->
+<div class="panel" id="pn-pnl">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:15px;font-weight:700;color:var(--white)">Profit &amp; Loss Statement</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="month" id="pnl-month" style="background:var(--surface2,var(--card,#003828));border:1px solid rgba(255,255,255,.15);border-radius:6px;color:var(--white);font-size:12px;padding:5px 9px;font-family:var(--BF);outline:none" onchange="renderPNL()">
+      <button onclick="exportPNL()" style="padding:6px 12px;background:rgba(0,196,140,.12);border:1px solid var(--accent,#00C48C);color:var(--accent,#00C48C);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">⬇ Export</button>
+    </div>
+  </div>
+
+  <!-- SALON NAME HEADER -->
+  <div id="pnl-salon-header" style="background:var(--accent,#00C48C);color:#fff;border-radius:10px;padding:12px 18px;text-align:center;font-family:var(--HF,'Bebas Neue',sans-serif);font-size:22px;letter-spacing:2px;margin-bottom:16px"></div>
+
+  <!-- REVENUE -->
+  <div class="pnl-section">
+    <div class="pnl-sec-title" style="background:rgba(0,196,140,.15);border-color:rgba(0,196,140,.3);color:var(--accent,#00C48C)">REVENUE</div>
+    <div class="pnl-row"><span>Revenue (Actual Sales)</span><span id="pnl-revenue" class="pnl-val-pos">₹0</span></div>
+    <div class="pnl-row"><span>Projected Revenue</span>
+      <span><input type="number" id="pnl-proj-rev" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input"></span>
+    </div>
+  </div>
+
+  <!-- OPEX -->
+  <div class="pnl-section">
+    <div class="pnl-sec-title" style="background:rgba(255,107,91,.1);border-color:rgba(255,107,91,.25);color:var(--danger,#FF6B5B)">OPEX (Operating Expenses)</div>
+
+    <!-- AUTO from Supabase -->
+    <div class="pnl-row pnl-auto"><span>Salaries (all staff)</span><span id="pnl-salaries" class="pnl-val-neg">₹0</span></div>
+    <div style="font-size:10px;color:var(--muted);padding:0 14px 6px;font-style:italic" id="pnl-salary-detail"></div>
+
+    <!-- MANUAL inputs by manager -->
+    <div class="pnl-row"><span>Rent</span>
+      <input type="number" id="pnl-rent" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row"><span>Staff Rent</span>
+      <input type="number" id="pnl-staff-rent" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row"><span>Cosmetics</span>
+      <input type="number" id="pnl-cosmetics" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row"><span>EB Store (Electricity)</span>
+      <input type="number" id="pnl-eb-store" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row"><span>EB Staff Room</span>
+      <input type="number" id="pnl-eb-staff" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row"><span>Maid</span>
+      <input type="number" id="pnl-maid" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row"><span>Ads</span>
+      <input type="number" id="pnl-ads" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row pnl-auto"><span>Food Money (from staff profile)</span><span id="pnl-food" class="pnl-val-neg">₹0</span></div>
+    <div class="pnl-row"><span>Extra Sunday Food</span>
+      <input type="number" id="pnl-extra-food" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row pnl-auto"><span>Actual Incentives (paid out)</span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
+    <div class="pnl-row"><span>WiFi</span>
+      <input type="number" id="pnl-wifi" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+    <div class="pnl-row"><span>Misc (Water + Trash + Gas etc)</span>
+      <input type="number" id="pnl-misc" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+
+    <!-- TOTALS -->
+    <div class="pnl-row pnl-total-row" style="margin-top:4px">
+      <span>Actual Total Opex</span><span id="pnl-total-opex" style="color:var(--danger,#FF6B5B);font-weight:800;font-size:15px">₹0</span>
+    </div>
+    <div class="pnl-row pnl-muted-row"><span>Projected Incentives</span><span id="pnl-proj-incentives">₹0</span></div>
+    <div class="pnl-row pnl-muted-row"><span>Projected Total Opex</span><span id="pnl-proj-opex">₹0</span></div>
+  </div>
+
+  <!-- PROFIT / LOSS -->
+  <div class="pnl-section">
+    <div class="pnl-sec-title" style="background:rgba(255,209,0,.1);border-color:rgba(255,209,0,.25);color:var(--gold,#FFD100)">PROFIT / LOSS</div>
+    <div class="pnl-row pnl-total-row"><span>Profit / Loss</span><span id="pnl-profit" style="font-size:16px;font-weight:900">₹0</span></div>
+    <div class="pnl-row pnl-muted-row"><span>Projected Profit / Loss</span><span id="pnl-proj-profit">₹0</span></div>
+    <div class="pnl-row"><span>Additional Ads Revenue</span>
+      <input type="number" id="pnl-ads-rev" placeholder="0" min="0" oninput="savePNLInputs();renderPNL()" class="pnl-input">
+    </div>
+  </div>
+
+  <!-- PROFIT SHARE -->
+  <div class="pnl-section">
+    <div class="pnl-sec-title" style="background:rgba(91,200,255,.08);border-color:rgba(91,200,255,.2);color:var(--blue,#5BC8FF)">PROFIT SHARE</div>
+    <div id="pnl-share-rows"></div>
+    <div class="pnl-row" style="margin-top:8px">
+      <input type="text" id="pnl-share-name" placeholder="Partner name" class="pnl-input" style="max-width:140px;text-align:left">
+      <input type="number" id="pnl-share-pct" placeholder="%" min="0" max="100" class="pnl-input" style="max-width:60px">
+      <button onclick="addProfitShare()" style="padding:6px 10px;background:rgba(91,200,255,.12);border:1px solid rgba(91,200,255,.3);color:var(--blue,#5BC8FF);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Add</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);padding:4px 14px">Partners and % share of profit/loss</div>
+  </div>
+
+</div>
+
 <div class="toast-el" id="toastEl"></div>
 
 <script>
@@ -479,8 +568,8 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -646,10 +735,14 @@ var SB = {
 // This is called once on app load. Supabase is source of truth.
 function supaBootstrap(onDone, onError){
   SB.readAll().then(function(data){
+    ['entries','staff','salons','customers','cashIn','expenses',
+     'attendance','styleCards','visits','advances','mgrCashIn','mgrExpenses'].forEach(function(k){
+      localStorage.removeItem('bb_'+k);
+    });
     applyRestoredData(data);
     if(onDone) onDone(data);
   }).catch(function(err){
-    console.warn('[BB] Supabase bootstrap failed:', err);
+    console.warn('[BB] Supabase fetch failed, using cached data:', err);
     if(onError) onError(err);
   });
 }
@@ -857,11 +950,7 @@ function showTab(tab){
   if(tab==='yearly')    renderYearly();
   if(tab==='staff')     renderStaff();
   if(tab==='customers') renderCustomers();
-  if(tab==='settings'){
-    document.getElementById('fr-settings-name').textContent=sessionStorage.getItem('bb_name')||'Franchise Owner';
-    document.getElementById('fr-sh-url').value=LS.get('sheetUrl')||'';
-    document.getElementById('fr-sh-name').value=LS.get('sheetName')||'Sheet1';
-  }
+  if(tab==='pnl'){ initPNL(); renderPNL(); }
 }
 function applyRestoredData(d){
   var toStr=function(rec,fields){
@@ -926,7 +1015,7 @@ function fetchFromSheets(url, onSuccess, onError){
 // ── SHARED: apply restored data to localStorage ──
 // ── JSONP fetch from Sheets (works on all devices) ──
 async function frRestoreFromSheets(){
-  var url=BB_SHEET_URL||LS.get('sheetUrl')||SUPA_URL;
+  var url=BB_SHEET_URL||SUPA_URL;
   if(!url){toast('⚠ No Supabase URL configured');return;}
   if(!confirm('Replace ALL local data with data from Google Sheets?'))return;
   frShowSyncStatus('⬇ Loading from Google Sheets…','loading');
@@ -1373,6 +1462,271 @@ function renderYearly(){
     '<div class="sc warn"><div class="sc-lbl">Cash Tips</div><div class="sc-val" style="font-size:18px;color:var(--warn)">'+fmtINR(tCashTip)+'</div></div>';
 }
 
+
+
+// ════════════════════════════════════════════════════
+//  P & L  TAB
+// ════════════════════════════════════════════════════
+
+
+function pnlKey(month){ return mySalonId + '_' + month; }
+
+function loadPNLInputs(month){
+  // Load from Supabase (async) — also check local cache as fallback
+  var cacheKey = 'pnl_' + pnlKey(month);
+  var cached = LS.get(cacheKey) || {};
+  _applyPNLInputs(cached);
+
+  // Fetch fresh from Supabase
+  sbSelect('pnl_inputs', 'salon_id=eq.' + encodeURIComponent(mySalonId) + '&month=eq.' + encodeURIComponent(month))
+    .then(function(rows){
+      if(rows && rows.length){
+        var d = rows[0];
+        LS.set(cacheKey, d);
+        _applyPNLInputs(d);
+        renderPNL();
+      }
+    }).catch(function(err){ console.warn('[BB] PNL load error:', err); });
+}
+
+function _applyPNLInputs(d){
+  function set(id, val){ var el=document.getElementById(id); if(el) el.value=val||''; }
+  set('pnl-proj-rev',   d.proj_rev);
+  set('pnl-rent',       d.rent);
+  set('pnl-staff-rent', d.staff_rent);
+  set('pnl-cosmetics',  d.cosmetics);
+  set('pnl-eb-store',   d.eb_store);
+  set('pnl-eb-staff',   d.eb_staff);
+  set('pnl-maid',       d.maid);
+  set('pnl-ads',        d.ads);
+  set('pnl-extra-food', d.extra_food);
+  set('pnl-wifi',       d.wifi);
+  set('pnl-misc',       d.misc);
+  set('pnl-ads-rev',    d.ads_rev);
+  window._pnlShares = d.shares ? (typeof d.shares === 'string' ? JSON.parse(d.shares) : d.shares) : [];
+}
+
+function savePNLInputs(){
+  var month = document.getElementById('pnl-month').value;
+  if(!month || !mySalonId) return;
+  function val(id){ return parseFloat((document.getElementById(id)||{}).value)||0; }
+  var d = {
+    salon_id:   mySalonId,
+    month:      month,
+    proj_rev:   val('pnl-proj-rev'),
+    rent:       val('pnl-rent'),
+    staff_rent: val('pnl-staff-rent'),
+    cosmetics:  val('pnl-cosmetics'),
+    eb_store:   val('pnl-eb-store'),
+    eb_staff:   val('pnl-eb-staff'),
+    maid:       val('pnl-maid'),
+    ads:        val('pnl-ads'),
+    extra_food: val('pnl-extra-food'),
+    wifi:       val('pnl-wifi'),
+    misc:       val('pnl-misc'),
+    ads_rev:    val('pnl-ads-rev'),
+    shares:     JSON.stringify(window._pnlShares || [])
+  };
+  // Cache locally
+  LS.set('pnl_' + pnlKey(month), d);
+  // Save to Supabase (upsert on salon_id + month)
+  _supaFetch('pnl_inputs?salon_id=eq.' + encodeURIComponent(mySalonId) + '&month=eq.' + encodeURIComponent(month), {method:'DELETE'})
+    .then(function(){ return sbInsert('pnl_inputs', d); })
+    .catch(function(err){ console.warn('[BB] PNL save error:', err); });
+}
+
+function renderPNL(){
+
+  var month = document.getElementById('pnl-month').value;
+  if(!month){ return; }
+  loadPNLInputs(month);
+
+  var yr = parseInt(month.split('-')[0]);
+  var mo = parseInt(month.split('-')[1]);
+
+  // ── Revenue (from entries) ──
+  var entries = getEntries().filter(function(e){
+    if(e.salonId && e.salonId !== mySalonId) return false;
+    var p = (e.date||'').split('/');
+    return parseInt(p[1])===mo && parseInt(p[2])===yr;
+  });
+  var revenue = entries.reduce(function(a,e){ return a+Number(e.phPay||0)+Number(e.cash||0); },0);
+
+  // ── Staff salaries + food money ──
+  var myStaff = (LS.get('staff')||[]).filter(function(u){ return u.salonId===mySalonId; });
+  var totalSalary = 0, totalFood = 0;
+  var salaryDetail = [];
+  myStaff.forEach(function(u){
+    var fs = Number(u.fixedSalary||0);
+    var fm = Number(u.foodMoney||0);
+    var cm = Number(u.cleaningMoney||0);
+    totalSalary += fs + cm;
+    totalFood   += fm;
+    if(fs||fm||cm) salaryDetail.push(u.name+': ₹'+fs+' salary, ₹'+fm+' food, ₹'+cm+' clean');
+  });
+
+  // ── Actual Incentives paid — sum from salary breakdown this month ──
+  // Incentive = max(0, (barberMoSales - fixedSalary) * 10%)
+  var totalActualIncentives = 0;
+  var totalProjIncentives   = 0;
+  myStaff.filter(function(u){ return u.role==='barber'; }).forEach(function(u){
+    var bEntries = entries.filter(function(e){ return e.barberId===u.id; });
+    var bSales   = bEntries.reduce(function(a,e){ return a+Number(e.phPay||0)+Number(e.cash||0); },0);
+    var inc = Math.max(0, Math.round((bSales - Number(u.fixedSalary||0)) * 0.10));
+    totalActualIncentives += inc;
+    // Projected incentive: assume projected revenue distributed proportionally
+    var projRevTotal = parseFloat(document.getElementById('pnl-proj-rev').value)||0;
+    if(projRevTotal && revenue > 0){
+      var bShare = bSales / revenue;
+      var projBSales = bShare * projRevTotal;
+      totalProjIncentives += Math.max(0, Math.round((projBSales - Number(u.fixedSalary||0)) * 0.10));
+    } else {
+      totalProjIncentives += inc;
+    }
+  });
+
+  // ── Manual inputs ──
+  function val(id){ return parseFloat((document.getElementById(id)||{}).value)||0; }
+  var rent      = val('pnl-rent');
+  var staffRent = val('pnl-staff-rent');
+  var cosmetics = val('pnl-cosmetics');
+  var ebStore   = val('pnl-eb-store');
+  var ebStaff   = val('pnl-eb-staff');
+  var maid      = val('pnl-maid');
+  var ads       = val('pnl-ads');
+  var extraFood = val('pnl-extra-food');
+  var wifi      = val('pnl-wifi');
+  var misc      = val('pnl-misc');
+  var adsRev    = val('pnl-ads-rev');
+  var projRev   = val('pnl-proj-rev');
+
+  var actualOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
+                   ebStaff + maid + ads + totalFood + extraFood +
+                   totalActualIncentives + wifi + misc;
+
+  var projOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
+                 ebStaff + maid + ads + totalFood + extraFood +
+                 totalProjIncentives + wifi + misc;
+
+  var profit     = revenue - actualOpex + adsRev;
+  var projProfit = projRev - projOpex + adsRev;
+
+  // ── Render ──
+  function fINR(n){ return (n<0?'−₹':'₹')+Math.abs(Math.round(n)).toLocaleString('en-IN'); }
+  function colr(n){ return n>=0?'var(--accent,#00C48C)':'var(--danger,#FF6B5B)'; }
+
+  // Salon header
+  var hdr = document.getElementById('pnl-salon-header');
+  if(hdr) hdr.textContent = mySalonName + ' · ' + new Date(yr,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+
+  document.getElementById('pnl-revenue').textContent     = fINR(revenue);
+  document.getElementById('pnl-salaries').textContent    = fINR(totalSalary);
+  document.getElementById('pnl-food').textContent        = fINR(totalFood);
+  document.getElementById('pnl-incentives').textContent  = fINR(totalActualIncentives);
+  document.getElementById('pnl-total-opex').textContent  = fINR(actualOpex);
+  document.getElementById('pnl-proj-incentives').textContent = fINR(totalProjIncentives);
+  document.getElementById('pnl-proj-opex').textContent   = fINR(projOpex);
+
+  var profEl = document.getElementById('pnl-profit');
+  profEl.textContent = fINR(profit);
+  profEl.style.color = colr(profit);
+  profEl.parentElement.style.background = profit>=0 ? 'rgba(0,196,140,.08)' : 'rgba(255,107,91,.08)';
+
+  var ppEl = document.getElementById('pnl-proj-profit');
+  ppEl.textContent = fINR(projProfit);
+  ppEl.style.color = colr(projProfit);
+
+  // Salary detail
+  var detEl = document.getElementById('pnl-salary-detail');
+  if(detEl) detEl.innerHTML = salaryDetail.map(function(s){ return '· '+s; }).join('<br>');
+
+  // Profit share
+  var shares = window._pnlShares || [];
+  var shareEl = document.getElementById('pnl-share-rows');
+  if(shareEl){
+    shareEl.innerHTML = !shares.length
+      ? '<div style="padding:10px 14px;font-size:12px;color:var(--muted);font-style:italic">No partners added yet</div>'
+      : shares.map(function(s,i){
+          var amt = Math.round(profit * s.pct / 100);
+          return '<div class="pnl-share-row">' +
+            '<span style="flex:1">'+s.name+' ('+s.pct+'%)</span>' +
+            '<span style="color:'+colr(amt)+';font-weight:700;margin-right:10px">'+fINR(amt)+'</span>' +
+            '<button onclick="removeProfitShare('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px">✕</button>' +
+            '</div>';
+        }).join('');
+  }
+}
+
+function exportPNL(){
+  var month = document.getElementById('pnl-month').value || 'unknown';
+  var rows = [
+    ['Budget Barber P&L — '+mySalonName, ''],
+    ['Month', month],
+    [''],
+    ['REVENUE',''],
+    ['Actual Revenue', document.getElementById('pnl-revenue').textContent],
+    ['Projected Revenue', document.getElementById('pnl-proj-rev').value||'0'],
+    [''],
+    ['OPEX',''],
+    ['Salaries', document.getElementById('pnl-salaries').textContent],
+    ['Rent', document.getElementById('pnl-rent').value||'0'],
+    ['Staff Rent', document.getElementById('pnl-staff-rent').value||'0'],
+    ['Cosmetics', document.getElementById('pnl-cosmetics').value||'0'],
+    ['EB Store', document.getElementById('pnl-eb-store').value||'0'],
+    ['EB Staff Room', document.getElementById('pnl-eb-staff').value||'0'],
+    ['Maid', document.getElementById('pnl-maid').value||'0'],
+    ['Ads', document.getElementById('pnl-ads').value||'0'],
+    ['Food Money', document.getElementById('pnl-food').textContent],
+    ['Extra Sunday Food', document.getElementById('pnl-extra-food').value||'0'],
+    ['Actual Incentives', document.getElementById('pnl-incentives').textContent],
+    ['WiFi', document.getElementById('pnl-wifi').value||'0'],
+    ['Misc', document.getElementById('pnl-misc').value||'0'],
+    ['Actual Total Opex', document.getElementById('pnl-total-opex').textContent],
+    ['Projected Total Opex', document.getElementById('pnl-proj-opex').textContent],
+    [''],
+    ['PROFIT / LOSS',''],
+    ['Profit / Loss', document.getElementById('pnl-profit').textContent],
+    ['Projected P/L', document.getElementById('pnl-proj-profit').textContent],
+    ['Additional Ads Revenue', document.getElementById('pnl-ads-rev').value||'0'],
+  ];
+  var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'PNL_'+mySalonName.replace(/\s+/g,'_')+'_'+month+'.csv';
+  a.click();
+}
+
+// Init PNL month to current month on tab open
+var _pnlInited = false;
+function initPNL(){
+  if(_pnlInited) return; _pnlInited=true;
+  var m = new Date().toISOString().slice(0,7);
+  document.getElementById('pnl-month').value = m;
+  renderPNL();
+}
+
+
+// Franchise: PNL is read-only
+(function(){
+  var orig = window.initPNL;
+  window.initPNL = function(){
+    if(orig) orig();
+    // Disable all PNL inputs for franchise (view only)
+    setTimeout(function(){
+      document.querySelectorAll('#pn-pnl input').forEach(function(el){
+        el.setAttribute('readonly','true');
+        el.style.opacity='0.6';
+        el.style.cursor='not-allowed';
+        el.style.pointerEvents='none';
+      });
+      document.querySelectorAll('#pn-pnl button').forEach(function(el){
+        if(!el.textContent.includes('Export')) {
+          el.style.display='none';
+        }
+      });
+    }, 100);
+  };
+})();
 
 </script>
 </div><!-- /app-content -->

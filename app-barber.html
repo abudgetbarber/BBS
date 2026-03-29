@@ -314,7 +314,6 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
   <button class="nt"    id="nt-scan"     onclick="showTab('scan')">📷 Scan</button>
   <button class="nt"    id="nt-style"    onclick="showTab('style')">💈 Style Card</button>
   <button class="nt"    id="nt-profile"  onclick="showTab('profile')">👤 My Profile</button>
-  <button class="nt"    id="nt-settings" onclick="showTab('settings')">⚙️ Settings</button>
 </div>
 
 <!-- ════ BILLING TAB ════ -->
@@ -594,30 +593,6 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 </div>
 
 <!-- ════ SETTINGS TAB ════ -->
-<div class="panel" id="pn-settings">
-  <div class="sec">Account</div>
-  <div style="background:var(--surface);border-radius:var(--r);padding:14px;margin-bottom:12px;border:1px solid var(--border)">
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Logged In As</div>
-    <div style="font-size:16px;font-weight:800;color:var(--white)" id="settingsName">—</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:3px" id="settingsRole">—</div>
-  </div>
-  <div class="sec">Google Sheets Sync</div>
-  <div style="background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border)">
-    <div class="ifield" style="margin-bottom:10px"><label>Supabase URL</label><input type="url" class="fi" id="sh-url" placeholder="YOUR_SUPABASE_URL"></div>
-    <div class="ifield" style="margin-bottom:10px"><label>Sheet Name</label><input type="text" class="fi" id="sh-name" placeholder="Sheet1"></div>
-    <button class="btn-sm" onclick="saveSheetConfig()" style="width:100%;margin-bottom:10px">💾 Save Config</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <button class="btn-sm" onclick="syncAllData()" style="background:rgba(0,196,140,.15);border-color:var(--accent);color:var(--accent);text-align:center">⬆ Sync to Supabase</button>
-      <button class="btn-sm" onclick="restoreFromSheets()" style="background:rgba(91,196,240,.1);border-color:var(--blue);color:var(--blue);text-align:center">⬇ Refresh from Supabase</button>
-    </div>
-    <div id="sync-status" style="display:none;border-radius:var(--rs);padding:9px 12px;font-size:12px;font-weight:600;text-align:center;margin-bottom:4px"></div>
-    <div style="font-size:10px;color:var(--muted2);line-height:1.5">
-      <b style="color:var(--muted)">Sync to Sheets</b> — pushes all your data up to Google Sheets.<br>
-      <b style="color:var(--muted)">Restore from Sheets</b> — pulls all data from Sheets to this device.
-    </div>
-  </div>
-  <div style="margin-top:12px"><button class="btn-sm" onclick="logout()" style="width:100%;text-align:center;color:var(--danger);border-color:rgba(224,112,112,.3)">Logout</button></div>
-</div>
 
 <!-- ZONE MODAL -->
 <div class="modal-bg" id="zoneModal" onclick="if(event.target===this)closeModal('zoneModal')">
@@ -668,8 +643,8 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -835,10 +810,14 @@ var SB = {
 // This is called once on app load. Supabase is source of truth.
 function supaBootstrap(onDone, onError){
   SB.readAll().then(function(data){
+    ['entries','staff','salons','customers','cashIn','expenses',
+     'attendance','styleCards','visits','advances','mgrCashIn','mgrExpenses'].forEach(function(k){
+      localStorage.removeItem('bb_'+k);
+    });
     applyRestoredData(data);
     if(onDone) onDone(data);
   }).catch(function(err){
-    console.warn('[BB] Supabase bootstrap failed:', err);
+    console.warn('[BB] Supabase fetch failed, using cached data:', err);
     if(onError) onError(err);
   });
 }
@@ -1035,9 +1014,7 @@ var ME = null;
     // No staff record found — device needs to restore from Google Sheets
     // Show setup prompt instead of creating a ghost account
     document.getElementById('app-content').style.display='none';
-    document.getElementById('setup-banner').style.display='block';
-    return;
-  }
+      }
   document.getElementById('tbName').textContent    = ME.name;
   var salons=LS.get('salons')||[];
   var mySalon=salons.find(function(s){return s.id===ME.salonId;});
@@ -1046,9 +1023,9 @@ var ME = null;
   document.getElementById('styleBarberName').textContent = ME.name;
   document.getElementById('settingsName').textContent    = ME.name;
   document.getElementById('settingsRole').textContent    = '✂️ Barber · +91 '+ME.phone;
-  var su=LS.get('sheetUrl')||''; var sn=LS.get('sheetName')||'Sheet1';
-  document.getElementById('sh-url').value=su;
-  document.getElementById('sh-name').value=sn;
+  var su=SUPA_URL||''; var sn="Sheet1"||'Sheet1';
+  
+  
 
   // Build service chips
   var chipsEl=document.getElementById('svc-chips');
@@ -1826,7 +1803,7 @@ function applyRestoredData(d){
 // Appends a single row directly to Supabase
 // Fetch fresh data from Supabase and update localStorage, then call onDone
 function refreshFromSheets(onDone){
-  var url=BB_SHEET_URL||LS.get('sheetUrl')||SUPA_URL;
+  var url=BB_SHEET_URL||SUPA_URL;
   if(!url){ onDone&&onDone(); return; }
   fetchFromSheets(url, function(d){
     applyRestoredData(d);  // update local cache from Sheets

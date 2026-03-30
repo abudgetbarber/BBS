@@ -914,8 +914,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -2716,22 +2716,29 @@ function addSalonExpenseMulti(){ toast('Use the Salon tab sections above'); }
 // ══ FRANCHISE INPUTS (rent, staff_rent, extra_food) ══
 // Fetched from franchise_inputs table
 function loadFranchiseInputs(month, cb){
-  sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(month))
-    .then(function(rows){
-      var d = rows&&rows.length ? rows[0] : {};
-      var rent = Number(d.rent||0);
-      var staffRent = Number(d.staff_rent||0);
-      var extraFood = Number(d.extra_food||0);
-      // Update hidden inputs for PNL calc
-      var rEl=document.getElementById('pnl-rent'); if(rEl) rEl.value=rent;
-      var sEl=document.getElementById('pnl-staff-rent'); if(sEl) sEl.value=staffRent;
-      var eEl=document.getElementById('pnl-extra-food'); if(eEl) eEl.value=extraFood;
-      // Update display spans
-      var rv=document.getElementById('pnl-rent-val'); if(rv) rv.textContent=fmtINR(rent);
-      var sv=document.getElementById('pnl-staff-rent-val'); if(sv) sv.textContent=fmtINR(staffRent);
-      var ev=document.getElementById('pnl-extra-food-val'); if(ev) ev.textContent=fmtINR(extraFood);
-      if(cb) cb();
-    }).catch(function(){ if(cb) cb(); });
+  // Franchise stores costs with effective_from (not month).
+  // Fetch all rows up to this month, ordered desc — latest value per field wins.
+  sbSelect('franchise_inputs',
+    'salon_id=eq.'+encodeURIComponent(mySalonId)+
+    '&effective_from=lte.'+encodeURIComponent(month)+
+    '&order=effective_from.desc'
+  ).then(function(rows){
+    rows = rows||[];
+    function latestVal(field){
+      for(var i=0;i<rows.length;i++){
+        if(rows[i][field] && Number(rows[i][field])>0) return Number(rows[i][field]);
+      }
+      return 0;
+    }
+    var rent=latestVal('rent'), staffRent=latestVal('staff_rent'), extraFood=latestVal('extra_food');
+    var rEl=document.getElementById('pnl-rent'); if(rEl) rEl.value=rent;
+    var sEl=document.getElementById('pnl-staff-rent'); if(sEl) sEl.value=staffRent;
+    var eEl=document.getElementById('pnl-extra-food'); if(eEl) eEl.value=extraFood;
+    var rv=document.getElementById('pnl-rent-val'); if(rv) rv.textContent=fmtINR(rent);
+    var sv=document.getElementById('pnl-staff-rent-val'); if(sv) sv.textContent=fmtINR(staffRent);
+    var ev=document.getElementById('pnl-extra-food-val'); if(ev) ev.textContent=fmtINR(extraFood);
+    if(cb) cb();
+  }).catch(function(){ if(cb) cb(); });
 }
 
 function renderPNL(){

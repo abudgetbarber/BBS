@@ -914,8 +914,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1288,10 +1288,10 @@ function showTab(tab){
   document.querySelectorAll('.nt').forEach(function(b){b.classList.remove('on');});
   document.getElementById('pn-'+tab).classList.add('on');
   document.getElementById('nt-'+tab).classList.add('on');
-  if(tab==='sales')    { renderSalesTable(); if(salFilterMode==='month') renderMonthlyInSales(); }
-  if(tab==='yearly')   renderYearly();
-  if(tab==='customers')renderCustomers();
-  if(tab==='staff')    renderStaff();
+  if(tab==='sales')    { supaBootstrap(function(){ renderSalesTable(); if(salFilterMode==='month') renderMonthlyInSales(); }, function(){ renderSalesTable(); if(salFilterMode==='month') renderMonthlyInSales(); }); }
+  if(tab==='yearly')   { supaBootstrap(function(){ renderYearly(); }, function(){ renderYearly(); }); }
+  if(tab==='customers'){ supaBootstrap(function(){ renderCustomers(); }, function(){ renderCustomers(); }); }
+  if(tab==='staff')    { supaBootstrap(function(){ renderStaff(); }, function(){ renderStaff(); }); }
   if(tab==='salon'){ document.getElementById('sx-month').value=new Date().toISOString().slice(0,7); supaBootstrap(function(){ renderSalonExpenses(); }, function(){ renderSalonExpenses(); }); }
   if(tab==='pnl'){ initPNL(); renderPNL(); }
   if(tab==='dashboard'){
@@ -2745,17 +2745,30 @@ function renderPNL(){
   var month = document.getElementById('pnl-month').value;
   if(!month){ return; }
   loadPNLInputs(month);
-  // Fetch BOTH salon expenses AND franchise inputs fresh, then render
+  var pnlEl = document.getElementById('pn-pnl');
+  if(pnlEl) pnlEl.style.opacity='0.5';
+  // Fetch ALL PNL-relevant data fresh from Supabase
   Promise.all([
-    sbSelect('salon_expenses','salon_id=eq.'+encodeURIComponent(mySalonId))
+    sbSelect('entries',        '"salonId"=eq.'+encodeURIComponent(mySalonId))
+      .then(function(rows){ LS.set('entries', rows||[]); return rows; })
+      .catch(function(){ return LS.get('entries')||[]; }),
+    sbSelect('staff',          '"salonId"=eq.'+encodeURIComponent(mySalonId))
+      .then(function(rows){ LS.set('staff',   (LS.get('staff')||[]).filter(function(u){return u.salonId!==mySalonId;}).concat(rows||[])); return rows; })
+      .catch(function(){ return LS.get('staff')||[]; }),
+    sbSelect('salon_expenses', 'salon_id=eq.'+encodeURIComponent(mySalonId))
       .then(function(rows){ LS.set('salonExpenses', rows||[]); return rows; })
       .catch(function(){ return LS.get('salonExpenses')||[]; }),
+    sbSelect('mgr_expenses',   '"salonId"=eq.'+encodeURIComponent(mySalonId))
+      .then(function(rows){ LS.set('mgrExpenses', rows||[]); return rows; })
+      .catch(function(){ return LS.get('mgrExpenses')||[]; }),
     new Promise(function(resolve){
       loadFranchiseInputs(month, function(){ resolve(); });
     })
   ]).then(function(){
+    if(pnlEl) pnlEl.style.opacity='1';
     _doRenderPNL(month);
   }).catch(function(){
+    if(pnlEl) pnlEl.style.opacity='1';
     _doRenderPNL(month);
   });
 }
@@ -2764,9 +2777,9 @@ function _doRenderPNL(month){
   var yr = parseInt(month.split('-')[0]);
   var mo = parseInt(month.split('-')[1]);
 
-  // ── Revenue (from entries) ──
+  // ── Revenue (from entries) — strict salon match ──
   var entries = getEntries().filter(function(e){
-    if(e.salonId && e.salonId !== mySalonId) return false;
+    if(String(e.salonId) !== String(mySalonId)) return false;
     var p = (e.date||'').split('/');
     return parseInt(p[1])===mo && parseInt(p[2])===yr;
   });

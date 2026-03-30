@@ -581,8 +581,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -947,26 +947,39 @@ function renderSalonPNL(){
     sbSelect('mgr_expenses','"salonId"=eq.'+encodeURIComponent(sid)),
     sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(sid)+'&effective_from=lte.'+encodeURIComponent(month)+'&order=effective_from.desc')
   ]).then(function(results){
-    var allEntries=results[0]||[];
-    var allStaff=results[1]||[];
+    // Normalize raw Supabase rows — handle both camelCase and snake_case field names
+    function norm(r, map){
+      var n={};
+      Object.keys(r).forEach(function(k){ n[k]=r[k]; });
+      Object.keys(map).forEach(function(from){
+        var to=map[from];
+        if(n[from]!==undefined && n[to]===undefined) n[to]=n[from];
+      });
+      return n;
+    }
+    var entryMap  ={barber_id:'barberId',salon_id:'salonId',ph_pay:'phPay',ph_tip:'phTip',cash_tip:'cashTip',customer_name:'customerName',customer_phone:'customerPhone',barber_name:'barberName'};
+    var staffMap  ={salon_id:'salonId',fixed_salary:'fixedSalary',food_money:'foodMoney',cleaning_money:'cleaningMoney',login_pin:'loginPin'};
+    var mgrExpMap ={salon_id:'salonId',manager_id:'managerId'};
+    var allEntries=(results[0]||[]).map(function(r){return norm(r,entryMap);});
+    var allStaff  =(results[1]||[]).map(function(r){return norm(r,staffMap);});
     var allSalonExp=results[2]||[];
-    var allMgrExp=results[3]||[];
-    var fiRows=results[4]||[];
-    // Filter entries to selected month
+    var allMgrExp  =(results[3]||[]).map(function(r){return norm(r,mgrExpMap);});
+    var fiRows     =results[4]||[];
+    // Filter entries to selected month (date format: d/m/yyyy or d/mm/yyyy)
     var allE=allEntries.filter(function(e){
       var p=(e.date||'').split('/');
       return parseInt(p[1])===mo&&parseInt(p[2])===yr;
     });
-    var revenue=allE.reduce(function(a,e){return a+Number(e.phPay||e.ph_pay||0)+Number(e.cash||0);},0);
+    var revenue=allE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
     var customers=allE.length;
-    // Staff costs
-    var totalSalary=allStaff.reduce(function(a,u){return a+Number(u.fixedSalary||u.fixed_salary||0)+Number(u.cleaningMoney||u.cleaning_money||0);},0);
-    var totalFood=allStaff.reduce(function(a,u){return a+Number(u.foodMoney||u.food_money||0);},0);
-    // Incentives
+    // Staff costs — all staff for this salon (barbers + manager)
+    var totalSalary=allStaff.reduce(function(a,u){return a+Number(u.fixedSalary||0)+Number(u.cleaningMoney||0);},0);
+    var totalFood  =allStaff.reduce(function(a,u){return a+Number(u.foodMoney||0);},0);
+    // Incentives — barbers only: max(0, (barberSales - fixedSalary) * 10%)
     var totalInc=0;
     allStaff.filter(function(u){return u.role==='barber';}).forEach(function(u){
-      var bS=allE.filter(function(e){return e.barberId===u.id||e.barber_id===u.id;}).reduce(function(a,e){return a+Number(e.phPay||e.ph_pay||0)+Number(e.cash||0);},0);
-      var fs=Number(u.fixedSalary||u.fixed_salary||0);
+      var bS=allE.filter(function(e){return String(e.barberId)===String(u.id);}).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+      var fs=Number(u.fixedSalary||0);
       totalInc+=Math.max(0,Math.round((bS-fs)*0.10));
     });
     // Salon expenses for this month
@@ -981,7 +994,7 @@ function renderSalonPNL(){
       var p=(r.date||'').split('/');
       return parseInt(p[1])===mo&&parseInt(p[2])===yr;
     }).reduce(function(a,r){return a+Number(r.amount||0);},0);
-    // Franchise inputs: latest per field up to this month
+    // Franchise inputs: latest value per field, up to this month
     function fiVal(field){for(var i=0;i<fiRows.length;i++){if(fiRows[i][field]&&Number(fiRows[i][field])>0)return Number(fiRows[i][field]);}return 0;}
     var rent=fiVal('rent'),staffRent=fiVal('staff_rent'),extraFood=fiVal('extra_food');
     // Projected revenue (avg wd/we from elapsed days × full month counts)
@@ -1038,9 +1051,9 @@ function showTab(tab){
     pnl.classList.add('on');
     btn.classList.add('on');
     if(tab==='allsales'){ var af=document.getElementById('as-from'),at=document.getElementById('as-to'); if(af)af.value=todayISO(); if(at)at.value=todayISO(); supaBootstrap(function(){renderAllSales();},function(){renderAllSales();}); }
-    if(tab==='reports')renderReports();
-    if(tab==='manage')renderManage();
-    if(tab==='salonpnl'){populateSalonPNLSelect();var sm=document.getElementById('spnl-month');if(sm&&!sm.value)sm.value=new Date().toISOString().slice(0,7);renderSalonPNL();}
+    if(tab==='reports'){ supaBootstrap(function(){ _populateCsvSalonFilter(); renderReports(); }, function(){ _populateCsvSalonFilter(); renderReports(); }); }
+    if(tab==='manage') { supaBootstrap(function(){ renderManage(); }, function(){ renderManage(); }); }
+    if(tab==='salonpnl'){ populateSalonPNLSelect(); var sm=document.getElementById('spnl-month'); if(sm&&!sm.value)sm.value=new Date().toISOString().slice(0,7); renderSalonPNL(); }
   }catch(e){
     toast('Tab error: '+e.message);
     console.error('[BB showTab]',e);

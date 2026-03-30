@@ -758,8 +758,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1183,7 +1183,7 @@ function showTab(tab){
         renderMySales();
       });
     }
-    if(tab==='scan'){ stopQRScan(); document.getElementById('scanResult').innerHTML=''; document.getElementById('scanCode').value=''; }
+    if(tab==='scan'){ supaBootstrap(function(){ stopQRScan(); document.getElementById('scanResult').innerHTML=''; document.getElementById('scanCode').value=''; },function(){}); }
     if(tab==='profile'){
       var curMo = new Date().toISOString().slice(0,7);
       // Ensure month pickers show current month

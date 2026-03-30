@@ -233,8 +233,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <button class="nt on" id="nt-overview"  onclick="showTab('overview')">🏢 Overview</button>
   <button class="nt"    id="nt-allsales"  onclick="showTab('allsales')">📋 All Sales</button>
   <button class="nt"    id="nt-reports"   onclick="showTab('reports')">📈 Reports</button>
-  <button class="nt"    id="nt-manage"    onclick="showTab('manage')">👥 Manage</button>
   <button class="nt"    id="nt-salonpnl"  onclick="showTab('salonpnl')">📊 Salon PNL</button>
+  <button class="nt"    id="nt-manage"    onclick="showTab('manage')">👥 Manage</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -300,17 +300,39 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   </div>
   <div id="rpt-stats"></div>
   <div id="rpt-chart"></div>
-  <div class="sec-hdr" style="margin-bottom:8px">
-    <div class="sec-title">Download Reports (CSV)</div>
+  <div class="sec-hdr" style="margin-bottom:10px">
+    <div class="sec-title">Download CSV Reports</div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-end">
-    <div class="ifield" style="flex:1;min-width:130px"><label>CSV Salon Filter</label><select id="csv-salon-filter" style="padding:8px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;width:100%;font-family:var(--BF)"><option value="">All Salons</option></select></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">
+    <div class="ifield" style="flex:1;min-width:130px"><label>Filter by Salon</label>
+      <select id="csv-salon-filter" style="padding:8px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;width:100%;font-family:var(--BF)"><option value="">All Salons</option></select>
+    </div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
-    <button class="btn-sm" onclick="downloadCSV('sales')">⬇ Sales Data</button>
-    <button class="btn-sm" onclick="downloadCSV('salon')">⬇ By Salon</button>
-    <button class="btn-sm" onclick="downloadCSV('barber')">⬇ By Stylist</button>
-    <button class="btn-sm" onclick="downloadCSV('daily')">⬇ Daily Summary</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+    <button class="btn-sm" onclick="downloadCSV('full_sales')" style="text-align:left;padding:10px 12px">
+      <div style="font-weight:700;margin-bottom:2px">📋 Full Sales Data</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:400">Every entry: date, salon, stylist, customer, services, amounts, tips</div>
+    </button>
+    <button class="btn-sm" onclick="downloadCSV('salon_summary')" style="text-align:left;padding:10px 12px">
+      <div style="font-weight:700;margin-bottom:2px">🏪 Salon Summary</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:400">Per salon: customers, sales, avg billing, PhonePe vs cash split</div>
+    </button>
+    <button class="btn-sm" onclick="downloadCSV('stylist_summary')" style="text-align:left;padding:10px 12px">
+      <div style="font-weight:700;margin-bottom:2px">✂️ Stylist Summary</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:400">Per stylist: customers, sales, avg billing, tips, incentives</div>
+    </button>
+    <button class="btn-sm" onclick="downloadCSV('daily_summary')" style="text-align:left;padding:10px 12px">
+      <div style="font-weight:700;margin-bottom:2px">📅 Daily Summary</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:400">Day-by-day: total sales, customers, avg per customer</div>
+    </button>
+    <button class="btn-sm" onclick="downloadCSV('monthly_salon')" style="text-align:left;padding:10px 12px">
+      <div style="font-weight:700;margin-bottom:2px">📆 Monthly by Salon</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:400">Each salon per month: sales, customers, avg billing</div>
+    </button>
+    <button class="btn-sm" onclick="downloadCSV('full_analysis')" style="text-align:left;padding:10px 12px;border-color:var(--accent);color:var(--accent)">
+      <div style="font-weight:800;margin-bottom:2px">⭐ Full Analysis</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:400">All of the above combined in one comprehensive file</div>
+    </button>
   </div>
   <div class="sec-hdr" style="margin-bottom:12px"><div class="sec-title">Revenue by Salon</div></div>
   <div id="rpt-salons"></div>
@@ -559,8 +581,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -916,74 +938,93 @@ function renderSalonPNL(){
   if(!sid||!month){if(el)el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Select salon and month</div>';return;}
   var salon=(LS.get('salons')||[]).find(function(s){return s.id===sid;})||{name:'Salon'};
   var yr=parseInt(month.split('-')[0]),mo=parseInt(month.split('-')[1]);
-  var allE=getEntries().filter(function(e){
-    if(e.salonId!==sid)return false;
-    var p=(e.date||'').split('/');
-    return parseInt(p[1])===mo&&parseInt(p[2])===yr;
-  });
-  var revenue=allE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-  var customers=allE.length;
-  var sStaff=(LS.get('staff')||[]).filter(function(u){return u.salonId===sid;});
-  var totalSalary=sStaff.reduce(function(a,u){return a+Number(u.fixedSalary||0)+Number(u.cleaningMoney||0);},0);
-  var totalFood=sStaff.reduce(function(a,u){return a+Number(u.foodMoney||0);},0);
-  var totalInc=0;
-  sStaff.filter(function(u){return u.role==='barber';}).forEach(function(u){
-    var bS=allE.filter(function(e){return e.barberId===u.id;}).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-    totalInc+=Math.max(0,Math.round((bS-Number(u.fixedSalary||0))*0.10));
-  });
-  var sxAll=LS.get('salonExpenses')||[];
-  var sxMo=sxAll.filter(function(r){
-    if(r.salon_id!==sid)return false;
-    var p=(r["date"]||'').split('/');
-    return parseInt(p[1])===mo&&parseInt(p[2])===yr;
-  });
-  function sxTot(cat){return sxMo.filter(function(r){return r.category===cat;}).reduce(function(a,r){return a+Number(r.amount||0);},0);}
-  var cosmetics=sxTot('cosmetics'),ebStore=sxTot('eb_store'),ebStaff=sxTot('eb_staff'),maid=sxTot('maid'),wifi=sxTot('wifi'),marketing=sxTot('marketing');
-  var mgrExp=(LS.get('mgrExpenses')||[]).filter(function(r){var p=(r["date"]||'').split('/');return r.salonId===sid&&parseInt(p[1])===mo&&parseInt(p[2])===yr;}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var fiAll=LS.get('_fi_'+sid)||[];
-  function fiVal(field){for(var i=0;i<fiAll.length;i++){if(fiAll[i][field]&&Number(fiAll[i][field])>0)return Number(fiAll[i][field]);}return 0;}
-  var rent=fiVal('rent'),staffRent=fiVal('staff_rent'),extraFood=fiVal('extra_food');
-  // Projected revenue
-  var dIM=new Date(yr,mo,0).getDate(),nowD=new Date(),isCM=(nowD.getFullYear()===yr&&nowD.getMonth()+1===mo),todD=isCM?nowD.getDate():dIM;
-  var wdR=[],weR=[],totWd=0,totWe=0;
-  for(var di=1;di<=dIM;di++){
-    var dow=new Date(yr,mo-1,di).getDay(),isWe=(dow===0||dow===6);
-    if(isWe)totWe++;else totWd++;
-    if(di<=todD){
-      var dayR=allE.filter(function(e){var p=(e.date||'').split('/');return parseInt(p[0])===di;}).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-      if(isWe)weR.push(dayR);else wdR.push(dayR);
+  if(el)el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Loading from Supabase...</div>';
+  // Fetch ALL data fresh from Supabase in parallel
+  Promise.all([
+    sbSelect('entries','salon_id=eq.'+encodeURIComponent(sid)),
+    sbSelect('staff','salon_id=eq.'+encodeURIComponent(sid)),
+    sbSelect('salon_expenses','salon_id=eq.'+encodeURIComponent(sid)),
+    sbSelect('mgr_expenses','salon_id=eq.'+encodeURIComponent(sid)),
+    sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(sid)+'&effective_from=lte.'+encodeURIComponent(month)+'&order=effective_from.desc')
+  ]).then(function(results){
+    var allEntries=results[0]||[];
+    var allStaff=results[1]||[];
+    var allSalonExp=results[2]||[];
+    var allMgrExp=results[3]||[];
+    var fiRows=results[4]||[];
+    // Filter entries to selected month
+    var allE=allEntries.filter(function(e){
+      var p=(e.date||'').split('/');
+      return parseInt(p[1])===mo&&parseInt(p[2])===yr;
+    });
+    var revenue=allE.reduce(function(a,e){return a+Number(e.phPay||e.ph_pay||0)+Number(e.cash||0);},0);
+    var customers=allE.length;
+    // Staff costs
+    var totalSalary=allStaff.reduce(function(a,u){return a+Number(u.fixedSalary||u.fixed_salary||0)+Number(u.cleaningMoney||u.cleaning_money||0);},0);
+    var totalFood=allStaff.reduce(function(a,u){return a+Number(u.foodMoney||u.food_money||0);},0);
+    // Incentives
+    var totalInc=0;
+    allStaff.filter(function(u){return u.role==='barber';}).forEach(function(u){
+      var bS=allE.filter(function(e){return e.barberId===u.id||e.barber_id===u.id;}).reduce(function(a,e){return a+Number(e.phPay||e.ph_pay||0)+Number(e.cash||0);},0);
+      var fs=Number(u.fixedSalary||u.fixed_salary||0);
+      totalInc+=Math.max(0,Math.round((bS-fs)*0.10));
+    });
+    // Salon expenses for this month
+    var sxMo=allSalonExp.filter(function(r){
+      var p=(r.date||'').split('/');
+      return parseInt(p[1])===mo&&parseInt(p[2])===yr;
+    });
+    function sxTot(cat){return sxMo.filter(function(r){return r.category===cat;}).reduce(function(a,r){return a+Number(r.amount||0);},0);}
+    var cosmetics=sxTot('cosmetics'),ebStore=sxTot('eb_store'),ebStaff=sxTot('eb_staff'),maid=sxTot('maid'),wifi=sxTot('wifi'),marketing=sxTot('marketing');
+    // Manager expenses for this month
+    var mgrExp=allMgrExp.filter(function(r){
+      var p=(r.date||'').split('/');
+      return parseInt(p[1])===mo&&parseInt(p[2])===yr;
+    }).reduce(function(a,r){return a+Number(r.amount||0);},0);
+    // Franchise inputs: latest per field up to this month
+    function fiVal(field){for(var i=0;i<fiRows.length;i++){if(fiRows[i][field]&&Number(fiRows[i][field])>0)return Number(fiRows[i][field]);}return 0;}
+    var rent=fiVal('rent'),staffRent=fiVal('staff_rent'),extraFood=fiVal('extra_food');
+    // Projected revenue (avg wd/we from elapsed days × full month counts)
+    var dIM=new Date(yr,mo,0).getDate(),nowD=new Date(),isCM=(nowD.getFullYear()===yr&&nowD.getMonth()+1===mo),todD=isCM?nowD.getDate():dIM;
+    var wdR=[],weR=[],totWd=0,totWe=0;
+    for(var di=1;di<=dIM;di++){
+      var dow=new Date(yr,mo-1,di).getDay(),isWe=(dow===0||dow===6);
+      if(isWe)totWe++;else totWd++;
+      if(di<=todD){
+        var dayR=allE.filter(function(e){var p=(e.date||'').split('/');return parseInt(p[0])===di;}).reduce(function(a,e){return a+Number(e.phPay||e.ph_pay||0)+Number(e.cash||0);},0);
+        if(isWe)weR.push(dayR);else wdR.push(dayR);
+      }
     }
-  }
-  var avgWd=wdR.length?(wdR.reduce(function(a,v){return a+v;},0)/wdR.length):0;
-  var avgWe=weR.length?(weR.reduce(function(a,v){return a+v;},0)/weR.length):0;
-  var projRev=Math.round(avgWd*totWd+avgWe*totWe);
-  var totalOpex=totalSalary+totalFood+totalInc+rent+staffRent+cosmetics+ebStore+ebStaff+maid+wifi+marketing+extraFood+mgrExp;
-  var profit=revenue-totalOpex,projProfit=projRev-totalOpex;
-  function fINR(n){return (n<0?'\u2212\u20b9':'\u20b9')+Math.abs(Math.round(n)).toLocaleString('en-IN');}
-  function prow(lbl,val,clr){return '<div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px"><span style="color:var(--muted)">'+lbl+'</span><span style="font-weight:700;color:'+clr+'">'+fINR(val)+'</span></div>';}
-  if(el) el.innerHTML=
-    '<div style="background:var(--accent);color:#fff;border-radius:10px;padding:10px 16px;text-align:center;font-weight:800;font-size:15px;margin-bottom:12px">'+salon.name+' · '+new Date(yr,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'})+'</div>'+
-    '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
-      '<div style="background:rgba(0,196,140,.1);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent)">REVENUE</div>'+
-      prow('Actual Sales',revenue,'var(--accent)')+prow('Customers',customers,'var(--blue)')+
-      prow('Avg/Customer',customers?Math.round(revenue/customers):0,'var(--blue)')+prow('Projected Revenue',projRev,'var(--accent)')+
-    '</div>'+
-    '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
-      '<div style="background:rgba(255,107,91,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--danger)">OPEX</div>'+
-      prow('Salaries',totalSalary,'var(--danger)')+prow('Food Money',totalFood,'var(--danger)')+prow('Incentives',totalInc,'var(--danger)')+
-      prow('Rent',rent,'var(--danger)')+prow('Staff Room Rent',staffRent,'var(--danger)')+prow('Extra Sunday Food',extraFood,'var(--danger)')+
-      prow('Cosmetics',cosmetics,'var(--danger)')+prow('EB Store',ebStore,'var(--danger)')+prow('EB Staff',ebStaff,'var(--danger)')+
-      prow('Maid',maid,'var(--danger)')+prow('WiFi',wifi,'var(--danger)')+prow('Marketing',marketing,'var(--danger)')+prow('Daily Expenses',mgrExp,'var(--danger)')+
-      '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px;font-weight:800;background:rgba(255,107,91,.06)"><span>Total Opex</span><span style="color:var(--danger)">'+fINR(totalOpex)+'</span></div>'+
-    '</div>'+
-    '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);overflow:hidden">'+
-      '<div style="background:rgba(217,119,6,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#D97706">PROFIT / LOSS</div>'+
-      '<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:16px;font-weight:900;border-bottom:1px solid var(--border)"><span>Profit / Loss</span><span style="color:'+(profit>=0?'var(--accent)':'var(--danger)')+'">'+fINR(profit)+'</span></div>'+
-      prow('Projected P/L',projProfit,projProfit>=0?'var(--accent)':'var(--danger)')+
-    '</div>';
-  // Fetch fresh franchise inputs in background
-  sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(sid)+'&effective_from=lte.'+encodeURIComponent(month)+'&order=effective_from.desc')
-    .then(function(rows){LS.set('_fi_'+sid,rows||[]);renderSalonPNL();}).catch(function(){});
+    var avgWd=wdR.length?(wdR.reduce(function(a,v){return a+v;},0)/wdR.length):0;
+    var avgWe=weR.length?(weR.reduce(function(a,v){return a+v;},0)/weR.length):0;
+    var projRev=Math.round(avgWd*totWd+avgWe*totWe);
+    var totalOpex=totalSalary+totalFood+totalInc+rent+staffRent+cosmetics+ebStore+ebStaff+maid+wifi+marketing+extraFood+mgrExp;
+    var profit=revenue-totalOpex,projProfit=projRev-totalOpex;
+    function fINR(n){return (n<0?'−₹':'₹')+Math.abs(Math.round(n)).toLocaleString('en-IN');}
+    function prow(lbl,val,clr){return '<div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px"><span style="color:var(--muted)">'+lbl+'</span><span style="font-weight:700;color:'+clr+'">'+fINR(val)+'</span></div>';}
+    if(el) el.innerHTML=
+      '<div style="background:var(--accent);color:#fff;border-radius:10px;padding:10px 16px;text-align:center;font-weight:800;font-size:15px;margin-bottom:12px">'+salon.name+' · '+new Date(yr,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'})+'</div>'+
+      '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
+        '<div style="background:rgba(0,196,140,.1);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent)">REVENUE</div>'+
+        prow('Actual Sales',revenue,'var(--accent)')+prow('Customers',customers,'var(--blue)')+
+        prow('Avg / Customer',customers?Math.round(revenue/customers):0,'var(--blue)')+prow('Projected Revenue',projRev,'var(--accent)')+
+      '</div>'+
+      '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
+        '<div style="background:rgba(255,107,91,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--danger)">OPEX</div>'+
+        prow('Salaries',totalSalary,'var(--danger)')+prow('Food Money',totalFood,'var(--danger)')+prow('Incentives',totalInc,'var(--danger)')+
+        prow('Rent',rent,'var(--danger)')+prow('Staff Room Rent',staffRent,'var(--danger)')+prow('Extra Sunday Food',extraFood,'var(--danger)')+
+        prow('Cosmetics',cosmetics,'var(--danger)')+prow('EB Store',ebStore,'var(--danger)')+prow('EB Staff',ebStaff,'var(--danger)')+
+        prow('Maid',maid,'var(--danger)')+prow('WiFi',wifi,'var(--danger)')+prow('Marketing',marketing,'var(--danger)')+prow('Daily Expenses',mgrExp,'var(--danger)')+
+        '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px;font-weight:800;background:rgba(255,107,91,.06)"><span>Total Opex</span><span style="color:var(--danger)">'+fINR(totalOpex)+'</span></div>'+
+      '</div>'+
+      '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);overflow:hidden">'+
+        '<div style="background:rgba(217,119,6,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#D97706">PROFIT / LOSS</div>'+
+        '<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:16px;font-weight:900;border-bottom:1px solid var(--border)"><span>Profit / Loss</span><span style="color:'+(profit>=0?'var(--accent)':'var(--danger)')+'">'+fINR(profit)+'</span></div>'+
+        prow('Projected P/L',projProfit,projProfit>=0?'var(--accent)':'var(--danger)')+
+      '</div>';
+  }).catch(function(err){
+    if(el) el.innerHTML='<div style="color:var(--danger);font-size:13px;padding:20px;text-align:center">Error loading data: '+err+'</div>';
+  });
 }
 
 function showTab(tab){
@@ -996,7 +1037,7 @@ function showTab(tab){
     if(!btn){ toast('⚠ Button not found: nt-'+tab); return; }
     pnl.classList.add('on');
     btn.classList.add('on');
-    if(tab==='allsales'){ var af=document.getElementById('as-from'),at=document.getElementById('as-to'); if(af&&!af.value)af.value=todayISO(); if(at&&!at.value)at.value=todayISO(); supaBootstrap(function(){renderAllSales();},function(){renderAllSales();}); }
+    if(tab==='allsales'){ var af=document.getElementById('as-from'),at=document.getElementById('as-to'); if(af)af.value=todayISO(); if(at)at.value=todayISO(); supaBootstrap(function(){renderAllSales();},function(){renderAllSales();}); }
     if(tab==='reports')renderReports();
     if(tab==='manage')renderManage();
     if(tab==='salonpnl'){populateSalonPNLSelect();var sm=document.getElementById('spnl-month');if(sm&&!sm.value)sm.value=new Date().toISOString().slice(0,7);renderSalonPNL();}
@@ -1293,12 +1334,22 @@ function renderManage(){
   // Salon cards with Edit button
   document.getElementById('mg-salons').innerHTML='<div class="salon-grid">'+salons.map(function(s){
     var sb=staff.filter(function(u){return u.salonId===s.id&&u.role==='barber';}).length;
-    return '<div class="salon-card">'+
-      '<div class="sn-name">'+s.name+'</div>'+
-      '<div class="sn-loc">'+s.location+'</div>'+
-      '<div style="font-size:12px;color:var(--muted);margin-top:5px">'+sb+' barbers · ID: '+s.id+'</div>'+
-      '<button onclick="openEditSalon(\''+s.id+'\')" '+
-        'style="margin-top:8px;width:100%;padding:6px;background:rgba(91,196,240,.1);border:1px solid rgba(91,196,240,.3);color:var(--blue);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">✏️ Edit Salon</button>'+
+    var isCoMgd=s.companyManaged==1||s.companyManaged==='1';
+    return '<div class="salon-card" style="'+(isCoMgd?'border:2px solid var(--accent);':'')+'">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between">'+
+        '<div>'+
+          '<div class="sn-name">'+s.name+'</div>'+
+          '<div class="sn-loc">'+s.location+'</div>'+
+          (isCoMgd?'<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-top:3px">🏢 Company Managed</div>':'')+
+          '<div style="font-size:12px;color:var(--muted);margin-top:5px">'+sb+' barbers</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;margin-top:10px">'+
+        '<button onclick="openEditSalon(\''+s.id+'\')" '+
+          'style="flex:1;padding:7px;background:rgba(91,196,240,.1);border:1px solid rgba(91,196,240,.3);color:var(--blue);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">✏️ Edit</button>'+
+        '<button onclick="deleteSalon(\''+s.id+'\',\''+s.name+'\')" '+
+          'style="padding:7px 10px;background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.3);color:var(--danger);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">🗑️</button>'+
+      '</div>'+
     '</div>';
   }).join('')+'</div>';
   // Populate stf-salon and est-salon selects
@@ -1664,6 +1715,14 @@ function doneAddStaff(){
   closeModal('addStaffModal'); renderManage();
 }
 
+function deleteSalon(id, name){
+  if(!confirm('Delete salon "'+name+'"?\nThis only removes the salon record. Staff and entries remain.')) return;
+  var salons=(LS.get('salons')||[]).filter(function(s){return s.id!==id;});
+  LS.set('salons',salons);
+  SB.deleteSalon(id).catch(function(e){console.warn('[BB] deleteSalon:',e);});
+  toast('✅ Salon deleted');
+  renderManage();
+}
 function deleteStaff(id){if(!confirm('Remove this staff member?'))return;LS.set('staff',(LS.get('staff')||[]).filter(function(u){return u.id!==id;}));deleteRowFromSheet('Staff',id,function(){});toast('Staff removed');renderManage();}
 
 // ── EDIT ENTRY ──
@@ -1704,45 +1763,118 @@ function renderEntriesTable(entries,editable,showSalon,isBody){
 
 // ── CSV DOWNLOAD ──
 function downloadCSV(type){
+  var yr=parseInt(document.getElementById('rpt-year').value)||new Date().getFullYear();
+  var moSel=document.getElementById('rpt-month-sel').value;
   var month=document.getElementById('rpt-month').value||new Date().toISOString().slice(0,7);
-  var sid=document.getElementById('rpt-salon').value;
-  var salons=LS.get('salons')||[];var staff=LS.get('staff')||[];
-  var allE=getEntries();var entries=filterByMonth(allE,month);
-  if(sid)entries=entries.filter(function(e){return e.salonId===sid;});
+  var csvSid=(document.getElementById('csv-salon-filter')||{}).value||'';
+  var salons=LS.get('salons')||[]; var staff=LS.get('staff')||[];
+  var allE=getEntries();
+  // Apply year+month filter
+  var entries=allE.filter(function(e){
+    var p=(e.date||'').split('/');
+    var eYr=parseInt(p[2]);
+    if(eYr!==yr)return false;
+    if(moSel&&parseInt(p[1])!==parseInt(moSel))return false;
+    return true;
+  });
+  if(csvSid)entries=entries.filter(function(e){return e.salonId===csvSid;});
   var salonMap={};salons.forEach(function(s){salonMap[s.id]=s.name;});
-  var csv='',rows=[];
-  if(type==='sales'){
-    rows.push(['Date','Time','Salon','Stylist','Customer','Phone','Services','PhonePe','Cash','Tip','Total']);
-    entries.forEach(function(e){
-      rows.push([e.date,e.time,(salonMap[e.salonId]||e.salonId||''),e.barberName,(e.customerName||''),(e.customerPhone||''),e.services,e.phPay||0,e.cash||0,e.tip||0,(Number(e.phPay||0)+Number(e.cash||0))]);
+  var periodLabel=(moSel?new Date(yr,parseInt(moSel)-1,1).toLocaleString('default',{month:'long',year:'numeric'}):String(yr));
+  var allBlocks=[]; // for full_analysis
+
+  function makeCSV(rows){ return rows.map(function(r){return r.map(function(c){return '"'+(String(c===null||c===undefined?'':c).replace(/"/g,'""'))+'"';}).join(',');}).join('\n'); }
+  function triggerDownload(csv,name){ var blob=new Blob([csv],{type:'text/csv'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+
+  function fullSalesRows(){
+    var rows=[['Date','Time','Day','Salon','Stylist','Customer Name','Customer Phone','Services','PhonePe','Cash','Ph Tip','Cash Tip','Total Sales']];
+    entries.slice().reverse().forEach(function(e){
+      var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var p=(e.date||'').split('/'); var d=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));
+      rows.push([e.date,e.time||'',days[d.getDay()]||'',(salonMap[e.salonId]||e.salonId||''),e.barberName||'',(e.customerName||'Walk-in'),(e.customerPhone||''),(e.services||''),Number(e.phPay||0),Number(e.cash||0),Number(e.phTip||0),Number(e.cashTip||0),(Number(e.phPay||0)+Number(e.cash||0))]);
     });
-  } else if(type==='salon'){
-    rows.push(['Salon','Customers','PhonePe','Cash','Tips','Total Sales']);
-    salons.forEach(function(s){
-      var se=entries.filter(function(e){return e.salonId===s.id;});
-      rows.push([s.name,se.length,se.reduce(function(a,e){return a+Number(e.phPay||0);},0),se.reduce(function(a,e){return a+Number(e.cash||0);},0),se.reduce(function(a,e){return a+Number(e.tip||0);},0),se.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0)]);
-    });
-  } else if(type==='barber'){
-    rows.push(['Stylist','Salon','Customers','PhonePe','Cash','Tips','Total Sales']);
-    staff.filter(function(u){return u.role==='barber';}).forEach(function(u){
-      var ue=entries.filter(function(e){return e.barberId===u.id;});
-      rows.push([u.name,(salonMap[u.salonId]||''),ue.length,ue.reduce(function(a,e){return a+Number(e.phPay||0);},0),ue.reduce(function(a,e){return a+Number(e.cash||0);},0),ue.reduce(function(a,e){return a+Number(e.tip||0);},0),ue.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0)]);
-    });
-  } else if(type==='daily'){
-    var yr=parseInt(month.split('-')[0]),mo=parseInt(month.split('-')[1]);
-    var days=new Date(yr,mo,0).getDate();
-    rows.push(['Date','Customers','PhonePe','Cash','Tips','Total Sales']);
-    for(var d=1;d<=days;d++){
-      var ds=d+'/'+mo+'/'+yr;
-      var de=entries.filter(function(e){return e.date===ds;});
-      rows.push([ds,de.length,de.reduce(function(a,e){return a+Number(e.phPay||0);},0),de.reduce(function(a,e){return a+Number(e.cash||0);},0),de.reduce(function(a,e){return a+Number(e.tip||0);},0),de.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0)]);
-    }
+    return rows;
   }
-  csv=rows.map(function(r){return r.map(function(c){return '"'+(String(c).replace(/"/g,'""'))+'"';}).join(',');}).join('\n');
-  var blob=new Blob([csv],{type:'text/csv'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='BB_'+type+'_'+month+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
-  toast('✅ CSV downloaded');
+  function salonSummaryRows(){
+    var salonsToUse=csvSid?salons.filter(function(s){return s.id===csvSid;}):salons;
+    var rows=[['Salon','Location','Company Managed','Customers','Total Sales','PhonePe','Cash','Tips','Avg Billing / Customer']];
+    salonsToUse.forEach(function(s){
+      var se=entries.filter(function(e){return e.salonId===s.id;});
+      var tot=se.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+      var ph=se.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+      var cash=se.reduce(function(a,e){return a+Number(e.cash||0);},0);
+      var tip=se.reduce(function(a,e){return a+Number(e.tip||e.phTip||0)+Number(e.cashTip||0);},0);
+      rows.push([s.name,s.location||'',(s.companyManaged?'Yes':'No'),se.length,tot,ph,cash,tip,se.length?Math.round(tot/se.length):0]);
+    });
+    var totAll=entries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    rows.push(['TOTAL','','',entries.length,totAll,'','','',entries.length?Math.round(totAll/entries.length):0]);
+    return rows;
+  }
+  function stylistSummaryRows(){
+    var barbers=staff.filter(function(u){return u.role==='barber'&&(!csvSid||u.salonId===csvSid);});
+    var rows=[['Stylist','Salon','Customers','Total Sales','PhonePe','Cash','Tips','Avg Billing / Customer','Fixed Salary','Incentives Earned']];
+    barbers.forEach(function(u){
+      var ue=entries.filter(function(e){return e.barberId===u.id;});
+      var tot=ue.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+      var ph=ue.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+      var cash=ue.reduce(function(a,e){return a+Number(e.cash||0);},0);
+      var tip=ue.reduce(function(a,e){return a+Number(e.tip||e.phTip||0)+Number(e.cashTip||0);},0);
+      var fs=Number(u.fixedSalary||0);
+      var inc=Math.max(0,Math.round((tot-fs)*0.10));
+      rows.push([u.name,(salonMap[u.salonId]||''),ue.length,tot,ph,cash,tip,ue.length?Math.round(tot/ue.length):0,fs,inc]);
+    });
+    return rows;
+  }
+  function dailySummaryRows(){
+    var pYr=yr,pMo=moSel?parseInt(moSel):null;
+    var rows=[['Date','Day','Salon','Customers','Total Sales','PhonePe','Cash','Tips','Avg / Customer']];
+    var salonsToUse=csvSid?salons.filter(function(s){return s.id===csvSid;}):salons;
+    if(pMo){
+      var days=new Date(pYr,pMo,0).getDate();
+      for(var d=1;d<=days;d++){
+        var ds=d+'/'+pMo+'/'+pYr;
+        var dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(pYr,pMo-1,d).getDay()];
+        salonsToUse.forEach(function(s){
+          var de=entries.filter(function(e){return e.date===ds&&e.salonId===s.id;});
+          if(!de.length&&!csvSid)return;
+          var tot=de.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+          rows.push([ds,dayName,s.name,de.length,tot,de.reduce(function(a,e){return a+Number(e.phPay||0);},0),de.reduce(function(a,e){return a+Number(e.cash||0);},0),de.reduce(function(a,e){return a+Number(e.tip||0);},0),de.length?Math.round(tot/de.length):0]);
+        });
+      }
+    }
+    return rows;
+  }
+  function monthlySalonRows(){
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var salonsToUse=csvSid?salons.filter(function(s){return s.id===csvSid;}):salons;
+    var rows=[['Month','Salon','Customers','Total Sales','PhonePe','Cash','Avg / Customer']];
+    for(var m=1;m<=12;m++){
+      salonsToUse.forEach(function(s){
+        var me=entries.filter(function(e){var p=(e.date||'').split('/');return parseInt(p[1])===m&&e.salonId===s.id;});
+        if(!me.length)return;
+        var tot=me.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+        rows.push([months[m-1]+' '+yr,s.name,me.length,tot,me.reduce(function(a,e){return a+Number(e.phPay||0);},0),me.reduce(function(a,e){return a+Number(e.cash||0);},0),me.length?Math.round(tot/me.length):0]);
+      });
+    }
+    return rows;
+  }
+
+  if(type==='full_sales'){
+    triggerDownload(makeCSV(fullSalesRows()),'BB_Full_Sales_'+periodLabel.replace(/ /g,'_')+'.csv');
+  } else if(type==='salon_summary'){
+    triggerDownload(makeCSV(salonSummaryRows()),'BB_Salon_Summary_'+periodLabel.replace(/ /g,'_')+'.csv');
+  } else if(type==='stylist_summary'){
+    triggerDownload(makeCSV(stylistSummaryRows()),'BB_Stylist_Summary_'+periodLabel.replace(/ /g,'_')+'.csv');
+  } else if(type==='daily_summary'){
+    triggerDownload(makeCSV(dailySummaryRows()),'BB_Daily_Summary_'+periodLabel.replace(/ /g,'_')+'.csv');
+  } else if(type==='monthly_salon'){
+    triggerDownload(makeCSV(monthlySalonRows()),'BB_Monthly_By_Salon_'+yr+'.csv');
+  } else if(type==='full_analysis'){
+    // Combine all into one file with section headers
+    var sep=[[''],[''],['']];
+    var all=fullSalesRows().concat(sep).concat(salonSummaryRows()).concat(sep).concat(stylistSummaryRows()).concat(sep).concat(dailySummaryRows()).concat(sep).concat(monthlySalonRows());
+    triggerDownload(makeCSV(all),'BB_Full_Analysis_'+periodLabel.replace(/ /g,'_')+'.csv');
+  }
+  toast('✅ CSV downloading…');
 }
 function syncAllData(){ toast('✅ All writes go directly to Supabase in real-time.'); }
 function applyRestoredData(d){

@@ -454,8 +454,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div id="bill-body"><div style="padding:24px;text-align:center;color:var(--muted2);font-size:13px;font-style:italic">No customers yet today</div></div>
 
   <!-- Cash-In hidden inputs for compatibility -->
-  <span id="ci-total" style="display:none">₹0</span>
-  <div id="ci-log" style="display:none"></div>
+  <span id="ci-total-hidden" style="display:none">₹0</span>
+  <div id="ci-log-hidden" style="display:none"></div>
 
   <!-- CASH HANDLING SECTION -->
   <div class="sec">Cash Handling</div>
@@ -472,11 +472,12 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 
   <div class="counter-box" style="background:rgba(155,127,212,.06);border-color:rgba(155,127,212,.35);margin-bottom:10px">
     <div class="counter-title" style="color:var(--purple)">
-      <span>🤝 Cash Handed Over</span>
+      <span>🤝 Cash Handed Over to Manager/Franchise Owner</span>
       <span class="counter-total" id="handover-total" style="color:var(--purple)">₹0</span>
     </div>
-    <div class="counter-row">
-      <input type="number" class="counter-inp" id="handover-inp" placeholder="Amount handed over…" min="0" inputmode="numeric">
+    <div class="counter-row" style="flex-wrap:wrap;gap:6px">
+      <input type="text" class="counter-inp" id="handover-name" placeholder="Name (Manager/Franchise Owner)" style="flex:1.4;min-width:140px">
+      <input type="number" class="counter-inp" id="handover-inp" placeholder="₹ Amount" min="0" inputmode="numeric" style="flex:.8;min-width:80px">
       <button class="counter-btn" onclick="addHandover()" style="background:rgba(155,127,212,.15);border-color:rgba(155,127,212,.4);color:var(--purple)">+ Add</button>
     </div>
     <div class="counter-log" id="handover-log"><span style="color:var(--muted2);font-style:italic">No entries yet</span></div>
@@ -710,7 +711,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     </div>
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <button id="adv-mode-cash" onclick="setAdvMode('cash')" style="flex:1;padding:8px;border-radius:var(--rs);border:1.5px solid var(--green);background:rgba(0,196,140,.15);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">💵 Cash</button>
-      <button id="adv-mode-phone" onclick="setAdvMode('phone')" style="flex:1;padding:8px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">📱 PhonePe</button>
+      <button id="adv-mode-phonePe" onclick="setAdvMode('phonePe')" style="flex:1;padding:8px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">📱 PhonePe</button>
       <button class="btn-sm" onclick="addAdvance()" style="color:var(--purple);border-color:rgba(155,127,212,.4)">+ Add</button>
     </div>
     <div id="adv-log"></div>
@@ -1241,7 +1242,9 @@ function renderBilling(){
     '<div class="tot-item">Customers: <b>'+my.length+'</b></div>'+
     '<div class="tot-item">PhonePe: <b style="color:var(--blue)">'+fmtINR(totPh)+'</b></div>'+
     '<div class="tot-item">Cash: <b style="color:var(--green)">'+fmtINR(totCash)+'</b></div>'+
-    '<div class="tot-item">Tips: <b style="color:var(--warn)">'+fmtINR(totTip)+'</b></div>'+
+    '<div class="tot-item">Tips: <b style="color:var(--warn)">'+fmtINR(totTip)+'</b>'+
+      (totTip>0?'<span style="font-size:10px;color:var(--muted);margin-left:4px">(Ph: '+fmtINR(my.reduce(function(a,e){return a+Number(e.phTip||0);},0))+' | Cash: '+fmtINR(my.reduce(function(a,e){return a+Number(e.cashTip||0);},0))+')</span>':'')+
+    '</b></div>'+
     '<div class="tot-item">Sales: <b style="color:var(--accent)">'+fmtINR(totSales)+'</b></div>';
 
   var sel=document.getElementById('sel-area');
@@ -1337,17 +1340,20 @@ function renderCashCounter(){ renderCashInCounter(); }
 // addCashIn removed — cash balance auto-calculated from entries
 function addHandover(){
   var amt=parseFloat(document.getElementById('handover-inp').value)||0;
+  var name=(document.getElementById('handover-name').value||'').trim();
   if(amt<=0){toast('Enter amount');return;}
+  if(!name){toast('Enter name of Manager/Franchise Owner');return;}
   var log=LS.get('cashHandover')||[];
   var now=new Date();
-  var row={amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),barberId:ME.id};
+  var row={amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),barberId:ME.id,handedTo:name,ts:Date.now()};
   log.push(row);
   LS.set('cashHandover',log);
   // Save to mgr_cash_in table as handover record
-  sbInsert('mgr_cash_in',{amount:amt,time:row.time,date:row.date,managerId:ME.id,salonId:ME.salonId,desc:'Handover from '+ME.name}).catch(function(){});
+  sbInsert('mgr_cash_in',{amount:amt,time:row.time,date:row.date,managerId:ME.id,salonId:ME.salonId,desc:'Handover from '+ME.name+' to '+name}).catch(function(){});
   document.getElementById('handover-inp').value='';
+  document.getElementById('handover-name').value='';
   renderCashInCounter();
-  toast('🤝 ₹'+amt+' handover recorded');
+  toast('🤝 ₹'+amt+' handed over to '+name);
 }
 
 function renderCashInCounter(){
@@ -1362,18 +1368,18 @@ function renderCashInCounter(){
   var mo=new Date().toISOString().slice(0,7);
   var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
   var cashAdv=(LS.get('advances')||[]).filter(function(r){
-    if(r.barberId!==ME.id)return false;
+    if(String(r.barberId)!==String(ME.id))return false;
     var p=(r.date||'').split('/');
     if(parseInt(p[1])!==m||parseInt(p[2])!==yr)return false;
     return !r.mode||r.mode==='cash'; // cash advances only
   }).reduce(function(a,r){return a+Number(r.amount||0);},0);
   // All expenses till today
-  var totalExp=(LS.get('expenses')||[]).filter(function(e){return e.barberId===ME.id;})
+  var totalExp=(LS.get('expenses')||[]).filter(function(e){return String(e.barberId)===String(ME.id);})
     .reduce(function(a,e){return a+Number(e.amount||0);},0);
-  // Cash handed over to manager
-  var handovers=(LS.get('cashHandover')||[]).filter(function(r){return r.barberId===ME.id;});
+  // Cash handed over to manager/franchise owner
+  var handovers=(LS.get('cashHandover')||[]).filter(function(r){return String(r.barberId)===String(ME.id);});
   var totalHandover=handovers.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  // Formula: Today Cash + Previous Cash - Cash Advances - Expenses - Handovers
+  // Formula: Today Cash + Previous Cash - Cash Advances (month) - Expenses - Handovers
   var balance=todayCash+prevCash-cashAdv-totalExp-totalHandover;
   document.getElementById('ci-total').textContent=fmtINR(balance);
   // Breakdown
@@ -1381,15 +1387,29 @@ function renderCashInCounter(){
   el.innerHTML=
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Previous Cash</span><span style="color:var(--green)">+'+fmtINR(prevCash)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Month)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (This Month)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses (All Time)</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over to Mgr/Franchise</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
   // Handover log
   var hel=document.getElementById('handover-total');
   if(hel) hel.textContent=fmtINR(totalHandover);
   var hlog=document.getElementById('handover-log');
   if(hlog) hlog.innerHTML=!handovers.length?'<span style="color:var(--muted2);font-style:italic">No handovers yet</span>':
-    handovers.slice().reverse().map(function(r){return '<div class="counter-log-item"><span>'+r.time+' '+r.date+'</span><span style="color:var(--blue);font-weight:700">'+fmtINR(r.amount)+'</span></div>';}).join('');
+    handovers.slice().reverse().map(function(r){
+      return '<div class="counter-log-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="flex:1;font-size:11px">'+r.time+' '+r.date+(r.handedTo?'<br><span style="color:var(--muted2)">→ '+r.handedTo+'</span>':'')+'</span>'+
+        '<span style="color:var(--purple);font-weight:700;white-space:nowrap">'+fmtINR(r.amount)+'</span>'+
+        '<button onclick="deleteHandover('+r.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0" title="Delete">✕</button>'+
+      '</div>';
+    }).join('');
+}
+
+function deleteHandover(ts){
+  if(!confirm('Delete this handover entry?'))return;
+  var log=(LS.get('cashHandover')||[]).filter(function(r){return r.ts!==ts;});
+  LS.set('cashHandover',log);
+  renderCashInCounter();
+  toast('Handover entry deleted');
 }
 
 // ── EXPENSES ──
@@ -1964,27 +1984,59 @@ function addAdvance(){
   var log=LS.get('advances')||[];
   log.push(row);
   LS.set('advances',log);
-  sbInsert('advances',{date:row.date,amount:amt,barberId:ME.id,ts:row.ts}).catch(function(){
+  sbInsert('advances',{date:row.date,amount:amt,barberId:ME.id,ts:row.ts,mode:_advMode}).catch(function(){
     appendRowToSheet('Advances',row,function(ok){if(!ok)toast('⚠ Saved locally');});
   });
   document.getElementById('adv-amt').value='';
   renderAdvanceLog();
+  renderSalary();
   renderCashInCounter();
-  toast('💳 Advance ('+_advMode+') ₹'+amt+' recorded');
+  toast('💳 Advance ('+(_advMode==='phonePe'?'PhonePe':'Cash')+') '+fmtINR(amt)+' recorded');
 }
 function renderAdvanceLog(){
   var mo=document.getElementById('sal-month').value||new Date().toISOString().slice(0,7);
   var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
   var log=(LS.get('advances')||[]).filter(function(r){
-    if(r.barberId!==ME.id)return false;
+    if(String(r.barberId)!==String(ME.id))return false;
     var p=(r.date||'').split('/');
     return parseInt(p[1])===m&&parseInt(p[2])===yr;
   });
-  var total=log.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var cashTotal=log.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var ppTotal  =log.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var total=cashTotal+ppTotal;
   var el=document.getElementById('adv-log');
   if(!log.length){el.innerHTML='<div style="font-size:12px;color:var(--muted2);font-style:italic">No advances this month</div>';return;}
-  el.innerHTML=log.map(function(r){var modeTag=r.mode==='phonePe'?'<span style="font-size:10px;color:var(--blue);margin-left:4px">📱</span>':'<span style="font-size:10px;color:var(--green);margin-left:4px">💵</span>';return '<div class="advance-row"><span>'+r.date+modeTag+'</span><span style="color:var(--purple);font-weight:700">'+fmtINR(r.amount)+'</span></div>';}).join('')+
-    '<div style="text-align:right;font-size:12px;color:var(--purple);font-weight:800;margin-top:6px">Total: '+fmtINR(total)+'</div>';
+  el.innerHTML=log.map(function(r){
+    var isPhone=r.mode==='phonePe';
+    var modeTag=isPhone
+      ?'<span style="font-size:10px;background:rgba(29,109,181,.12);color:var(--blue);border-radius:4px;padding:1px 5px;margin-left:5px">📱 PhonePe</span>'
+      :'<span style="font-size:10px;background:rgba(22,163,74,.10);color:var(--green);border-radius:4px;padding:1px 5px;margin-left:5px">💵 Cash</span>';
+    return '<div class="advance-row" style="display:flex;align-items:center;gap:5px">'+
+      '<span style="flex:1;min-width:0">'+r.date+modeTag+'</span>'+
+      '<span style="color:var(--purple);font-weight:700;white-space:nowrap">'+fmtINR(r.amount)+'</span>'+
+      '<button onclick="deleteAdvance('+r.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0" title="Delete">✕</button>'+
+    '</div>';
+  }).join('')+
+  '<div style="text-align:right;font-size:12px;color:var(--purple);font-weight:800;margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">'+
+    'Cash: <span style="color:var(--green)">'+fmtINR(cashTotal)+'</span> &nbsp;|&nbsp; PhonePe: <span style="color:var(--blue)">'+fmtINR(ppTotal)+'</span> &nbsp;|&nbsp; Total: '+fmtINR(total)+
+  '</div>';
+}
+
+function deleteAdvance(ts){
+  if(!confirm('Delete this advance entry?'))return;
+  // Find the record to get Supabase id if present
+  var log=LS.get('advances')||[];
+  var target=log.find(function(r){return r.ts===ts;});
+  log=log.filter(function(r){return r.ts!==ts;});
+  LS.set('advances',log);
+  // Try to delete from Supabase by id (bigserial) if available
+  if(target && target.id){
+    sbDelete('advances',target.id).catch(function(){});
+  }
+  renderAdvanceLog();
+  renderSalary();
+  renderCashInCounter();
+  toast('Advance entry deleted');
 }
 
 // ── FIX 10c: SALARY ──

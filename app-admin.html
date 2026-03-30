@@ -54,10 +54,10 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 /* STATS */
 .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .sc{background:var(--surface);border:1px solid rgba(0,0,0,.06);border-radius:var(--r);padding:16px 18px}
-.sc.accent{border-color:var(--accent)}.sc.gold{border-color:var(--gold)}.sc.danger{border-color:var(--danger)}
+.sc.accent{border-color:var(--accent)}.sc.gold{border-color:#D97706}.sc.danger{border-color:var(--danger)}
 .sc-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .sc-val{font-family:var(--HF);font-size:28px;color:var(--white);letter-spacing:1px;line-height:1}
-.sc.accent .sc-val{color:var(--accent)}.sc.gold .sc-val{color:var(--gold)}.sc.danger .sc-val{color:var(--danger)}
+.sc.accent .sc-val{color:var(--accent)}.sc.gold .sc-val{color:#D97706}.sc.danger .sc-val{color:var(--danger)}
 /* SALON CARDS */
 .salon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px}
 .salon-card{background:var(--surface);border-radius:var(--r);padding:18px;border:1px solid rgba(0,0,0,.06);transition:border-color .2s;cursor:pointer}
@@ -76,7 +76,7 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .tbl-empty{padding:28px;text-align:center;color:var(--muted);font-size:13px;font-style:italic}
 .cols-a{grid-template-columns:26px 62px 74px 90px 1fr 54px 52px 46px 46px 50px 54px}
 .cols-u{grid-template-columns:1fr 80px 110px 90px 90px 80px;text-align:center}
-.tag-ph{color:var(--blue);font-size:12px}.tag-cash{color:#90EE90;font-size:12px}.tag-tot{color:var(--gold);font-size:13px;font-weight:600}
+.tag-ph{color:var(--blue);font-size:12px}.tag-cash{color:#90EE90;font-size:12px}.tag-tot{color:var(--accent);font-size:13px;font-weight:600}
 .btn-del{background:none;border:none;color:rgba(255,107,91,.5);cursor:pointer;font-size:14px;padding:0;transition:color .15s}
 .btn-del:hover{color:var(--danger)}
 .btn-edit{background:none;border:none;color:rgba(91,200,255,.5);cursor:pointer;font-size:13px;padding:0;margin-right:4px}
@@ -118,7 +118,7 @@ body{font-family:var(--BF);background:var(--bg);color:var(--white);font-size:15p
 .badge-green{background:rgba(0,196,140,.12);color:var(--accent);border:1px solid rgba(0,196,140,.25)}
 .badge-blue{background:rgba(91,200,255,.1);color:var(--blue);border:1px solid rgba(91,200,255,.2)}
 .badge-red{background:rgba(255,107,91,.1);color:var(--danger);border:1px solid rgba(255,107,91,.2)}
-.badge-gold{background:rgba(255,209,0,.1);color:var(--gold);border:1px solid rgba(255,209,0,.2)}
+.badge-gold{background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2)}
 .badge-purple{background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.3)}
 /* SEC */
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -148,7 +148,7 @@ body { background: var(--bg) !important; color: var(--white) !important; }
 /* Stat card values — keep accent colors readable on light */
 .sc-val { color: var(--white) !important; }
 .sc.accent .sc-val { color: var(--accent) !important; }
-.sc.gold   .sc-val { color: #8B6F00 !important; }
+.sc.gold   .sc-val { color: #D97706 !important; }
 .sc.danger .sc-val { color: var(--danger) !important; }
 .sc.b      .sc-val { color: var(--blue) !important; }
 .sc.g      .sc-val { color: var(--green) !important; }
@@ -215,7 +215,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 .badge-green  { background: rgba(22,163,74,.10) !important; color: var(--green) !important; border-color: rgba(22,163,74,.2) !important; }
 .badge-blue   { background: rgba(29,109,181,.08) !important; color: var(--blue) !important; border-color: rgba(29,109,181,.2) !important; }
 .badge-red    { background: rgba(220,53,69,.08) !important; color: var(--danger) !important; border-color: rgba(220,53,69,.2) !important; }
-.badge-gold   { background: rgba(139,111,0,.08) !important; color: #8B6F00 !important; border-color: rgba(139,111,0,.2) !important; }
+.badge-gold   { background: rgba(217,119,6,.08) !important; color: #D97706 !important; border-color: rgba(217,119,6,.2) !important; }
 .badge-purple { background: rgba(109,40,217,.08) !important; color: var(--purple) !important; border-color: rgba(109,40,217,.2) !important; }
 
 </style>
@@ -234,21 +234,21 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <button class="nt"    id="nt-allsales"  onclick="showTab('allsales')">📋 All Sales</button>
   <button class="nt"    id="nt-reports"   onclick="showTab('reports')">📈 Reports</button>
   <button class="nt"    id="nt-manage"    onclick="showTab('manage')">👥 Manage</button>
+  <button class="nt"    id="nt-salonpnl"  onclick="showTab('salonpnl')">📊 Salon PNL</button>
 </div>
 
 <!-- OVERVIEW -->
 <div class="panel on" id="pn-overview">
   <div class="sg" id="ov-stats"></div>
 
-  <!-- Fix 3: Monthly Salon Performance ABOVE today's -->
+  <div class="sec-hdr"><div class="sec-title">Salon Performance — Today</div></div>
+  <div class="salon-grid" id="ov-salons" style="margin-bottom:18px"></div>
+
   <div class="sec-hdr" style="margin-bottom:8px">
     <div class="sec-title">Salon Performance — Month</div>
     <input type="month" id="ov-month" style="background:var(--surface);border:1px solid rgba(0,0,0,.08);border-radius:6px;color:var(--white);font-size:12px;padding:4px 8px;font-family:var(--BF);outline:none" onchange="renderOverview()">
   </div>
   <div class="salon-grid" id="ov-salons-month" style="margin-bottom:18px"></div>
-
-  <div class="sec-hdr"><div class="sec-title">Salon Performance Today</div></div>
-  <div class="salon-grid" id="ov-salons"></div>
   <div class="sec-hdr"><div class="sec-title">Today's All Customers</div></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-end">
     <div class="ifield" style="flex:1;min-width:110px"><label>Salon</label><select id="ov-filter-salon" onchange="renderOvBills()" style="padding:8px 10px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%;-webkit-appearance:none"><option value="">All Salons</option></select></div>
@@ -303,6 +303,9 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div class="sec-hdr" style="margin-bottom:8px">
     <div class="sec-title">Download Reports (CSV)</div>
   </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-end">
+    <div class="ifield" style="flex:1;min-width:130px"><label>CSV Salon Filter</label><select id="csv-salon-filter" style="padding:8px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;width:100%;font-family:var(--BF)"><option value="">All Salons</option></select></div>
+  </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
     <button class="btn-sm" onclick="downloadCSV('sales')">⬇ Sales Data</button>
     <button class="btn-sm" onclick="downloadCSV('salon')">⬇ By Salon</button>
@@ -314,6 +317,21 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div class="sec-hdr" style="margin-bottom:12px"><div class="sec-title">Revenue by Stylist</div></div>
   <div id="rpt-barbers"></div>
 </div>
+
+<!-- SALON PNL -->
+<div class="panel" id="pn-salonpnl">
+  <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px">Salon P&amp;L</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+    <div class="ifield" style="flex:1;min-width:140px"><label>Salon</label>
+      <select id="spnl-salon" onchange="renderSalonPNL()" style="padding:8px 10px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%"><option value="">Select Salon</option></select>
+    </div>
+    <div class="ifield" style="flex:1;min-width:130px"><label>Month</label>
+      <input type="month" id="spnl-month" onchange="renderSalonPNL()" style="padding:8px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%">
+    </div>
+  </div>
+  <div id="spnl-content"><div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Select a salon to view P&amp;L</div></div>
+</div>
+
 
 <!-- MANAGE -->
 <div class="panel" id="pn-manage">
@@ -388,12 +406,12 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="ifield" style="margin-bottom:12px"><label>Role</label><select id="stf-role"><option value="barber">Barber / Hairstylist</option><option value="manager">Manager</option><option value="franchise">Franchise Owner</option></select></div>
     <div class="ifield" style="margin-bottom:12px"><label>Assign to Salon</label><select id="stf-salon"></select></div>
     <div style="background:rgba(255,209,0,.08);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:8px">🔐 Login PIN</div>
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">🔐 Login PIN</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="stf-pin" maxlength="4" inputmode="numeric" placeholder="Set 4-digit PIN"
-          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
+          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(0,196,140,.3);border-radius:var(--rs);color:var(--accent);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
           oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
-        <button onclick="regenStfPin()" style="padding:9px 12px;background:rgba(255,209,0,.12);border:1.5px solid rgba(255,209,0,.3);color:var(--gold);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🎲 Generate</button>
+        <button onclick="regenStfPin()" style="padding:9px 12px;background:rgba(0,196,140,.12);border:1.5px solid rgba(0,196,140,.3);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🎲 Generate</button>
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:6px">Staff uses this PIN to log in. Share it with them.</div>
     </div>
@@ -404,7 +422,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     </div>
     <div id="stf-otp-box" style="display:none;background:rgba(0,196,140,.1);border:1.5px solid rgba(0,196,140,.3);border-radius:8px;padding:12px;text-align:center;margin-bottom:10px">
       <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">✅ Staff Added — Share PIN</div>
-      <div style="font-family:monospace;font-size:28px;font-weight:800;color:var(--gold);letter-spacing:6px" id="stf-otp-val">----</div>
+      <div style="font-family:monospace;font-size:28px;font-weight:800;color:var(--accent);letter-spacing:6px" id="stf-otp-val">----</div>
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Phone + this PIN = their login</div>
     </div>
     <div class="modal-actions" id="stf-actions">
@@ -439,6 +457,19 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="ifield" style="margin-bottom:12px"><label>Salon Name</label><input type="text" id="esl-name" placeholder="Budget Barber – City Name"></div>
     <div class="ifield" style="margin-bottom:12px"><label>Location</label><input type="text" id="esl-loc" placeholder="Area, City"></div>
     <div class="ifield" style="margin-bottom:12px"><label>Manager Phone</label><input type="tel" id="esl-mgr" placeholder="10-digit phone" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div class="ifield" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="esl-company" onchange="toggleEditSalonCosts()" style="width:16px;height:16px">
+        <span>Company Managed Salon</span>
+      </label>
+    </div>
+    <div id="esl-costs-section" style="display:none;background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Monthly Costs (Company Managed)</div>
+      <div class="ifield" style="margin-bottom:8px"><label>Salon Rent (₹)</label><input type="number" id="esl-rent" class="fi" placeholder="0" min="0" inputmode="numeric"></div>
+      <div class="ifield" style="margin-bottom:8px"><label>Staff Room Rent (₹)</label><input type="number" id="esl-staff-rent" class="fi" placeholder="0" min="0" inputmode="numeric"></div>
+      <div class="ifield" style="margin-bottom:8px"><label>Extra Sunday Food (₹)</label><input type="number" id="esl-extra-food" class="fi" placeholder="0" min="0" inputmode="numeric"></div>
+      <div style="font-size:10px;color:var(--muted)">These will be saved to franchise_inputs and used in PNL calculations.</div>
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('editSalonModal')">Cancel</button>
       <button class="btn-primary" onclick="saveEditSalon()">Save Changes</button>
@@ -455,12 +486,12 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="ifield" style="margin-bottom:12px"><label>Role</label><select id="est-role"><option value="barber">Barber / Hairstylist</option><option value="manager">Manager</option><option value="franchise">Franchise Owner</option></select></div>
     <div class="ifield" style="margin-bottom:12px"><label>Assign to Salon</label><select id="est-salon"></select></div>
     <div style="background:rgba(255,209,0,.08);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:8px">🔐 Login PIN</div>
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">🔐 Login PIN</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="est-pin" maxlength="4" inputmode="numeric" placeholder="4-digit PIN"
-          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
+          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(0,196,140,.3);border-radius:var(--rs);color:var(--accent);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
           oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
-        <button onclick="regenPin()" style="padding:9px 12px;background:rgba(255,209,0,.12);border:1.5px solid rgba(255,209,0,.3);color:var(--gold);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🔄 New PIN</button>
+        <button onclick="regenPin()" style="padding:9px 12px;background:rgba(0,196,140,.12);border:1.5px solid rgba(0,196,140,.3);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🔄 New PIN</button>
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:6px">Share this PIN with the staff member. They use it to log in.</div>
     </div>
@@ -502,12 +533,12 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     </div>
     <div class="ifield" style="margin-bottom:12px"><label>Growth / Notes</label><input type="text" id="ecu-notes" placeholder="Any special notes…"></div>
     <div style="background:rgba(255,209,0,.08);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:8px">🔐 Customer Portal PIN</div>
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">🔐 Customer Portal PIN</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="ecu-pin" maxlength="4" inputmode="numeric" placeholder="4-digit PIN"
-          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);color:var(--gold);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
+          style="flex:1;padding:10px 12px;background:var(--surface2);border:1.5px solid rgba(0,196,140,.3);border-radius:var(--rs);color:var(--accent);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none;width:100%"
           oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
-        <button onclick="regenCustPin()" style="padding:9px 12px;background:rgba(255,209,0,.12);border:1.5px solid rgba(255,209,0,.3);color:var(--gold);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🔄 New PIN</button>
+        <button onclick="regenCustPin()" style="padding:9px 12px;background:rgba(0,196,140,.12);border:1.5px solid rgba(0,196,140,.3);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🔄 New PIN</button>
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:6px">Share this PIN with the customer so they can access their style cards.</div>
     </div>
@@ -528,8 +559,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -872,6 +903,89 @@ function filterByMonth(e,mo){if(!mo)return e;var p=mo.split('-');return e.filter
 
 // ── AUTO SYNC (every 5 minutes) ──
 // ── AUTO-RESTORE on load (admin) ──
+// ─── SALON PNL ───
+function populateSalonPNLSelect(){
+  var sel=document.getElementById('spnl-salon');
+  if(!sel||sel.options.length>1)return;
+  (LS.get('salons')||[]).forEach(function(s){var o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});
+}
+function renderSalonPNL(){
+  var sid=(document.getElementById('spnl-salon')||{}).value||'';
+  var month=(document.getElementById('spnl-month')||{}).value||'';
+  var el=document.getElementById('spnl-content');
+  if(!sid||!month){if(el)el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Select salon and month</div>';return;}
+  var salon=(LS.get('salons')||[]).find(function(s){return s.id===sid;})||{name:'Salon'};
+  var yr=parseInt(month.split('-')[0]),mo=parseInt(month.split('-')[1]);
+  var allE=getEntries().filter(function(e){
+    if(e.salonId!==sid)return false;
+    var p=(e.date||'').split('/');
+    return parseInt(p[1])===mo&&parseInt(p[2])===yr;
+  });
+  var revenue=allE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+  var customers=allE.length;
+  var sStaff=(LS.get('staff')||[]).filter(function(u){return u.salonId===sid;});
+  var totalSalary=sStaff.reduce(function(a,u){return a+Number(u.fixedSalary||0)+Number(u.cleaningMoney||0);},0);
+  var totalFood=sStaff.reduce(function(a,u){return a+Number(u.foodMoney||0);},0);
+  var totalInc=0;
+  sStaff.filter(function(u){return u.role==='barber';}).forEach(function(u){
+    var bS=allE.filter(function(e){return e.barberId===u.id;}).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    totalInc+=Math.max(0,Math.round((bS-Number(u.fixedSalary||0))*0.10));
+  });
+  var sxAll=LS.get('salonExpenses')||[];
+  var sxMo=sxAll.filter(function(r){
+    if(r.salon_id!==sid)return false;
+    var p=(r["date"]||'').split('/');
+    return parseInt(p[1])===mo&&parseInt(p[2])===yr;
+  });
+  function sxTot(cat){return sxMo.filter(function(r){return r.category===cat;}).reduce(function(a,r){return a+Number(r.amount||0);},0);}
+  var cosmetics=sxTot('cosmetics'),ebStore=sxTot('eb_store'),ebStaff=sxTot('eb_staff'),maid=sxTot('maid'),wifi=sxTot('wifi'),marketing=sxTot('marketing');
+  var mgrExp=(LS.get('mgrExpenses')||[]).filter(function(r){var p=(r["date"]||'').split('/');return r.salonId===sid&&parseInt(p[1])===mo&&parseInt(p[2])===yr;}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var fiAll=LS.get('_fi_'+sid)||[];
+  function fiVal(field){for(var i=0;i<fiAll.length;i++){if(fiAll[i][field]&&Number(fiAll[i][field])>0)return Number(fiAll[i][field]);}return 0;}
+  var rent=fiVal('rent'),staffRent=fiVal('staff_rent'),extraFood=fiVal('extra_food');
+  // Projected revenue
+  var dIM=new Date(yr,mo,0).getDate(),nowD=new Date(),isCM=(nowD.getFullYear()===yr&&nowD.getMonth()+1===mo),todD=isCM?nowD.getDate():dIM;
+  var wdR=[],weR=[],totWd=0,totWe=0;
+  for(var di=1;di<=dIM;di++){
+    var dow=new Date(yr,mo-1,di).getDay(),isWe=(dow===0||dow===6);
+    if(isWe)totWe++;else totWd++;
+    if(di<=todD){
+      var dayR=allE.filter(function(e){var p=(e.date||'').split('/');return parseInt(p[0])===di;}).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+      if(isWe)weR.push(dayR);else wdR.push(dayR);
+    }
+  }
+  var avgWd=wdR.length?(wdR.reduce(function(a,v){return a+v;},0)/wdR.length):0;
+  var avgWe=weR.length?(weR.reduce(function(a,v){return a+v;},0)/weR.length):0;
+  var projRev=Math.round(avgWd*totWd+avgWe*totWe);
+  var totalOpex=totalSalary+totalFood+totalInc+rent+staffRent+cosmetics+ebStore+ebStaff+maid+wifi+marketing+extraFood+mgrExp;
+  var profit=revenue-totalOpex,projProfit=projRev-totalOpex;
+  function fINR(n){return (n<0?'\u2212\u20b9':'\u20b9')+Math.abs(Math.round(n)).toLocaleString('en-IN');}
+  function prow(lbl,val,clr){return '<div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px"><span style="color:var(--muted)">'+lbl+'</span><span style="font-weight:700;color:'+clr+'">'+fINR(val)+'</span></div>';}
+  if(el) el.innerHTML=
+    '<div style="background:var(--accent);color:#fff;border-radius:10px;padding:10px 16px;text-align:center;font-weight:800;font-size:15px;margin-bottom:12px">'+salon.name+' · '+new Date(yr,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'})+'</div>'+
+    '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
+      '<div style="background:rgba(0,196,140,.1);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent)">REVENUE</div>'+
+      prow('Actual Sales',revenue,'var(--accent)')+prow('Customers',customers,'var(--blue)')+
+      prow('Avg/Customer',customers?Math.round(revenue/customers):0,'var(--blue)')+prow('Projected Revenue',projRev,'var(--accent)')+
+    '</div>'+
+    '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
+      '<div style="background:rgba(255,107,91,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--danger)">OPEX</div>'+
+      prow('Salaries',totalSalary,'var(--danger)')+prow('Food Money',totalFood,'var(--danger)')+prow('Incentives',totalInc,'var(--danger)')+
+      prow('Rent',rent,'var(--danger)')+prow('Staff Room Rent',staffRent,'var(--danger)')+prow('Extra Sunday Food',extraFood,'var(--danger)')+
+      prow('Cosmetics',cosmetics,'var(--danger)')+prow('EB Store',ebStore,'var(--danger)')+prow('EB Staff',ebStaff,'var(--danger)')+
+      prow('Maid',maid,'var(--danger)')+prow('WiFi',wifi,'var(--danger)')+prow('Marketing',marketing,'var(--danger)')+prow('Daily Expenses',mgrExp,'var(--danger)')+
+      '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px;font-weight:800;background:rgba(255,107,91,.06)"><span>Total Opex</span><span style="color:var(--danger)">'+fINR(totalOpex)+'</span></div>'+
+    '</div>'+
+    '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);overflow:hidden">'+
+      '<div style="background:rgba(217,119,6,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#D97706">PROFIT / LOSS</div>'+
+      '<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:16px;font-weight:900;border-bottom:1px solid var(--border)"><span>Profit / Loss</span><span style="color:'+(profit>=0?'var(--accent)':'var(--danger)')+'">'+fINR(profit)+'</span></div>'+
+      prow('Projected P/L',projProfit,projProfit>=0?'var(--accent)':'var(--danger)')+
+    '</div>';
+  // Fetch fresh franchise inputs in background
+  sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(sid)+'&effective_from=lte.'+encodeURIComponent(month)+'&order=effective_from.desc')
+    .then(function(rows){LS.set('_fi_'+sid,rows||[]);renderSalonPNL();}).catch(function(){});
+}
+
 function showTab(tab){
   try{
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
@@ -882,9 +996,10 @@ function showTab(tab){
     if(!btn){ toast('⚠ Button not found: nt-'+tab); return; }
     pnl.classList.add('on');
     btn.classList.add('on');
-    if(tab==='allsales')renderAllSales();
+    if(tab==='allsales'){ var af=document.getElementById('as-from'),at=document.getElementById('as-to'); if(af&&!af.value)af.value=todayISO(); if(at&&!at.value)at.value=todayISO(); supaBootstrap(function(){renderAllSales();},function(){renderAllSales();}); }
     if(tab==='reports')renderReports();
     if(tab==='manage')renderManage();
+    if(tab==='salonpnl'){populateSalonPNLSelect();var sm=document.getElementById('spnl-month');if(sm&&!sm.value)sm.value=new Date().toISOString().slice(0,7);renderSalonPNL();}
   }catch(e){
     toast('Tab error: '+e.message);
     console.error('[BB showTab]',e);
@@ -905,33 +1020,75 @@ function renderOverview(){
   var totTipT= todayE.reduce(function(a,e){return a+Number(e.tip||0);},0);
   document.getElementById('ov-stats').innerHTML=
     '<div class="sc accent"><div class="sc-lbl">Today Customers</div><div class="sc-val">'+todayE.length+'</div></div>'+
-    '<div class="sc gold"><div class="sc-lbl">Today Sales</div><div class="sc-val" style="font-size:22px">'+fmtINR(totT)+'</div></div>'+
+    '<div class="sc" style="border-left:3px solid #D97706"><div class="sc-lbl">Today Sales</div><div class="sc-val" style="font-size:22px">'+fmtINR(totT)+'</div></div>'+
     '<div class="sc"><div class="sc-lbl">PhonePe Today</div><div class="sc-val" style="font-size:22px;color:var(--blue)">'+fmtINR(totPhT)+'</div></div>'+
     '<div class="sc"><div class="sc-lbl">Cash Today</div><div class="sc-val" style="font-size:22px;color:#90EE90">'+fmtINR(totCashT)+'</div></div>'+
     '<div class="sc"><div class="sc-lbl">Tips Today</div><div class="sc-val" style="font-size:22px;color:#E8A642">'+fmtINR(totTipT)+'</div></div>'+
     '<div class="sc"><div class="sc-lbl">Month Sales</div><div class="sc-val" style="font-size:22px">'+fmtINR(totM)+'</div></div>'+
     '<div class="sc accent"><div class="sc-lbl">Hairstylists</div><div class="sc-val">'+staff.length+'</div></div>';
 
-  // Monthly salon performance cards (selectable month)
-  document.getElementById('ov-salons-month').innerHTML=salons.map(function(s){
-    var sm=monthE.filter(function(e){return e.salonId===s.id;});
-    var smS=sm.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-    return '<div class="salon-card" onclick="filterSalon(\''+s.id+'\')">'+
-      '<div class="sn-name">'+s.name+'</div>'+
-      '<div class="sn-loc">'+s.location+'</div>'+
-      '<div class="sn-stats">'+
-        '<div class="sn-stat"><b>'+fmtINR(smS)+'</b>Sales</div>'+
-        '<div class="sn-stat"><b>'+sm.length+'</b>Customers</div>'+
-      '</div>'+
-    '</div>';
-  }).join('')||'<div style="color:var(--muted);font-size:13px">No salons yet.</div>';
-
-  // Today's salon cards
+  // Today salon cards (shown first)
   document.getElementById('ov-salons').innerHTML=salons.map(function(s){
     var se=todayE.filter(function(e){return e.salonId===s.id;});
     var seS=se.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-    return '<div class="salon-card" onclick="filterSalon(\''+s.id+'\')"><div class="sn-name">'+s.name+'</div><div class="sn-loc">'+s.location+'</div><div class="sn-stats"><div class="sn-stat"><b>'+fmtINR(seS)+'</b>Sales</div><div class="sn-stat"><b>'+se.length+'</b>Customers</div></div></div>';
+    var seAvg=se.length?Math.round(seS/se.length):0;
+    return '<div class="salon-card" data-sid="'+s.id+'" onclick="filterSalon(this)">'+
+      '<div class="sn-name">'+s.name+'</div><div class="sn-loc">'+s.location+'</div>'+
+      '<div class="sn-stats">'+
+        '<div class="sn-stat"><b>'+fmtINR(seS)+'</b>Sales</div>'+
+        '<div class="sn-stat"><b>'+se.length+'</b>Custs</div>'+
+        '<div class="sn-stat"><b style="color:var(--blue)">'+fmtINR(seAvg)+'</b>Avg/Cust</div>'+
+      '</div></div>';
   }).join('');
+
+  // Monthly salon cards with Avg + Projected Revenue + Proj P/L
+  var selYr=parseInt(selMo.split('-')[0]),selMoN=parseInt(selMo.split('-')[1]);
+  var dIM=new Date(selYr,selMoN,0).getDate();
+  var nowD2=new Date(),isCM=(nowD2.getFullYear()===selYr&&nowD2.getMonth()+1===selMoN);
+  var todD=isCM?nowD2.getDate():dIM;
+  document.getElementById('ov-salons-month').innerHTML=salons.map(function(s){
+    var sm=monthE.filter(function(e){return e.salonId===s.id;});
+    var smS=sm.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    var smAvg=sm.length?Math.round(smS/sm.length):0;
+    // Projected revenue
+    var wdRevs=[],weRevs=[],totWd=0,totWe=0;
+    for(var di=1;di<=dIM;di++){
+      var dow=new Date(selYr,selMoN-1,di).getDay(),isWe=(dow===0||dow===6);
+      if(isWe)totWe++;else totWd++;
+      if(di<=todD){
+        var dayR=sm.filter(function(e){
+          var p=(e.date||'').split('/');
+          return parseInt(p[0])===di&&parseInt(p[1])===selMoN&&parseInt(p[2])===selYr;
+        }).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+        if(isWe)weRevs.push(dayR);else wdRevs.push(dayR);
+      }
+    }
+    var avgWd=wdRevs.length?(wdRevs.reduce(function(a,v){return a+v;},0)/wdRevs.length):0;
+    var avgWe=weRevs.length?(weRevs.reduce(function(a,v){return a+v;},0)/weRevs.length):0;
+    var projRev=Math.round(avgWd*totWd+avgWe*totWe);
+    var sStaff=(LS.get('staff')||[]).filter(function(u){return u.salonId===s.id;});
+    var salaries=sStaff.reduce(function(a,u){return a+Number(u.fixedSalary||0)+Number(u.cleaningMoney||0);},0);
+    var projPL=projRev-salaries;
+    var plColor=projPL>=0?'var(--accent)':'var(--danger)';
+    return '<div class="salon-card" data-sid="'+s.id+'" onclick="filterSalon(this)">'+
+      '<div class="sn-name">'+s.name+'</div><div class="sn-loc">'+s.location+'</div>'+
+      '<div class="sn-stats">'+
+        '<div class="sn-stat"><b>'+fmtINR(smS)+'</b>Sales</div>'+
+        '<div class="sn-stat"><b>'+sm.length+'</b>Custs</div>'+
+        '<div class="sn-stat"><b style="color:var(--blue)">'+fmtINR(smAvg)+'</b>Avg/Cust</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;margin-top:8px">'+
+        '<div style="flex:1;background:rgba(0,196,140,.06);border-radius:6px;padding:5px 8px;font-size:11px;border:1px solid rgba(0,196,140,.15)">'+
+          '<div style="color:var(--muted);font-size:10px">Proj Rev</div>'+
+          '<div style="font-weight:700;color:var(--accent)">'+fmtINR(projRev)+'</div>'+
+        '</div>'+
+        '<div style="flex:1;background:rgba(0,0,0,.03);border-radius:6px;padding:5px 8px;font-size:11px;border:1px solid var(--border)">'+
+          '<div style="color:var(--muted);font-size:10px">Proj P/L</div>'+
+          '<div style="font-weight:700;color:'+plColor+'">'+fmtINR(projPL)+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('')||'<div style="color:var(--muted);font-size:13px">No salons yet.</div>';
 
   // Populate overview filter dropdowns (once)
   var ovSel=document.getElementById('ov-filter-salon');
@@ -961,7 +1118,8 @@ function clearOvFilters(){
   renderOvBills();
 }
 
-function filterSalon(sid){
+function filterSalon(btn){
+  var sid = typeof btn==="string" ? btn : btn.getAttribute("data-sid");
   showTab('allsales');
   setTimeout(function(){
     setAsFilter('day');
@@ -1022,7 +1180,7 @@ function renderAllSales(){
     '<div class="tot-item">PhonePe: <b style="color:var(--blue)">'+fmtINR(totPh)+'</b></div>'+
     '<div class="tot-item">Cash: <b style="color:#90EE90">'+fmtINR(totCash)+'</b></div>'+
     '<div class="tot-item">Tips: <b style="color:#E8A642">'+fmtINR(totTip)+'</b></div>'+
-    '<div class="tot-item">Sales Total: <b style="color:var(--gold)">'+fmtINR(totSales)+'</b></div>';
+    '<div class="tot-item">Sales Total: <b style="color:#D97706">'+fmtINR(totSales)+'</b></div>';
   document.getElementById('as-body').innerHTML=renderEntriesTable(entries,true,true,true);
 }
 
@@ -1030,6 +1188,7 @@ function renderAllSales(){
 function onRptYearChange(){
   // Sync rpt-month hidden field from year+month-sel combo
   syncRptMonth();
+  _populateCsvSalonFilter();
   renderReports();
 }
 function syncRptMonth(){
@@ -1042,6 +1201,7 @@ function syncRptMonth(){
     document.getElementById('rpt-month').value=yr+'-01';
   }
 }
+function _populateCsvSalonFilter(){var sel=document.getElementById('csv-salon-filter');if(!sel||sel.options.length>1)return;(LS.get('salons')||[]).forEach(function(s){var o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});}
 function renderReports(){
   var yr=parseInt(document.getElementById('rpt-year').value)||new Date().getFullYear();
   var moSel=document.getElementById('rpt-month-sel').value;
@@ -1067,7 +1227,7 @@ function renderReports(){
   var totCash= entries.reduce(function(a,e){return a+Number(e.cash||0);},0);
   var totTip = entries.reduce(function(a,e){return a+Number(e.tip||0);},0);
   document.getElementById('rpt-stats').innerHTML='<div class="sg">'+
-    '<div class="sc gold"><div class="sc-lbl">'+periodLabel+' Sales</div><div class="sc-val" style="font-size:22px">'+fmtINR(totM)+'</div></div>'+
+    '<div class="sc" style="border-left:3px solid #D97706"><div class="sc-lbl">'+periodLabel+' Sales</div><div class="sc-val" style="font-size:22px">'+fmtINR(totM)+'</div></div>'+
     '<div class="sc"><div class="sc-lbl">PhonePe</div><div class="sc-val" style="font-size:22px;color:var(--blue)">'+fmtINR(totPh)+'</div></div>'+
     '<div class="sc"><div class="sc-lbl">Cash</div><div class="sc-val" style="font-size:22px;color:#90EE90">'+fmtINR(totCash)+'</div></div>'+
     '<div class="sc" style="border-left:3px solid #E8A642"><div class="sc-lbl">Tips</div><div class="sc-val" style="font-size:22px;color:#E8A642">'+fmtINR(totTip)+'</div></div>'+
@@ -1090,8 +1250,41 @@ function renderReports(){
     var maxT2=Math.max.apply(null,monTotals.map(function(x){return x.tot;}));if(maxT2===0)maxT2=1;
     document.getElementById('rpt-chart').innerHTML='<div class="month-chart"><div class="chart-title">Monthly Sales — '+yr+'</div><div class="bar-chart">'+monTotals.map(function(d){return '<div class="bar-group"><div class="bar" style="height:'+Math.max(4,Math.round((d.tot/maxT2)*100))+'%" data-tip="'+fmtINR(d.tot)+'"></div><div class="bar-lbl">'+d.lbl+'</div></div>';}).join('')+'</div></div>';
   }
-  document.getElementById('rpt-salons').innerHTML='<div class="sg">'+salons.map(function(s){var se=entries.filter(function(e){return e.salonId===s.id;});var t=se.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);return '<div class="sc"><div class="sc-lbl">'+(s.name.split('–')[1]||s.name).trim()+'</div><div class="sc-val" style="font-size:20px">'+fmtINR(t)+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+se.length+' customers</div></div>';}).join('')+'</div>';
-  document.getElementById('rpt-barbers').innerHTML='<div class="sg">'+staff.map(function(u){var ue=entries.filter(function(e){return e.barberId===u.id;});var t=ue.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);return '<div class="sc"><div class="sc-lbl">'+u.name+'</div><div class="sc-val" style="font-size:20px">'+fmtINR(t)+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+ue.length+' customers</div></div>';}).join('')+'</div>';
+  document.getElementById('rpt-salons').innerHTML='<div class="sg">'+salons.map(function(s){
+    var se=entries.filter(function(e){return e.salonId===s.id;});
+    var t=se.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    var avg=se.length?Math.round(t/se.length):0;
+    // Projected revenue for this salon (current month only when month selected)
+    var projRev=0;
+    if(moSel){
+      var pYr=yr,pMo=parseInt(moSel),pDIM=new Date(pYr,pMo,0).getDate();
+      var pNow=new Date(),pIsCM=(pNow.getFullYear()===pYr&&pNow.getMonth()+1===pMo);
+      var pTodD=pIsCM?pNow.getDate():pDIM;
+      var pwdR=[],pweR=[],ptWd=0,ptWe=0;
+      for(var pdi=1;pdi<=pDIM;pdi++){
+        var pdow=new Date(pYr,pMo-1,pdi).getDay(),pisWe=(pdow===0||pdow===6);
+        if(pisWe)ptWe++;else ptWd++;
+        if(pdi<=pTodD){
+          var pdayR=se.filter(function(e){var p=(e.date||'').split('/');return parseInt(p[0])===pdi&&parseInt(p[1])===pMo;}).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+          if(pisWe)pweR.push(pdayR);else pwdR.push(pdayR);
+        }
+      }
+      var pAvgWd=pwdR.length?(pwdR.reduce(function(a,v){return a+v;},0)/pwdR.length):0;
+      var pAvgWe=pweR.length?(pweR.reduce(function(a,v){return a+v;},0)/pweR.length):0;
+      projRev=Math.round(pAvgWd*ptWd+pAvgWe*ptWe);
+    }
+    var sStaff2=(LS.get('staff')||[]).filter(function(u){return u.salonId===s.id;});
+    var salaries2=sStaff2.reduce(function(a,u){return a+Number(u.fixedSalary||0)+Number(u.cleaningMoney||0);},0);
+    var projPL2=projRev?projRev-salaries2:0;
+    var plColor2=projPL2>=0?'var(--accent)':'var(--danger)';
+    return '<div class="sc">'+
+      '<div class="sc-lbl">'+(s.name.split('\u2013')[1]||s.name).trim()+'</div>'+
+      '<div class="sc-val" style="font-size:20px">'+fmtINR(t)+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+se.length+' customers · Avg: '+fmtINR(avg)+'</div>'+
+      (projRev?'<div style="font-size:11px;margin-top:4px"><span style="color:var(--accent)">Proj: '+fmtINR(projRev)+'</span> · <span style="color:'+plColor2+'">P/L: '+fmtINR(projPL2)+'</span></div>':'')+
+    '</div>';
+  }).join('')+'</div>';
+  document.getElementById('rpt-barbers').innerHTML='<div class="sg">'+staff.map(function(u){var ue=entries.filter(function(e){return e.barberId===u.id;});var t=ue.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);var avg=ue.length?Math.round(t/ue.length):0;return '<div class="sc"><div class="sc-lbl">'+u.name+'</div><div class="sc-val" style="font-size:20px">'+fmtINR(t)+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+ue.length+' customers</div><div style="font-size:11px;color:var(--blue);margin-top:2px">Avg: '+fmtINR(avg)+'/cust</div></div>';}).join('')+'</div>';
 }
 
 // ── MANAGE ──
@@ -1128,7 +1321,7 @@ function renderManage(){
     var roleBadge=u.role==='admin'?'badge-red':u.role==='manager'?'badge-blue':u.role==='barber'?'badge-green':u.role==='franchise'?'badge-purple':'badge-gold';
     var salonName=u.salonId?(salonMap[u.salonId]||u.salonId).split('–').pop().trim():'—';
     var pinDisplay=u.loginPin
-      ?'<span style="font-family:monospace;font-size:14px;font-weight:800;color:var(--gold);letter-spacing:2px">'+u.loginPin+'</span>'
+      ?'<span style="font-family:monospace;font-size:14px;font-weight:800;color:var(--accent);letter-spacing:2px">'+u.loginPin+'</span>'
       :'<span style="color:var(--muted);font-size:11px">—</span>';
     return '<div class="tbl-row cols-u">'+
       '<span style="font-weight:600;text-align:left">'+u.name+'</span>'+
@@ -1191,7 +1384,7 @@ function renderManageCustomers(){
     var salonName=salonId?(salonMap[salonId]||salonId):'—';
     var visits=entries.filter(function(e){return e.customerPhone===c.phone;}).length;
     var pinDisplay=c.loginPin
-      ?'<span style="font-family:monospace;font-size:13px;font-weight:800;color:var(--gold);letter-spacing:2px">'+c.loginPin+'</span>'
+      ?'<span style="font-family:monospace;font-size:13px;font-weight:800;color:var(--accent);letter-spacing:2px">'+c.loginPin+'</span>'
       :'<span style="color:var(--muted2);font-size:10px">No PIN</span>';
     var hairInfo=[c.hairType,c.faceShape].filter(Boolean).join(' · ')||'—';
     return '<div class="tbl-row" style="display:grid;grid-template-columns:1fr 100px 90px 80px 70px;text-align:center;align-items:center">'+
@@ -1210,6 +1403,17 @@ function renderManageCustomers(){
   }).join('');
 }
 
+function quickPinCust(id){
+  var customers=LS.get('customers')||[];
+  var idx=customers.findIndex(function(c){return c.id===id;});
+  if(idx===-1)return;
+  var pin=String(Math.floor(1000+Math.random()*9000));
+  customers[idx].loginPin=pin;
+  LS.set('customers',customers);
+  appendRowToSheet('Customers',customers[idx],function(){});
+  toast('📌 PIN '+pin+' set for '+customers[idx].name);
+  renderManageCustomers();
+}
 function regenCustPin(){
   document.getElementById('ecu-pin').value=String(Math.floor(1000+Math.random()*9000));
 }
@@ -1247,6 +1451,10 @@ function saveEditCust(){
 
 // Edit Salon
 var editingSalonId=null;
+function toggleEditSalonCosts(){
+  var chk=document.getElementById('esl-company');
+  document.getElementById('esl-costs-section').style.display=chk&&chk.checked?'block':'none';
+}
 function openEditSalon(id){
   editingSalonId=id;
   var salons=LS.get('salons')||[];
@@ -1255,6 +1463,22 @@ function openEditSalon(id){
   document.getElementById('esl-name').value=s.name||'';
   document.getElementById('esl-loc').value=s.location||'';
   document.getElementById('esl-mgr').value=s.mgrPhone||'';
+  var isCo=s.companyManaged==1||s.companyManaged==='1'||s.companyManaged===true;
+  document.getElementById('esl-company').checked=isCo;
+  document.getElementById('esl-costs-section').style.display=isCo?'block':'none';
+  // Load current franchise costs from Supabase
+  if(isCo){
+    var curMo=new Date().toISOString().slice(0,7);
+    sbSelect('franchise_inputs',
+      'salon_id=eq.'+encodeURIComponent(id)+'&effective_from=lte.'+encodeURIComponent(curMo)+'&order=effective_from.desc'
+    ).then(function(rows){
+      rows=rows||[];
+      function lv(f){for(var i=0;i<rows.length;i++){if(rows[i][f]&&Number(rows[i][f])>0)return Number(rows[i][f]);}return 0;}
+      var rEl=document.getElementById('esl-rent'); if(rEl) rEl.value=lv('rent')||'';
+      var sEl=document.getElementById('esl-staff-rent'); if(sEl) sEl.value=lv('staff_rent')||'';
+      var eEl=document.getElementById('esl-extra-food'); if(eEl) eEl.value=lv('extra_food')||'';
+    }).catch(function(){});
+  }
   openModal('editSalonModal');
 }
 function saveEditSalon(){
@@ -1264,8 +1488,21 @@ function saveEditSalon(){
   salons[idx].name    =document.getElementById('esl-name').value.trim()||salons[idx].name;
   salons[idx].location=document.getElementById('esl-loc').value.trim();
   salons[idx].mgrPhone=document.getElementById('esl-mgr').value.trim();
+  var isCo=document.getElementById('esl-company').checked;
+  salons[idx].companyManaged=isCo?1:0;
   LS.set('salons',salons);
   updateRowInSheet('Salons',salons[idx],function(ok){if(!ok)toast('⚠ Saved locally');});
+  // Save costs to franchise_inputs if company managed
+  if(isCo){
+    var rent=parseFloat(document.getElementById('esl-rent').value)||0;
+    var staffRent=parseFloat(document.getElementById('esl-staff-rent').value)||0;
+    var extraFood=parseFloat(document.getElementById('esl-extra-food').value)||0;
+    var curMo=new Date().toISOString().slice(0,7);
+    var salonId=editingSalonId;
+    if(rent>0) sbInsert('franchise_inputs',{salon_id:salonId,effective_from:curMo,rent:rent}).catch(function(){});
+    if(staffRent>0) sbInsert('franchise_inputs',{salon_id:salonId,effective_from:curMo,staff_rent:staffRent}).catch(function(){});
+    if(extraFood>0) sbInsert('franchise_inputs',{salon_id:salonId,effective_from:curMo,extra_food:extraFood}).catch(function(){});
+  }
   closeModal('editSalonModal');
   toast('✓ Salon updated');
   renderManage();

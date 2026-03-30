@@ -465,7 +465,12 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       <span class="counter-total" id="ci-total" style="color:var(--blue)">₹0</span>
     </div>
     <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.6">
-      Today Cash + All Previous Cash − Advances (cash) − Expenses − Cash Handed Over
+      Prev Month Cash + Today Cash + All Previous Cash (till yesterday) − Advances (cash) − Expenses − Cash Handed Over
+    </div>
+    <!-- Previous Month Cash Input -->
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Prev Month Cash (₹)</label>
+      <input type="number" class="counter-inp" id="prev-month-cash" placeholder="0" min="0" inputmode="numeric" style="flex:1;min-width:90px" oninput="savePrevMonthCash()">
     </div>
     <div style="font-size:12px;color:var(--muted2)" id="ci-log"></div>
   </div>
@@ -1356,14 +1361,24 @@ function addHandover(){
   toast('🤝 ₹'+amt+' handed over to '+name);
 }
 
+function savePrevMonthCash(){
+  var val=parseFloat(document.getElementById('prev-month-cash').value)||0;
+  LS.set('prevMonthCash_'+ME.id, val);
+  renderCashInCounter();
+}
 function renderCashInCounter(){
-  var allEntries=getEntries().filter(function(e){return e.barberId===ME.id;});
+  var allEntries=getEntries().filter(function(e){return String(e.barberId)===String(ME.id);});
   // Today's cash from billing
   var todayCash=allEntries.filter(function(e){return e.date===today();})
     .reduce(function(a,e){return a+Number(e.cash||0);},0);
-  // All previous days cash (entries before today)
-  var prevCash=allEntries.filter(function(e){return e.date!==today();})
+  // All previous days cash (entries before today — this month up till yesterday)
+  var prevDailyCash=allEntries.filter(function(e){return e.date!==today();})
     .reduce(function(a,e){return a+Number(e.cash||0);},0);
+  // Previous month cash (manually entered)
+  var prevMonthCash=Number(LS.get('prevMonthCash_'+ME.id)||0);
+  // Restore input field value
+  var pmEl=document.getElementById('prev-month-cash');
+  if(pmEl && pmEl.value==='') pmEl.value = prevMonthCash > 0 ? prevMonthCash : '';
   // Cash advances this month (advances with mode=cash or no mode)
   var mo=new Date().toISOString().slice(0,7);
   var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
@@ -1379,14 +1394,15 @@ function renderCashInCounter(){
   // Cash handed over to manager/franchise owner
   var handovers=(LS.get('cashHandover')||[]).filter(function(r){return String(r.barberId)===String(ME.id);});
   var totalHandover=handovers.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  // Formula: Today Cash + Previous Cash - Cash Advances (month) - Expenses - Handovers
-  var balance=todayCash+prevCash-cashAdv-totalExp-totalHandover;
+  // Formula: Prev Month Cash + Today Cash + Prev Daily Cash - Cash Advances (month) - Expenses - Handovers
+  var balance=prevMonthCash+todayCash+prevDailyCash-cashAdv-totalExp-totalHandover;
   document.getElementById('ci-total').textContent=fmtINR(balance);
   // Breakdown
   var el=document.getElementById('ci-log');
   el.innerHTML=
+    (prevMonthCash>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Prev Month Cash</span><span style="color:var(--blue)">+'+fmtINR(prevMonthCash)+'</span></div>':'')+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Previous Cash</span><span style="color:var(--green)">+'+fmtINR(prevCash)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Previous Days Cash (till yesterday)</span><span style="color:var(--green)">+'+fmtINR(prevDailyCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (This Month)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses (All Time)</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over to Mgr/Franchise</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
@@ -1420,7 +1436,7 @@ function addExpense(){
   if(amt<=0){toast('Enter amount');return;}
   var log=LS.get('expenses')||[];
   var now=new Date();
-  log.push({desc:desc,amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),barberId:ME.id});
+  log.push({desc:desc,amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),barberId:ME.id,ts:Date.now()});
   LS.set('expenses',log);
   appendRowToSheet('Expenses',log[log.length-1],function(ok){if(!ok)toast('⚠ Saved locally');});
   document.getElementById('exp-desc').value='';
@@ -1429,12 +1445,26 @@ function addExpense(){
   toast('🧾 Expense recorded');
 }
 function renderExpenseCounter(){
-  var log=(LS.get('expenses')||[]).filter(function(e){return e.date===today()&&e.barberId===ME.id;});
+  var log=(LS.get('expenses')||[]).filter(function(e){return e.date===today()&&String(e.barberId)===String(ME.id);});
   var total=log.reduce(function(a,e){return a+Number(e.amount||0);},0);
   document.getElementById('exp-total').textContent=fmtINR(total);
   var el=document.getElementById('exp-log');
   el.innerHTML=!log.length?'<span style="color:var(--muted2);font-style:italic">No expenses yet</span>':
-    log.slice().reverse().map(function(e){return '<div class="counter-log-item"><span style="flex:1">'+e.time+' — <b style="color:var(--white)">'+e.desc+'</b></span><span style="color:var(--danger);font-weight:700;margin-left:7px">'+fmtINR(e.amount)+'</span></div>';}).join('');
+    log.slice().reverse().map(function(e){
+      return '<div class="counter-log-item" style="display:flex;align-items:center;gap:5px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
+        '<span style="flex:1;font-size:11px">'+e.time+' — <b style="color:var(--white)">'+e.desc+'</b></span>'+
+        '<span style="color:var(--danger);font-weight:700;white-space:nowrap">'+fmtINR(e.amount)+'</span>'+
+        '<button onclick="deleteExpense('+e.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0" title="Delete">✕</button>'+
+      '</div>';
+    }).join('');
+}
+function deleteExpense(ts){
+  if(!confirm('Delete this expense?'))return;
+  var log=(LS.get('expenses')||[]).filter(function(e){return e.ts!==ts;});
+  LS.set('expenses',log);
+  renderExpenseCounter();
+  renderCashInCounter();
+  toast('Expense deleted');
 }
 
 // ── MY SALES ── Fix 3+4+7
@@ -1980,11 +2010,11 @@ function addAdvance(){
   var d=document.getElementById('adv-date').value;
   var amt=parseFloat(document.getElementById('adv-amt').value)||0;
   if(!d||amt<=0){toast('Enter date and amount');return;}
-  var row={date:isoToLocal(d),amount:amt,barberId:ME.id,ts:Date.now(),mode:_advMode};
+  var row={date:isoToLocal(d),amount:amt,barberId:String(ME.id),ts:Date.now(),mode:_advMode};
   var log=LS.get('advances')||[];
   log.push(row);
   LS.set('advances',log);
-  sbInsert('advances',{date:row.date,amount:amt,barberId:ME.id,ts:row.ts,mode:_advMode}).catch(function(){
+  sbInsert('advances',{date:row.date,amount:amt,barberId:String(ME.id),ts:row.ts,mode:_advMode}).catch(function(){
     appendRowToSheet('Advances',row,function(ok){if(!ok)toast('⚠ Saved locally');});
   });
   document.getElementById('adv-amt').value='';

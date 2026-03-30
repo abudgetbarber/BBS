@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Budget Barber – Choose Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Black+Han+Sans&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Barlow', sans-serif;
-  background: #003D2B;
+  background: #F0F4F2;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -18,7 +18,7 @@ body {
   padding: 30px 20px 40px;
 }
 
-/* LOGO — matches app topbar style */
+/* LOGO — colours intact: yellow box, dark green text */
 .logo-box {
   background: #F5E030;
   border-radius: 10px;
@@ -26,6 +26,7 @@ body {
   text-align: center;
   margin-bottom: 6px;
   display: inline-block;
+  box-shadow: 0 4px 16px rgba(0,61,43,0.15);
 }
 .logo-top {
   font-family: 'Bebas Neue', sans-serif;
@@ -50,20 +51,19 @@ body {
 }
 .tagline {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 3px;
-  color: rgba(255,255,255,0.4);
+  color: #5A7A6A;
   text-transform: uppercase;
   margin-top: 14px;
   margin-bottom: 32px;
 }
 
-/* HEADING */
 h1 {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 20px;
   font-weight: 800;
-  color: white;
+  color: #1A2E25;
   text-align: center;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -71,7 +71,7 @@ h1 {
 }
 .subtitle {
   font-size: 13px;
-  color: rgba(255,255,255,0.5);
+  color: #7A9A8A;
   text-align: center;
   margin-bottom: 28px;
 }
@@ -86,8 +86,8 @@ h1 {
   margin-bottom: 16px;
 }
 .portal-btn {
-  background: rgba(255,255,255,0.07);
-  border: 1.5px solid rgba(255,255,255,0.12);
+  background: #ffffff;
+  border: 1.5px solid #D8E8DF;
   border-radius: 12px;
   padding: 22px 12px 18px;
   text-align: center;
@@ -95,11 +95,13 @@ h1 {
   text-decoration: none;
   display: block;
   transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,61,43,0.06);
 }
 .portal-btn:hover {
-  background: rgba(245,224,48,0.12);
-  border-color: #F5E030;
+  background: #EBF5EF;
+  border-color: #00C48C;
   transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,196,140,0.15);
 }
 .portal-btn:active {
   transform: scale(0.97);
@@ -113,17 +115,19 @@ h1 {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 16px;
   font-weight: 900;
-  color: #F5E030;
+  color: #003D2B;
   text-transform: uppercase;
   letter-spacing: 1px;
   display: block;
 }
 .portal-desc {
   font-size: 11px;
-  color: rgba(255,255,255,0.4);
+  color: #7A9A8A;
   margin-top: 4px;
   display: block;
 }
+
+/* Admin — full-width card */
 .portal-btn.admin-btn {
   grid-column: 1 / -1;
   display: flex;
@@ -131,12 +135,13 @@ h1 {
   justify-content: center;
   gap: 14px;
   padding: 16px 20px;
-  background: rgba(124,58,237,0.15);
-  border-color: rgba(124,58,237,0.3);
+  background: #F0EBFF;
+  border-color: #C4B0F0;
 }
 .portal-btn.admin-btn:hover {
-  background: rgba(124,58,237,0.25);
-  border-color: #a78bfa;
+  background: #E4D9FF;
+  border-color: #7C3AED;
+  box-shadow: 0 6px 18px rgba(124,58,237,0.15);
 }
 .portal-btn.admin-btn .portal-icon {
   font-size: 28px;
@@ -145,11 +150,16 @@ h1 {
 .portal-btn.admin-btn .portal-text {
   text-align: left;
 }
-
+.portal-btn.admin-btn .portal-name {
+  color: #4C1D95;
+}
+.portal-btn.admin-btn .portal-desc {
+  color: #7C5AC0;
+}
 
 .footer-note {
   font-size: 11px;
-  color: rgba(255,255,255,0.3);
+  color: #9AB5A5;
   text-align: center;
   margin-top: 20px;
 }
@@ -187,7 +197,7 @@ h1 {
     <span class="portal-desc">Dashboard & analytics</span>
   </a>
 
-  <a href="login-franchise.html" class="portal-btn franchise-btn">
+  <a href="login-franchise.html" class="portal-btn">
     <span class="portal-icon">🏢</span>
     <span class="portal-name">Franchise</span>
     <span class="portal-desc">View-only outlet</span>
@@ -206,17 +216,8 @@ h1 {
 <div class="footer-note">© 2026 Budget Barber · Digital Men's Salon</div>
 
 <script>
-// ── SHARED CONFIG ──
-// Set your Google Apps Script URL here ONCE.
-// All apps on this site will automatically use it.
-// After deploying, paste your Apps Script URL below:
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
-
-if(BB_SHEET_URL){
-  // Save to localStorage so all apps on this domain can use it
-  localStorage.setItem('bb_sheetUrl', BB_SHEET_URL);
-}
+var SUPA_URL = "YOUR_SUPABASE_URL";
+var SUPA_KEY = "YOUR_SUPABASE_ANON_KEY";
 </script>
 </body>
 </html>

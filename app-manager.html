@@ -1357,57 +1357,81 @@ function populateMgrBillBarbers(){
     myBarbers.map(function(u){return '<option value="'+u.id+'">'+u.name+'</option>';}).join('');
 }
 function addMgrBill(){
-  var barberId = document.getElementById('mgr-bill-barber').value;
-  var services = mgrSelectedSvcs.map(function(s){return s.label;}).join(', ');
-  var ph       = parseFloat(document.getElementById('mgr-bill-ph').value)||0;
-  var cash     = parseFloat(document.getElementById('mgr-bill-cash').value)||0;
-  var phone    = document.getElementById('mgr-bill-phone').value.trim();
+  var barberId   = document.getElementById('mgr-bill-barber').value;
+  var services   = mgrSelectedSvcs.map(function(s){return s.label;}).join(', ');
+  var ph         = parseFloat(document.getElementById('mgr-bill-ph').value)||0;
+  var cash       = parseFloat(document.getElementById('mgr-bill-cash').value)||0;
+  var phTip      = parseFloat(document.getElementById('mgr-bill-ph-tip').value)||0;
+  var cashTip    = parseFloat(document.getElementById('mgr-bill-cash-tip').value)||0;
+  var custName   = (document.getElementById('mgr-bill-name').value||'').trim()||'Walk-in';
+  var custPhone  = document.getElementById('mgr-bill-phone').value.trim();
   if(!barberId){ toast('Select a hairstylist'); return; }
   if(!services){ toast('Select at least one service'); return; }
   if(ph<=0 && cash<=0){ toast('Enter PhonePe or Cash amount'); return; }
-  var staff = LS.get('staff')||[];
+  var staff  = LS.get('staff')||[];
   var barber = staff.find(function(u){return u.id===barberId;});
-  var now = new Date();
-  var entry = {
-    id: Date.now(),
-    date: today(),
-    time: now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
-    barberId: barberId,
-    barberName: barber ? barber.name : '—',
-    salonId: mySalonId,
-    services: services,
-    phPay: ph,
-    cash: cash,
-    tip: 0, phTip: 0, cashTip: 0,
-    total: ph + cash,
-    customerName: '',
-    customerPhone: phone,
-    entrySource: 'manager'
+  var now    = new Date();
+  var entry  = {
+    id:             String(Date.now()),   // string id for Supabase text PK
+    date:           today(),
+    time:           now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+    barberId:       barberId,
+    barberName:     barber ? barber.name : '—',
+    salonId:        mySalonId,
+    services:       services,
+    phPay:          ph,
+    cash:           cash,
+    phTip:          phTip,
+    cashTip:        cashTip,
+    tip:            phTip + cashTip,
+    total:          ph + cash,
+    customerName:   custName,
+    customerPhone:  custPhone,
+    entrySource:    'manager'
   };
-  var entries = LS.get('entries')||[];
-  entries.push(entry);
-  LS.set('entries', entries);
-  appendRowToSheet('Entries', entry, function(ok){ if(!ok) toast('⚠ Saved locally'); });
-  // Clear form
+  // Save to Supabase FIRST, then update local cache
+  sbInsert('entries', entry)
+    .then(function(saved){
+      var cached = LS.get('entries')||[];
+      cached.push(saved||entry);
+      LS.set('entries', cached);
+      renderDashboard();
+      toast('✅ Entry saved to Supabase for ' + (barber ? barber.name : 'stylist'));
+    })
+    .catch(function(err){
+      console.error('[BB] addMgrBill Supabase error:', err);
+      // Fallback: save locally so barber can still see it this session
+      var cached = LS.get('entries')||[];
+      cached.push(entry);
+      LS.set('entries', cached);
+      renderDashboard();
+      toast('⚠ Saved locally — Supabase error: '+err);
+    });
+  // Clear form immediately for UX
   mgrSelectedSvcs=[];
   document.querySelectorAll('#mgr-svc-chips .mgr-chip').forEach(function(b){b.classList.remove('on');});
-  document.getElementById('mgr-bill-ph').value = '';
-  document.getElementById('mgr-bill-cash').value = '';
-  document.getElementById('mgr-bill-phone').value = '';
-  renderDashboard();
-  toast('✅ Entry added for ' + (barber ? barber.name : 'stylist'));
+  ['mgr-bill-ph','mgr-bill-cash','mgr-bill-ph-tip','mgr-bill-cash-tip','mgr-bill-name','mgr-bill-phone'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
 }
 
 function addMgrCashIn(){
   var amt=parseFloat(document.getElementById('mgr-ci-inp').value)||0;
   if(amt<=0){toast('Enter amount');return;}
-  var log=LS.get('mgrCashIn')||[];
   var now=new Date();
-  log.push({amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId});
-  LS.set('mgrCashIn',log);
-  appendRowToSheet('MgrCashIn',log[log.length-1],function(ok){if(!ok)toast('⚠ Saved locally');});
+  var row={amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId};
   document.getElementById('mgr-ci-inp').value='';
-  renderMgrCounters();
+  sbInsert('mgr_cash_in', row).then(function(saved){
+    var log=LS.get('mgrCashIn')||[];
+    log.push(saved||row); LS.set('mgrCashIn',log);
+    renderMgrCounters();
+    toast('✅ Cash-in saved');
+  }).catch(function(){
+    var log=LS.get('mgrCashIn')||[];
+    log.push(row); LS.set('mgrCashIn',log);
+    renderMgrCounters();
+    toast('⚠ Saved locally');
+  });
   renderDashboard();
   toast('💵 Cash-in ₹'+amt+' recorded');
 }
@@ -1416,16 +1440,21 @@ function addMgrExpense(){
   var amt=parseFloat(document.getElementById('mgr-exp-amt').value)||0;
   if(!desc){toast('Enter description');return;}
   if(amt<=0){toast('Enter amount');return;}
-  var log=LS.get('mgrExpenses')||[];
   var now=new Date();
-  log.push({desc:desc,amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId});
-  LS.set('mgrExpenses',log);
-  appendRowToSheet('MgrExpenses',log[log.length-1],function(ok){if(!ok)toast('⚠ Saved locally');});
+  var row={desc:desc,amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId};
   document.getElementById('mgr-exp-desc').value='';
   document.getElementById('mgr-exp-amt').value='';
-  renderMgrCounters();
-  renderDashboard();
-  toast('🧾 Expense recorded');
+  sbInsert('mgr_expenses', row).then(function(saved){
+    var log=LS.get('mgrExpenses')||[];
+    log.push(saved||row); LS.set('mgrExpenses',log);
+    renderMgrCounters();
+    toast('✅ Expense saved');
+  }).catch(function(){
+    var log=LS.get('mgrExpenses')||[];
+    log.push(row); LS.set('mgrExpenses',log);
+    renderMgrCounters();
+    toast('⚠ Saved locally');
+  });
 }
 function renderMgrCounters(){
   var allCI=LS.get('mgrCashIn')||[];

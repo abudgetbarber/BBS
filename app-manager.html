@@ -914,8 +914,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -1387,10 +1387,26 @@ function addMgrBill(){
     total:          ph + cash,
     customerName:   custName,
     customerPhone:  custPhone,
-    entrySource:    'manager'
   };
-  // Save to Supabase FIRST, then update local cache
-  sbInsert('entries', entry)
+  // Save to Supabase FIRST — only send columns that exist in the schema
+  var dbRow = {
+    id:             entry.id,
+    date:           entry.date,
+    time:           entry.time,
+    barberId:       entry.barberId,
+    barberName:     entry.barberName,
+    salonId:        entry.salonId,
+    services:       entry.services,
+    phPay:          entry.phPay,
+    cash:           entry.cash,
+    phTip:          entry.phTip,
+    cashTip:        entry.cashTip,
+    tip:            entry.tip,
+    total:          entry.total,
+    customerName:   entry.customerName,
+    customerPhone:  entry.customerPhone
+  };
+  sbInsert('entries', dbRow)
     .then(function(saved){
       var cached = LS.get('entries')||[];
       cached.push(saved||entry);

@@ -581,8 +581,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 //    YOUR_SUPABASE_ANON_KEY  →  eyJ...
 // ════════════════════════════════════════════════════════════════
 
-var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
-var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
+var SUPA_URL  = 'YOUR_SUPABASE_URL';
+var SUPA_KEY  = 'YOUR_SUPABASE_ANON_KEY';
 
 // ── Low-level REST helpers ──────────────────────────────────────
 function _supaHeaders(){
@@ -966,11 +966,16 @@ function renderSalonPNL(){
     var allMgrExp  =(results[3]||[]).map(function(r){return norm(r,mgrExpMap);});
     var fiRows     =results[4]||[];
     // Filter entries to selected month (date format: d/m/yyyy or d/mm/yyyy)
+    // Filter to selected month — handles both padded (01/03/2026) and unpadded (1/3/2026)
     var allE=allEntries.filter(function(e){
       var p=(e.date||'').split('/');
-      return parseInt(p[1])===mo&&parseInt(p[2])===yr;
+      return parseInt(p[1])===mo && parseInt(p[2])===yr;
     });
-    var revenue=allE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    // Debug: log entry count and revenue to console for verification
+    var revenue=allE.reduce(function(a,e){
+      return a+Number(e.phPay||0)+Number(e.cash||0);
+    },0);
+    console.log('[BB PNL] Salon:'+sid+' Month:'+month+' Entries:'+allE.length+' Revenue:'+revenue);
     var customers=allE.length;
     // Staff costs — all staff for this salon (barbers + manager)
     var totalSalary=allStaff.reduce(function(a,u){return a+Number(u.fixedSalary||0)+Number(u.cleaningMoney||0);},0);

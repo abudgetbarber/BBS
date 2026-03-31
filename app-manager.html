@@ -455,29 +455,15 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div class="sec-hdr"><div class="sec-title">Today's Customers</div></div>
   <div id="dash-bills"></div>
 
-  <!-- Cash-In log (barbers) -->
-  <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--rs);padding:8px 14px;margin-top:16px;margin-bottom:12px;border-left:3px solid var(--green)">
-    <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--green)">💵 Cash-In Today (Hairstylists)</span>
-    <span style="font-family:var(--HF);font-size:22px;color:var(--green);letter-spacing:.5px" id="cc-total">₹0</span>
-  </div>
-  <div id="cc-log" style="margin-bottom:12px"></div>
+  <!-- Hairstylist expenses (kept hidden for PNL calculations) -->
+  <div id="expense-log-panel" style="display:none"></div>
 
-  <!-- Hairstylist expenses -->
-  <div id="expense-log-panel"></div>
+  <!-- ══ CASH HANDLING SECTION ══ -->
+  <div class="sec-hdr" style="margin-top:16px;margin-bottom:8px"><div class="sec-title">💰 Cash Handling</div></div>
 
-  <!-- Manager's own Cash-In entry -->
-  <div class="mgr-counter ci">
-    <div class="mgr-ci-title ci"><span>💵 Cash-In Today (Manager)</span><span class="mgr-ci-total" id="mgr-ci-total">₹0</span></div>
-    <div class="mgr-ci-row">
-      <input type="number" class="mgr-ci-inp" id="mgr-ci-inp" placeholder="Enter amount…" min="0" inputmode="numeric">
-      <button onclick="addMgrCashIn()" style="padding:8px 12px;background:rgba(77,201,138,.15);border:1.5px solid var(--green);color:var(--green);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">+ Add</button>
-    </div>
-    <div class="mgr-ci-log" id="mgr-ci-log"></div>
-  </div>
-
-  <!-- Manager's own Expenses entry -->
-  <div class="mgr-counter ex">
-    <div class="mgr-ci-title ex"><span>🧾 Add Expense (Manager)</span><span class="mgr-ci-total" id="mgr-exp-total">₹0</span></div>
+  <!-- Manager Expenses -->
+  <div class="mgr-counter ex" style="border-color:rgba(224,107,91,.35);background:rgba(232,107,91,.06);margin-bottom:10px">
+    <div class="mgr-ci-title ex"><span>🧾 Expenses</span><span class="mgr-ci-total" id="mgr-exp-total">₹0</span></div>
     <div class="mgr-ci-row">
       <input type="text" class="mgr-ci-inp" id="mgr-exp-desc" placeholder="Description…" style="flex:1.5">
       <input type="number" class="mgr-ci-inp" id="mgr-exp-amt" placeholder="₹" min="0" inputmode="numeric" style="flex:.8;min-width:70px">
@@ -486,9 +472,41 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="mgr-ci-log" id="mgr-exp-log"></div>
   </div>
 
-  <!-- Total Cash In / Total Expenses / Net — bottom of page -->
-  <div class="sec-hdr" style="margin-top:18px;margin-bottom:8px"><div class="sec-title">Today — Outlet Summary</div></div>
-  <div class="outlet-summary" id="outlet-summary"></div>
+  <!-- Cash Counter (auto-calculated) -->
+  <div class="mgr-counter ci" style="border-color:rgba(29,109,181,.35);background:rgba(91,196,240,.06);margin-bottom:10px">
+    <div class="mgr-ci-title" style="color:var(--blue)">
+      <span>💵 Cash Counter</span>
+      <span class="mgr-ci-total" id="mgr-cash-counter-total" style="color:var(--blue)">₹0</span>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+      Today Cash Sales + All Previous Cash − Cash Advances − Expenses − Cash Handed Over
+    </div>
+    <!-- Previous Month Cash -->
+    <div style="margin-bottom:8px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Prev Month Cash Entry</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="text" class="mgr-ci-inp" id="mgr-prev-cash-desc" placeholder="Description (e.g. March closing)" style="flex:1.5;min-width:110px">
+        <input type="number" class="mgr-ci-inp" id="mgr-prev-cash-amt" placeholder="₹ Amount" min="0" inputmode="numeric" style="flex:1;min-width:80px">
+        <button onclick="addMgrPrevMonthCash()" style="padding:8px 12px;background:rgba(29,109,181,.15);border:1.5px solid var(--blue);color:var(--blue);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">+ Add</button>
+      </div>
+      <div id="mgr-prev-cash-log" style="margin-top:6px"></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted2)" id="mgr-cash-counter-log"></div>
+  </div>
+
+  <!-- Cash Handed Over -->
+  <div class="mgr-counter" style="border-color:rgba(155,127,212,.35);background:rgba(155,127,212,.06);margin-bottom:10px">
+    <div class="mgr-ci-title" style="color:var(--purple)">
+      <span>🤝 Cash Handed Over to Franchise Owner</span>
+      <span class="mgr-ci-total" id="mgr-handover-total" style="color:var(--purple)">₹0</span>
+    </div>
+    <div class="mgr-ci-row" style="flex-wrap:wrap;gap:6px">
+      <input type="text" class="mgr-ci-inp" id="mgr-handover-name" placeholder="Name (Franchise Owner)" style="flex:1.4;min-width:140px">
+      <input type="number" class="mgr-ci-inp" id="mgr-handover-amt" placeholder="₹ Amount" min="0" inputmode="numeric" style="flex:.8;min-width:80px">
+      <button onclick="addMgrHandover()" style="padding:8px 12px;background:rgba(155,127,212,.15);border:1.5px solid rgba(155,127,212,.4);color:var(--purple);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">+ Add</button>
+    </div>
+    <div class="mgr-ci-log" id="mgr-handover-log"><span style="color:var(--muted2);font-size:11px;font-style:italic">No entries yet</span></div>
+  </div>
 </div>
 
 <!-- ════ SALES RECORDS ════ -->
@@ -666,6 +684,17 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       </div>
       <button onclick="saveAttendanceOverride()" style="padding:7px 14px;background:rgba(0,196,140,.15);border:1.5px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">✓ Save Attendance</button>
     </div>
+
+    <!-- OT Entry (permanent, save/edit) -->
+    <div style="margin-bottom:12px;background:rgba(0,196,140,.06);border:1.5px solid rgba(0,196,140,.2);border-radius:var(--rs);padding:11px 13px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">⏱ Overtime (OT) — This Month</div>
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+        <input type="number" class="fi" id="ss-ot-amt" placeholder="₹ OT Amount" min="0" inputmode="numeric" style="flex:1;min-width:100px;padding:9px 11px">
+        <button onclick="saveOT()" style="padding:9px 13px;background:rgba(0,196,140,.15);border:1.5px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">💾 Save OT</button>
+      </div>
+      <div id="ss-ot-display" style="margin-top:8px;font-size:12px;color:var(--muted2);font-style:italic">No OT set for this month</div>
+    </div>
+
     <div style="margin-bottom:12px">
       <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px">Add Deduction</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
@@ -1431,26 +1460,6 @@ function addMgrBill(){
   });
 }
 
-function addMgrCashIn(){
-  var amt=parseFloat(document.getElementById('mgr-ci-inp').value)||0;
-  if(amt<=0){toast('Enter amount');return;}
-  var now=new Date();
-  var row={amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId};
-  document.getElementById('mgr-ci-inp').value='';
-  sbInsert('mgr_cash_in', row).then(function(saved){
-    var log=LS.get('mgrCashIn')||[];
-    log.push(saved||row); LS.set('mgrCashIn',log);
-    renderMgrCounters();
-    toast('✅ Cash-in saved');
-  }).catch(function(){
-    var log=LS.get('mgrCashIn')||[];
-    log.push(row); LS.set('mgrCashIn',log);
-    renderMgrCounters();
-    toast('⚠ Saved locally');
-  });
-  renderDashboard();
-  toast('💵 Cash-in ₹'+amt+' recorded');
-}
 function addMgrExpense(){
   var desc=document.getElementById('mgr-exp-desc').value.trim();
   var amt=parseFloat(document.getElementById('mgr-exp-amt').value)||0;
@@ -1472,55 +1481,137 @@ function addMgrExpense(){
     toast('⚠ Saved locally');
   });
 }
+
+function addMgrPrevMonthCash(){
+  var desc=(document.getElementById('mgr-prev-cash-desc').value||'').trim();
+  var amt=parseFloat(document.getElementById('mgr-prev-cash-amt').value)||0;
+  if(!desc){toast('Enter a description');return;}
+  if(amt<=0){toast('Enter amount');return;}
+  var log=LS.get('mgrPrevCashLog_'+ME.id)||[];
+  log.push({desc:desc,amount:amt,ts:Date.now(),date:today()});
+  LS.set('mgrPrevCashLog_'+ME.id,log);
+  document.getElementById('mgr-prev-cash-desc').value='';
+  document.getElementById('mgr-prev-cash-amt').value='';
+  renderMgrCashCounter();
+  toast('💵 Prev month cash added');
+}
+function deleteMgrPrevMonthCash(ts){
+  if(!confirm('Delete this entry?'))return;
+  var log=(LS.get('mgrPrevCashLog_'+ME.id)||[]).filter(function(r){return r.ts!==ts;});
+  LS.set('mgrPrevCashLog_'+ME.id,log);
+  renderMgrCashCounter();
+  toast('Entry deleted');
+}
+
+function addMgrHandover(){
+  var amt=parseFloat(document.getElementById('mgr-handover-amt').value)||0;
+  var name=(document.getElementById('mgr-handover-name').value||'').trim();
+  if(amt<=0){toast('Enter amount');return;}
+  if(!name){toast('Enter name of Franchise Owner');return;}
+  var log=LS.get('mgrHandover')||[];
+  var now=new Date();
+  var row={amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,handedTo:name,ts:Date.now()};
+  log.push(row);
+  LS.set('mgrHandover',log);
+  sbInsert('mgr_cash_in',{amount:amt,time:row.time,date:row.date,managerId:ME.id,salonId:mySalonId,desc:'Handover from '+ME.name+' to '+name,handedTo:name}).catch(function(){});
+  document.getElementById('mgr-handover-amt').value='';
+  document.getElementById('mgr-handover-name').value='';
+  renderMgrCashCounter();
+  toast('🤝 ₹'+amt+' handed over to '+name);
+}
+function deleteMgrHandover(ts){
+  if(!confirm('Delete this handover entry?'))return;
+  var log=(LS.get('mgrHandover')||[]).filter(function(r){return r.ts!==ts;});
+  LS.set('mgrHandover',log);
+  renderMgrCashCounter();
+  toast('Handover entry deleted');
+}
+
 function renderMgrCounters(){
-  var allCI=LS.get('mgrCashIn')||[];
+  // Expenses section
   var allEX=LS.get('mgrExpenses')||[];
-  var ci=allCI.filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
-  var ex=allEX.filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
-  var ciT=ci.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  var ex=allEX.filter(function(e){return e.date===today()&&String(e.salonId)===String(mySalonId);});
   var exT=ex.reduce(function(a,e){return a+Number(e.amount||0);},0);
-  document.getElementById('mgr-ci-total').textContent=fmtINR(ciT);
   document.getElementById('mgr-exp-total').textContent=fmtINR(exT);
-  var ciEl=document.getElementById('mgr-ci-log');
-  ciEl.innerHTML=!ci.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No entries today</span>':
-    ci.slice().reverse().map(function(e,i){
-      var eid = e.id ? String(e.id) : ('idx_'+i);
-      return '<div class="mgr-ci-item" style="gap:6px">'+
-        '<span>'+e.time+'</span>'+
-        '<span style="color:var(--green);font-weight:700;flex:1">'+fmtINR(e.amount)+'</span>'+
-        '<button onclick="deleteMgrCashIn(this)" data-id="'+eid+'" '+
-          'style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:0 2px">✕</button>'+
-      '</div>';
-    }).join('');
   var exEl=document.getElementById('mgr-exp-log');
   exEl.innerHTML=!ex.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No expenses today</span>':
     ex.slice().reverse().map(function(e,i){
       var eid = e.id ? String(e.id) : ('idx_'+i);
       return '<div class="mgr-ci-item" style="gap:6px">'+
-        '<span style="flex:1">'+e.time+' — '+(e["desc"]||e.desc||'')+'</span>'+
+        '<span style="flex:1">'+e.time+' — '+(e['desc']||e.desc||'')+'</span>'+
         '<span style="color:var(--danger);font-weight:700">'+fmtINR(e.amount)+'</span>'+
         '<button onclick="deleteMgrExpense(this)" data-id="'+eid+'" '+
           'style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:0 2px">✕</button>'+
       '</div>';
     }).join('');
+  renderMgrCashCounter();
 }
-function deleteMgrCashIn(btn){
-  var id = btn ? btn.getAttribute("data-id") : arguments[0];
-  if(!confirm('Delete this cash-in entry?'))return;
-  var log=LS.get('mgrCashIn')||[];
-  var newLog=log.filter(function(e){return (e.id||'')!==id;});
-  if(newLog.length===log.length){
-    // fallback: remove by position prefix
-    var idx=parseInt(id.replace('idx_',''));
-    newLog=log.filter(function(e,i){return i!==idx;});
+
+function renderMgrCashCounter(){
+  // Today's cash from billing entries for this salon
+  var allE=getEntries().filter(function(e){return String(e.salonId)===String(mySalonId);});
+  var todayCash=allE.filter(function(e){return e.date===today();}).reduce(function(a,e){return a+Number(e.cash||0);},0);
+  var prevDailyCash=allE.filter(function(e){return e.date!==today();}).reduce(function(a,e){return a+Number(e.cash||0);},0);
+  // Previous month cash log
+  var prevCashLog=LS.get('mgrPrevCashLog_'+ME.id)||[];
+  var prevMonthCash=prevCashLog.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Render prev cash log
+  var pcEl=document.getElementById('mgr-prev-cash-log');
+  if(pcEl){
+    if(!prevCashLog.length){pcEl.innerHTML='<span style="font-size:11px;color:var(--muted2);font-style:italic">No previous cash entries</span>';}
+    else{
+      pcEl.innerHTML=prevCashLog.map(function(r){
+        return '<div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
+          '<span style="flex:1;font-size:11px;color:var(--muted)">'+r.date+' — <b style="color:var(--white)">'+r.desc+'</b></span>'+
+          '<span style="color:var(--blue);font-weight:700;white-space:nowrap;font-size:12px">'+fmtINR(r.amount)+'</span>'+
+          '<button onclick="deleteMgrPrevMonthCash('+r.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0">✕</button>'+
+        '</div>';
+      }).join('');
+    }
   }
-  LS.set('mgrCashIn',newLog);
-  if(id && !id.startsWith('idx_')) sbDelete('mgr_cash_in',id).catch(function(){});
-  renderMgrCounters(); renderDashboard();
-  toast('Cash-in deleted');
+  // All manager expenses (all time for this manager/salon)
+  var allMgrExp=(LS.get('mgrExpenses')||[]).filter(function(e){return String(e.salonId)===String(mySalonId);});
+  var totalMgrExp=allMgrExp.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  // Barber expenses for this salon
+  var stylistIds=(LS.get('staff')||[]).filter(function(u){return String(u.salonId)===String(mySalonId)&&u.role==='barber';}).map(function(u){return u.id;});
+  var barberExp=(LS.get('expenses')||[]).filter(function(e){return stylistIds.indexOf(String(e.barberId))>-1;});
+  var totalBarberExp=barberExp.reduce(function(a,e){return a+Number(e.amount||0);},0);
+  var totalExp=totalMgrExp+totalBarberExp;
+  // Handovers
+  var handovers=(LS.get('mgrHandover')||[]).filter(function(r){return String(r.managerId)===String(ME.id);});
+  var totalHandover=handovers.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Cash advances for barbers (cash mode)
+  var cashAdv=(LS.get('advances')||[]).filter(function(r){
+    return stylistIds.indexOf(String(r.barberId))>-1 && (!r.mode||r.mode==='cash');
+  }).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Balance = PrevMonth + TodayCash + PrevDailyCash − CashAdv − Expenses − Handovers
+  var balance=prevMonthCash+todayCash+prevDailyCash-cashAdv-totalExp-totalHandover;
+  var cTotal=document.getElementById('mgr-cash-counter-total');
+  if(cTotal) cTotal.textContent=fmtINR(balance);
+  var cLog=document.getElementById('mgr-cash-counter-log');
+  if(cLog) cLog.innerHTML=
+    (prevMonthCash>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Prev Month Cash</span><span style="color:var(--blue)">+'+fmtINR(prevMonthCash)+'</span></div>':'')+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash Sales</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Previous Days Cash</span><span style="color:var(--green)">+'+fmtINR(prevDailyCash)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Barbers)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Total Expenses</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
+  // Handover display
+  var hTotal=document.getElementById('mgr-handover-total');
+  if(hTotal) hTotal.textContent=fmtINR(totalHandover);
+  var hLog=document.getElementById('mgr-handover-log');
+  if(hLog) hLog.innerHTML=!handovers.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No handovers yet</span>':
+    handovers.slice().reverse().map(function(r){
+      return '<div class="mgr-ci-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="flex:1;font-size:11px">'+r.time+' '+r.date+(r.handedTo?'<br><span style="color:var(--muted2)">→ '+r.handedTo+'</span>':'')+'</span>'+
+        '<span style="color:var(--purple);font-weight:700;white-space:nowrap">'+fmtINR(r.amount)+'</span>'+
+        '<button onclick="deleteMgrHandover('+r.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px">✕</button>'+
+      '</div>';
+    }).join('');
 }
+
 function deleteMgrExpense(btn){
-  var id = btn ? btn.getAttribute("data-id") : arguments[0];
+  var id = btn ? btn.getAttribute('data-id') : arguments[0];
   if(!confirm('Delete this expense entry?'))return;
   var log=LS.get('mgrExpenses')||[];
   var newLog=log.filter(function(e){return (e.id||'')!==id;});
@@ -1535,55 +1626,12 @@ function deleteMgrExpense(btn){
 }
 
 // ════ CASH-IN COUNTER — reads hairstylist entries, editable ════
-function initCashCounter(){ renderCashCounter(); renderMgrCounters(); }
+function initCashCounter(){ renderMgrCounters(); }
 function yesterday(){
   var yd=new Date(); yd.setDate(yd.getDate()-1);
   return yd.toLocaleDateString('en-IN');
 }
-function renderCashCounter(){
-  var stylistIds = (LS.get('staff')||[])
-    .filter(function(u){return u.salonId===mySalonId&&u.role==='barber';})
-    .map(function(u){return u.id;});
-  var log = (LS.get('cashIn')||[]).filter(function(e){
-    return e.date===today() && stylistIds.indexOf(e.barberId)>-1;
-  });
-  var total = log.reduce(function(a,e){return a+Number(e.amount||0);},0);
-  document.getElementById('cc-total').textContent = fmtINR(total);
-  var el = document.getElementById('cc-log');
-  if (!log.length) {
-    el.innerHTML = '<span style="font-size:11px;color:var(--muted2);font-style:italic">No hairstylist cash-in today</span>';
-    return;
-  }
-  var staff = LS.get('staff')||[];
-  // Show amount · time · name (no edit tick/cross on yesterday barber entries)
-  el.innerHTML = log.slice().reverse().map(function(e){
-    var st = staff.find(function(u){return u.id===e.barberId;});
-    var stName = st ? st.name.split(' ')[0] : '—';
-    return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
-      '<span style="font-size:13px;font-weight:700;color:var(--green)">'+fmtINR(e.amount)+'</span>'+
-      '<span style="font-size:11px;color:var(--muted)">'+e.time+' · '+stName+'</span>'+
-    '</div>';
-  }).join('');
-}
-function saveCashInEdit(idx){
-  var log = LS.get('cashIn')||[];
-  var newAmt = parseFloat(document.getElementById('ci-edit-'+idx).value)||0;
-  if (newAmt<=0){ toast('Enter valid amount'); return; }
-  log[idx].amount = newAmt;
-  LS.set('cashIn',log);
-  renderCashCounter();
-  renderDashboard();
-  toast('✅ Cash-in updated');
-}
-function deleteCashIn(idx){
-  if(!confirm('Remove this cash-in entry?'))return;
-  var log = LS.get('cashIn')||[];
-  log.splice(idx,1);
-  LS.set('cashIn',log);
-  renderCashCounter();
-  renderDashboard();
-  toast('Cash-in entry removed');
-}
+function renderCashCounter(){ renderMgrCashCounter(); }
 
 // ════ DASHBOARD ════
 function renderDashboard(){
@@ -1601,49 +1649,17 @@ function renderDashboard(){
   var totCshM  = monthE.reduce(function(a,e){return a+Number(e.cash||0);},0);
   var totM     = totPhM + totCshM; // tips excluded
 
-  // FIX 2: Cash-in counter shows ONLY what barbers entered (read from bb_cashIn by barberId in this salon)
+  // FIX 2: Cash-in counter — now handled by new cash handling section
   var stylistIds = myStylists.map(function(u){return u.id;});
-  var barberCashIn = (LS.get('cashIn')||[]).filter(function(e){
-    return e.date===today() && stylistIds.indexOf(e.barberId)>-1;
-  });
   var allExpenses = (LS.get('expenses')||[]).filter(function(e){
-    return e.date===today() && stylistIds.indexOf(e.barberId)>-1;
+    return e.date===today() && stylistIds.indexOf(String(e.barberId))>-1;
   });
-  var totalBarberCashIn = barberCashIn.reduce(function(a,e){return a+Number(e.amount||0);},0);
-  var totalExpenses     = allExpenses.reduce(function(a,e){return a+Number(e.amount||0);},0);
-  // Include manager's own cash-in and expenses in outlet totals
-  var mgrCiToday=(LS.get('mgrCashIn')||[]).filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
-  var mgrExToday=(LS.get('mgrExpenses')||[]).filter(function(e){return e.date===today()&&e.salonId===mySalonId;});
-  var totalMgrCashIn=mgrCiToday.reduce(function(a,e){return a+Number(e.amount||0);},0);
-  var totalMgrExpenses=mgrExToday.reduce(function(a,e){return a+Number(e.amount||0);},0);
-  var totalCashIn   = totalBarberCashIn + totalMgrCashIn + totCshT; // cash counter + manager + today's cash sales
-  var totalExp      = totalExpenses + totalMgrExpenses;
-  var netCash       = totalCashIn - totalExp;
 
-  // Outlet summary
-  document.getElementById('outlet-summary').innerHTML=
-    '<div class="os-box ci"><div class="os-lbl">💵 Total Cash In</div><div class="os-val">'+fmtINR(totalCashIn)+'</div></div>'+
-    '<div class="os-box ex"><div class="os-lbl">🧾 Total Expenses</div><div class="os-val">'+fmtINR(totalExp)+'</div></div>'+
-    '<div class="os-box net"><div class="os-lbl">📊 Net</div><div class="os-val">'+fmtINR(netCash)+'</div></div>';
-
-  // Expense log panel
+  // Expense log panel (hidden, keep for PNL calcs)
   var expPanelEl = document.getElementById('expense-log-panel');
-  if (allExpenses.length) {
-    expPanelEl.innerHTML =
-      '<div class="exp-log-panel">'+
-        '<div class="exp-log-title">🧾 Today\'s Expenses ('+allExpenses.length+')</div>'+
-        allExpenses.slice().reverse().map(function(e){
-          var st = (LS.get('staff')||[]).find(function(u){return u.id===e.barberId;});
-          return '<div class="exp-log-row">'+
-            '<div><div class="exp-log-desc">'+e.desc+'</div>'+
-            '<div class="exp-log-meta">'+e.time+(st?' · '+st.name:'')+'</div></div>'+
-            '<div style="color:var(--danger);font-weight:700;font-size:13px">'+fmtINR(e.amount)+'</div>'+
-          '</div>';
-        }).join('')+
-      '</div>';
-  } else {
-    expPanelEl.innerHTML = '';
-  }
+  if(expPanelEl) expPanelEl.innerHTML = '';
+
+  renderMgrCounters();
 
   // Fix 3: Today Customers = total bills today (matches table below exactly)
   var todayCustCount = todayE.length;
@@ -1756,8 +1772,8 @@ function renderSalesTable(){
         '<span class="tag-tot">'+fmtINR(sales)+'</span>'+
         '<span>'+
           (e.date===today()?
-            '<button class="btn-edit" onclick="openEdit('+e.id+')" title="Edit">✏️</button>'+
-            '<button class="btn-del"  onclick="delEntry('+e.id+')" title="Delete">✕</button>'
+            '<button class="btn-edit" onclick="openEdit(\''+e.id+'\')" title="Edit">✏️</button>'+
+            '<button class="btn-del"  onclick="delEntry(\''+e.id+'\')" title="Delete">✕</button>'
           :'<span style="font-size:10px;color:var(--muted2)">—</span>')+
         '</span>'+
       '</div>';
@@ -2095,7 +2111,7 @@ function openStaffSalary(id){
 
 function renderStaffSalary(){
   window._curMonth = document.getElementById('ss-month').value || new Date().toISOString().slice(0,7);
-  var mo=document.getElementById('ss-month').value||new Date().toISOString().slice(0,7);
+  var mo=window._curMonth;
   var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
   var staff=LS.get('staff')||[];
   var b=staff.find(function(u){return u.id===salaryStaffId;})||{};
@@ -2103,41 +2119,70 @@ function renderStaffSalary(){
   var foodMoney     =Number(b.foodMoney||0);
   var cleaningMoney =Number(b.cleaningMoney||0);
 
-  // Attendance override
+  // ── Attendance-prorated salary ──
+  // Working days = all days excluding Sundays
+  var daysInMonth=new Date(yr,m,0).getDate();
+  var workingDaysInMonth=0;
+  for(var d=1;d<=daysInMonth;d++){
+    var dow=new Date(yr,m-1,d).getDay();
+    if(dow!==0) workingDaysInMonth++;
+  }
+
+  // Attendance override or auto-compute
   var attKey='att_'+salaryStaffId+'_'+mo;
   var savedAtt=LS.get(attKey)||null;
-  // Compute from attendance log if no override
   var log=LS.get('attendance')||[];
   var present=0,half=0,absent=0;
-  var days=new Date(yr,m,0).getDate();
-  for(var d=1;d<=days;d++){
-    var ds=d+'/'+m+'/'+yr;
-    var recs=log.filter(function(r){return r.date===ds&&r.barberId===salaryStaffId;});
+  for(var dd=1;dd<=daysInMonth;dd++){
+    var ds=dd+'/'+m+'/'+yr;
+    var recs=log.filter(function(r){return r.date===ds&&String(r.barberId)===String(salaryStaffId);});
     var hasIn=recs.some(function(r){return r.type==='in';});
     var hasOut=recs.some(function(r){return r.type==='out';});
-    if(hasIn&&hasOut)present++;
-    else if(hasIn)half++;
-    else if(d<new Date().getDate()||mo<new Date().toISOString().slice(0,7))absent++;
+    if(hasIn&&hasOut) present++;
+    else if(hasIn) half++;
+    else if(dd<new Date().getDate()||mo<new Date().toISOString().slice(0,7)) absent++;
   }
   if(savedAtt){present=savedAtt.present;half=savedAtt.half;absent=savedAtt.absent;}
   document.getElementById('ss-present').value=present;
   document.getElementById('ss-half').value=half;
   document.getElementById('ss-absent').value=absent;
 
-  // Sales this month
-  var moEntries=filterByMonth(getEntries().filter(function(e){return e.barberId===salaryStaffId&&e.salonId===mySalonId;}),mo);
-  var moSales=moEntries.reduce(function(a,e){return a+Number(e.total||0);},0);
+  // Month Salary = Fixed × (Present + Half×0.5) / WorkingDays
+  var effectiveDays=present+half*0.5;
+  var monthSalary=workingDaysInMonth>0?Math.round(fixedSalary*effectiveDays/workingDaysInMonth):0;
 
-  // Incentives = (Total Sales - Fixed Salary) * 10%
+  // Sales & tips this month
+  var moEntries=filterByMonth(getEntries().filter(function(e){return String(e.barberId)===String(salaryStaffId)&&String(e.salonId)===String(mySalonId);}),mo);
+  var moSales=moEntries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+  var moPhTips=moEntries.reduce(function(a,e){return a+Number(e.phTip||0);},0);
+
+  // Incentives = max(0, (Sales − Fixed) × 10%)
   var incentives=Math.max(0,Math.round((moSales-fixedSalary)*0.10));
 
-  // Advances this month
+  // Advances this month (cash + phonePe separate)
   var advances=(LS.get('advances')||[]).filter(function(r){
-    if(r.barberId!==salaryStaffId)return false;
+    if(String(r.barberId)!==String(salaryStaffId))return false;
     var p=(r.date||'').split('/');
     return parseInt(p[1])===m&&parseInt(p[2])===yr;
   });
-  var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var cashAdv  =advances.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var ppAdv    =advances.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var totalAdv =cashAdv+ppAdv;
+
+  // OT for this month (stored separately)
+  var otKey='ot_'+salaryStaffId+'_'+mo;
+  var otData=LS.get(otKey)||{amount:0};
+  var totalOT=Number(otData.amount||0);
+  // Populate OT field
+  var otInp=document.getElementById('ss-ot-amt');
+  if(otInp) otInp.value=totalOT>0?totalOT:'';
+  var otDisp=document.getElementById('ss-ot-display');
+  if(otDisp) otDisp.innerHTML=totalOT>0?
+    '<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,196,140,.08);border-radius:6px;padding:6px 10px">'+
+      '<span style="color:var(--accent);font-weight:700;font-size:13px">⏱ OT: '+fmtINR(totalOT)+'</span>'+
+      '<button onclick="clearOT()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;font-weight:700;padding:0 2px">✕ Clear</button>'+
+    '</div>':
+    '<div style="color:var(--muted2);font-style:italic;font-size:12px">No OT set for this month</div>';
 
   // Deductions
   var dedKey='ded_'+salaryStaffId+'_'+mo;
@@ -2149,27 +2194,65 @@ function renderStaffSalary(){
   dedEl.innerHTML=!deductions.length?
     '<div style="font-size:11px;color:var(--muted2);font-style:italic">No deductions this month</div>':
     deductions.map(function(r,i){
-      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">'+
-        '<span>'+r.desc+'</span>'+
-        '<span style="color:var(--danger);font-weight:700">'+fmtINR(r.amount)+
-        ' <button onclick="removeDeduction('+i+')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:11px">✕</button></span>'+
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.06);font-size:12px">'+
+        '<span style="flex:1;color:var(--white)">'+r.desc+'</span>'+
+        '<span style="color:var(--danger);font-weight:700;margin-left:8px">'+fmtINR(r.amount)+'</span>'+
+        ' <button onclick="removeDeduction('+i+')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:11px;margin-left:4px">✕</button>'+
       '</div>';
     }).join('');
 
-  var gross=fixedSalary+foodMoney+cleaningMoney+incentives;
-  var net=gross-totalAdv-totalDed;
+  // Net = MonthSalary + Food + Cleaning + Incentives + PhPe Tips + OT − CashAdv − PhPeAdv − Deductions
+  var net=monthSalary+foodMoney+cleaningMoney+incentives+moPhTips+totalOT-cashAdv-ppAdv-totalDed;
   var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
 
   document.getElementById('ss-salary-breakdown').innerHTML=
     '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+mName+' · Sales: '+fmtINR(moSales)+'</div>'+
-    '<div class="sal-row inc"><span class="sal-lbl">Fixed Salary</span><span class="sal-val">'+fmtINR(fixedSalary)+'</span></div>'+
-    '<div class="sal-row inc"><span class="sal-lbl">Food Money</span><span class="sal-val">'+fmtINR(foodMoney)+'</span></div>'+
-    '<div class="sal-row inc"><span class="sal-lbl">Cleaning Money</span><span class="sal-val">'+fmtINR(cleaningMoney)+'</span></div>'+
-    '<div class="sal-row inc"><span class="sal-lbl">Incentives (Sales−Fixed)×10%</span><span class="sal-val">'+fmtINR(incentives)+'</span></div>'+
-    '<div class="sal-row ded"><span class="sal-lbl">Advances</span><span class="sal-val">− '+fmtINR(totalAdv)+'</span></div>'+
-    '<div class="sal-row ded"><span class="sal-lbl">Deductions</span><span class="sal-val">− '+fmtINR(totalDed)+'</span></div>'+
+    '<div style="background:rgba(0,196,140,.07);border-radius:6px;padding:7px 10px;margin-bottom:6px">'+
+      '<span style="font-size:11px;color:var(--muted)">Fixed Salary</span>'+
+      '<span style="float:right;font-size:12px;color:var(--muted)">'+fmtINR(fixedSalary)+'</span>'+
+    '</div>'+
+    '<div style="background:rgba(0,196,140,.12);border-radius:6px;padding:7px 10px;margin-bottom:6px;border-left:3px solid var(--accent)">'+
+      '<span style="font-size:11px;font-weight:800;color:var(--accent)">Month Salary <span style="font-size:9px;font-weight:600;color:var(--muted)">('+present+' full + '+half+' half / '+workingDaysInMonth+' working days)</span></span>'+
+      '<span style="float:right;font-size:15px;font-weight:800;color:var(--accent)">'+fmtINR(monthSalary)+'</span>'+
+    '</div>'+
+    mkSalRow('Food Money',foodMoney,'inc')+
+    mkSalRow('Cleaning Money',cleaningMoney,'inc')+
+    mkSalRow('Incentives (Sales−Fixed)×10%',incentives,'inc')+
+    mkSalRow('PhonePe Tips',moPhTips,'inc')+
+    (totalOT>0?mkSalRow('Overtime (OT)',totalOT,'inc'):'')+
+    mkSalRow('Advances — Cash',cashAdv,'ded')+
+    mkSalRow('Advances — PhonePe',ppAdv,'ded')+
+    mkSalRow('Deductions',totalDed,'ded')+
     '<div class="sal-row net"><span class="sal-lbl">Net Salary</span><span class="sal-val">'+fmtINR(net)+'</span></div>'+
     (fixedSalary===0?'<div style="font-size:11px;color:var(--warn);margin-top:6px">⚠ Fixed salary not set — edit hairstylist profile</div>':'');
+}
+
+function mkSalRow(label,amount,type){
+  var col=type==='inc'?'var(--green)':'var(--danger)';
+  var prefix=type==='ded'?'− ':'';
+  return '<div class="sal-row '+(type==='inc'?'inc':'ded')+'"><span class="sal-lbl">'+label+'</span><span class="sal-val">'+prefix+fmtINR(amount)+'</span></div>';
+}
+
+function saveOT(){
+  var mo=document.getElementById('ss-month').value||new Date().toISOString().slice(0,7);
+  var amt=parseFloat(document.getElementById('ss-ot-amt').value)||0;
+  var otKey='ot_'+salaryStaffId+'_'+mo;
+  LS.set(otKey,{amount:amt,savedAt:new Date().toISOString()});
+  // Also save to deductions table in Supabase as OT entry (consistent with barber app)
+  var dedKey='ded_'+salaryStaffId+'_'+mo;
+  var deductions=LS.get(dedKey)||[];
+  // Remove any existing OT entry then add fresh
+  deductions=deductions.filter(function(r){return !(r.desc||'').toUpperCase().startsWith('OT');});
+  if(amt>0) deductions.push({desc:'OT - Overtime',amount:amt});
+  LS.set(dedKey,deductions);
+  SB.upsertDeductions(salaryStaffId,mo,deductions).catch(function(e){console.warn('[BB]OT save:',e);});
+  renderStaffSalary();
+  toast(amt>0?'✅ OT ₹'+amt.toLocaleString()+' saved':'OT cleared');
+}
+
+function clearOT(){
+  document.getElementById('ss-ot-amt').value='';
+  saveOT();
 }
 
 function saveAttendanceOverride(){
@@ -2272,9 +2355,9 @@ function autofillName(phone){
 // ════ EDIT ENTRY ════
 var editingId=null;
 function openEdit(id){
-  editingId=id;
-  var e=getEntries().find(function(x){return x.id===id;});
-  if(!e)return;
+  editingId=String(id);
+  var e=getEntries().find(function(x){return String(x.id)===String(id);});
+  if(!e){ toast('Entry not found'); return; }
   populateCustDatalist(); // Fix 3: load dropdown options
   document.getElementById('edit-cust-name').value  = e.customerName  || '';
   document.getElementById('edit-cust-phone').value = e.customerPhone || '';
@@ -2286,8 +2369,8 @@ function openEdit(id){
 }
 function saveEdit(){
   var entries=getEntries();
-  var idx=entries.findIndex(function(e){return e.id===editingId;});
-  if(idx===-1)return;
+  var idx=entries.findIndex(function(e){return String(e.id)===String(editingId);});
+  if(idx===-1){ toast('Entry not found'); closeModal('editModal'); return; }
   var custName  = document.getElementById('edit-cust-name').value.trim()  || 'Walk-in';
   var custPhone = document.getElementById('edit-cust-phone').value.trim() || '';
   entries[idx].customerName  = custName;
@@ -2317,7 +2400,7 @@ function saveEdit(){
 }
 function delEntry(id){
   if(!confirm('Delete this entry?'))return;
-  var _mde=getEntries().filter(function(e){return e.id!==id;});LS.set('entries',_mde);deleteRowFromSheet('Entries',id,function(){});
+  var _mde=getEntries().filter(function(e){return String(e.id)!==String(id);});LS.set('entries',_mde);deleteRowFromSheet('Entries',id,function(){});
   toast('Entry deleted');
   renderDashboard();
   renderSalesTable();
@@ -2340,7 +2423,7 @@ function renderEntriesTable(entries, editable){
         '<span style="color:var(--muted2);font-size:11px">'+(i+1)+'</span>'+
         '<span style="font-size:11px;color:var(--muted);line-height:1.3">'+e.date+'<br>'+e.time+'</span>'+
         '<span style="font-size:12px;font-weight:600">'+e.barberName+'</span>'+
-        '<span style="font-size:12px;color:var(--muted)" onclick="openEdit('+e.id+')" style="cursor:pointer">'+cust+' <span style="color:var(--accent);font-size:9px">✏</span></span>'+
+        '<span style="font-size:12px;color:var(--muted)" onclick="openEdit(\''+e.id+'\')" style="cursor:pointer">'+cust+' <span style="color:var(--accent);font-size:9px">✏</span></span>'+
         '<span style="font-size:11px;color:var(--muted)">'+phone+'</span>'+
         '<span style="font-size:12px;color:var(--muted)">'+e.services+'</span>'+
         '<span class="tag-ph">'+(Number(e.phPay||0)>0?fmtINR(e.phPay):'—')+'</span>'+
@@ -2348,7 +2431,7 @@ function renderEntriesTable(entries, editable){
         '<span class="tag-tip">'+(phTip>0?fmtINR(phTip):'—')+'</span>'+
         '<span class="tag-tip">'+(cashTip>0?fmtINR(cashTip):'—')+'</span>'+
         '<span class="tag-tot">'+fmtINR(sales)+'</span>'+
-        '<span>'+(editable?'<button class="btn-edit" onclick="openEdit('+e.id+')" title="Edit">✏️</button><button class="btn-del" onclick="delEntry('+e.id+')" title="Delete">✕</button>':'')+'</span>'+
+        '<span>'+(editable?'<button class="btn-edit" onclick="openEdit(\''+e.id+'\')" title="Edit">✏️</button><button class="btn-del" onclick="delEntry(\''+e.id+'\')" title="Delete">✕</button>':'')+'</span>'+
       '</div>';
     }).join('')+'</div></div>';
 }

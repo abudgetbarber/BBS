@@ -467,10 +467,15 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.6">
       Prev Month Cash + Today Cash + All Previous Cash (till yesterday) − Advances (cash) − Expenses − Cash Handed Over
     </div>
-    <!-- Previous Month Cash Input -->
-    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">
-      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Prev Month Cash (₹)</label>
-      <input type="number" class="counter-inp" id="prev-month-cash" placeholder="0" min="0" inputmode="numeric" style="flex:1;min-width:90px" oninput="savePrevMonthCash()">
+    <!-- Previous Month Cash: add/delete log -->
+    <div style="margin-bottom:8px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Prev Month Cash Entry</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="text" class="counter-inp" id="prev-cash-desc" placeholder="Description (e.g. March closing)" style="flex:1.5;min-width:110px">
+        <input type="number" class="counter-inp" id="prev-cash-amt" placeholder="₹ Amount" min="0" inputmode="numeric" style="flex:1;min-width:80px">
+        <button class="counter-btn" onclick="addPrevMonthCash()" style="background:rgba(29,109,181,.15);border-color:var(--blue);color:var(--blue)">+ Add</button>
+      </div>
+      <div id="prev-cash-log" style="margin-top:6px"></div>
     </div>
     <div style="font-size:12px;color:var(--muted2)" id="ci-log"></div>
   </div>
@@ -1212,21 +1217,46 @@ function showTab(tab){
     if(tab==='scan'){ supaBootstrap(function(){ stopQRScan(); document.getElementById('scanResult').innerHTML=''; document.getElementById('scanCode').value=''; },function(){}); }
     if(tab==='profile'){
       var curMo = new Date().toISOString().slice(0,7);
-      // Ensure month pickers show current month
       var salEl = document.getElementById('sal-month');
       var attEl = document.getElementById('att-month');
       if(salEl && !salEl.value) salEl.value = curMo;
       if(attEl && !attEl.value) attEl.value = curMo;
-      // Fetch fresh from Supabase then render
-      supaBootstrap(function(){
+      // Render immediately from local cache so fresh advances are visible
+      renderAttendance();
+      renderAdvanceLog();
+      renderSalary();
+      // Background sync — merge remote advances with local (don't wipe local)
+      SB.readAll().then(function(data){
+        // Merge advances: keep all local entries, add any remote ones not present locally
+        var localAdv = LS.get('advances') || [];
+        var remoteAdv = (data.advances || []).map(function(r){
+          return {date:r.date,amount:Number(r.amount||0),barberId:String(r.barberId||r.barber_id||''),ts:r.ts||0,mode:r.mode||'cash',id:r.id};
+        });
+        var localTs = {};
+        localAdv.forEach(function(r){ if(r.ts) localTs[r.ts]=true; });
+        remoteAdv.forEach(function(r){
+          if(r.ts && !localTs[r.ts]) localAdv.push(r);
+        });
+        LS.set('advances', localAdv);
+        // Update other tables normally
+        if(data.staff&&data.staff.length) LS.set('staff', data.staff);
+        if(data.attendance&&data.attendance.length) LS.set('attendance', data.attendance);
+        if(data.deductions&&data.deductions.length){
+          var dg={};
+          data.deductions.forEach(function(r){
+            var sid=String(r.staff_id||r.staffId||'');
+            var k='ded_'+sid+'_'+r.month;
+            if(!dg[k])dg[k]=[];
+            dg[k].push({desc:r.desc||'',amount:Number(r.amount||0)});
+          });
+          Object.keys(dg).forEach(function(k){LS.set(k,dg[k]);});
+          LS.set('deductions',data.deductions);
+        }
         renderAttendance();
         renderAdvanceLog();
         renderSalary();
-      }, function(){
-        // Fallback: render from cache anyway
-        renderAttendance();
-        renderAdvanceLog();
-        renderSalary();
+      }).catch(function(){
+        // Silently ignore — already rendered from cache
       });
     }
 }
@@ -1361,52 +1391,76 @@ function addHandover(){
   toast('🤝 ₹'+amt+' handed over to '+name);
 }
 
-function savePrevMonthCash(){
-  var val=parseFloat(document.getElementById('prev-month-cash').value)||0;
-  LS.set('prevMonthCash_'+ME.id, val);
+function addPrevMonthCash(){
+  var desc=(document.getElementById('prev-cash-desc').value||'').trim();
+  var amt=parseFloat(document.getElementById('prev-cash-amt').value)||0;
+  if(!desc){toast('Enter a description');return;}
+  if(amt<=0){toast('Enter amount');return;}
+  var log=LS.get('prevCashLog_'+ME.id)||[];
+  log.push({desc:desc,amount:amt,ts:Date.now(),date:today()});
+  LS.set('prevCashLog_'+ME.id,log);
+  document.getElementById('prev-cash-desc').value='';
+  document.getElementById('prev-cash-amt').value='';
   renderCashInCounter();
+  toast('💵 Prev month cash added');
+}
+function deletePrevMonthCash(ts){
+  if(!confirm('Delete this entry?'))return;
+  var log=(LS.get('prevCashLog_'+ME.id)||[]).filter(function(r){return r.ts!==ts;});
+  LS.set('prevCashLog_'+ME.id,log);
+  renderCashInCounter();
+  toast('Entry deleted');
+}
+function renderPrevCashLog(log){
+  var el=document.getElementById('prev-cash-log');
+  if(!el)return;
+  if(!log||!log.length){el.innerHTML='<span style="font-size:11px;color:var(--muted2);font-style:italic">No previous cash entries</span>';return;}
+  el.innerHTML=log.map(function(r){
+    return '<div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
+      '<span style="flex:1;font-size:11px;color:var(--muted)">'+r.date+' — <b style="color:var(--white)">'+r.desc+'</b></span>'+
+      '<span style="color:var(--blue);font-weight:700;white-space:nowrap;font-size:12px">'+fmtINR(r.amount)+'</span>'+
+      '<button onclick="deletePrevMonthCash('+r.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0" title="Delete">✕</button>'+
+    '</div>';
+  }).join('');
 }
 function renderCashInCounter(){
   var allEntries=getEntries().filter(function(e){return String(e.barberId)===String(ME.id);});
   // Today's cash from billing
   var todayCash=allEntries.filter(function(e){return e.date===today();})
     .reduce(function(a,e){return a+Number(e.cash||0);},0);
-  // All previous days cash (entries before today — this month up till yesterday)
+  // All previous days cash (entries before today)
   var prevDailyCash=allEntries.filter(function(e){return e.date!==today();})
     .reduce(function(a,e){return a+Number(e.cash||0);},0);
-  // Previous month cash (manually entered)
-  var prevMonthCash=Number(LS.get('prevMonthCash_'+ME.id)||0);
-  // Restore input field value
-  var pmEl=document.getElementById('prev-month-cash');
-  if(pmEl && pmEl.value==='') pmEl.value = prevMonthCash > 0 ? prevMonthCash : '';
-  // Cash advances this month (advances with mode=cash or no mode)
+  // Previous month cash log
+  var prevCashLog=LS.get('prevCashLog_'+ME.id)||[];
+  var prevMonthCash=prevCashLog.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  renderPrevCashLog(prevCashLog);
+  // Cash advances this month
   var mo=new Date().toISOString().slice(0,7);
   var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
   var cashAdv=(LS.get('advances')||[]).filter(function(r){
     if(String(r.barberId)!==String(ME.id))return false;
     var p=(r.date||'').split('/');
     if(parseInt(p[1])!==m||parseInt(p[2])!==yr)return false;
-    return !r.mode||r.mode==='cash'; // cash advances only
+    return !r.mode||r.mode==='cash';
   }).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  // All expenses till today
+  // All expenses
   var totalExp=(LS.get('expenses')||[]).filter(function(e){return String(e.barberId)===String(ME.id);})
     .reduce(function(a,e){return a+Number(e.amount||0);},0);
-  // Cash handed over to manager/franchise owner
+  // Handovers
   var handovers=(LS.get('cashHandover')||[]).filter(function(r){return String(r.barberId)===String(ME.id);});
   var totalHandover=handovers.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  // Formula: Prev Month Cash + Today Cash + Prev Daily Cash - Cash Advances (month) - Expenses - Handovers
+  // Formula: Prev Month Cash + Today Cash + Prev Daily Cash − Cash Advances − Expenses − Handovers
   var balance=prevMonthCash+todayCash+prevDailyCash-cashAdv-totalExp-totalHandover;
   document.getElementById('ci-total').textContent=fmtINR(balance);
-  // Breakdown
   var el=document.getElementById('ci-log');
   el.innerHTML=
     (prevMonthCash>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Prev Month Cash</span><span style="color:var(--blue)">+'+fmtINR(prevMonthCash)+'</span></div>':'')+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Previous Days Cash (till yesterday)</span><span style="color:var(--green)">+'+fmtINR(prevDailyCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (This Month)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses (All Time)</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over to Mgr/Franchise</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
-  // Handover log
   var hel=document.getElementById('handover-total');
   if(hel) hel.textContent=fmtINR(totalHandover);
   var hlog=document.getElementById('handover-log');
@@ -2076,31 +2130,54 @@ function renderSalary(){
 
   // Staff data
   var staff=LS.get('staff')||[];
-  var me=staff.find(function(u){return u.id===ME.id;})||{};
-  var fixedSalary  = Number(me.fixedSalary||0);
-  var foodMoney    = Number(me.foodMoney||0);
-  var cleaningMoney= Number(me.cleaningMoney||0);
+  var me=staff.find(function(u){return String(u.id)===String(ME.id);})||{};
+  var fixedSalary   = Number(me.fixedSalary||0);
+  var foodMoney     = Number(me.foodMoney||0);
+  var cleaningMoney = Number(me.cleaningMoney||0);
+
+  // ── Attendance-prorated Month Salary ──
+  // Count working days in the month (exclude Sundays as weekly off)
+  var daysInMonth = new Date(yr,m,0).getDate();
+  var workingDaysInMonth = 0;
+  for(var d=1;d<=daysInMonth;d++){
+    var dow = new Date(yr,m-1,d).getDay();
+    if(dow!==0) workingDaysInMonth++; // 0=Sunday
+  }
+
+  // Count barber's present & half days this month
+  var attLog = LS.get('attendance')||[];
+  var presentDays=0, halfDays=0;
+  for(var dd=1;dd<=daysInMonth;dd++){
+    var ds=dd+'/'+m+'/'+yr;
+    var recs=attLog.filter(function(r){return r.date===ds&&String(r.barberId)===String(ME.id);});
+    var status=getAttStatus(recs);
+    if(status==='present') presentDays++;
+    else if(status==='half') halfDays++;
+  }
+  // Month Salary = Fixed × (Present + Half×0.5) / WorkingDays
+  var effectiveDays = presentDays + halfDays * 0.5;
+  var monthSalary = workingDaysInMonth > 0
+    ? Math.round(fixedSalary * effectiveDays / workingDaysInMonth)
+    : 0;
 
   // Sales + tips this month
-  var moEntries=filterByMonth(getEntries().filter(function(e){return e.barberId===ME.id;}),mo);
+  var moEntries=filterByMonth(getEntries().filter(function(e){return String(e.barberId)===String(ME.id);}),mo);
   var moSales  =moEntries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
   var moPhTips =moEntries.reduce(function(a,e){return a+Number(e.phTip||0);},0);
 
-  // Incentives = max(0, (Sales - Fixed) × 10%)
+  // Incentives = max(0, (Sales − Fixed) × 10%)
   var incentives=Math.max(0,Math.round((moSales-fixedSalary)*0.10));
 
   // All advances this month
   var allAdv=(LS.get('advances')||[]).filter(function(r){
-    if(r.barberId!==ME.id)return false;
+    if(String(r.barberId)!==String(ME.id))return false;
     var p=(r.date||'').split('/');
     return parseInt(p[1])===m&&parseInt(p[2])===yr;
   });
   var cashAdv  =allAdv.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
   var ppAdv    =allAdv.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var totalAdv =cashAdv+ppAdv;
 
-  // Deductions from manager (negative entries — desc NOT 'OT')
-  // OT from manager stored as deduction with desc starting 'OT'
+  // Deductions / OT from manager
   var allDed=(LS.get('deductions')||[]).filter(function(r){
     var sid=String(r.staff_id||r.staffId||r.barberId||'');
     return sid===String(ME.id) && r.month===mo;
@@ -2110,15 +2187,22 @@ function renderSalary(){
   var totalOT  =otEntries.reduce(function(a,r){return a+Number(r.amount||0);},0);
   var totalDed =dedEntries.reduce(function(a,r){return a+Number(r.amount||0);},0);
 
-  // Net = Fixed + Food + Cleaning + Incentives + PhPe Tips + OT - Cash Adv - PhPe Adv - Deductions
-  var net=fixedSalary+foodMoney+cleaningMoney+incentives+moPhTips+totalOT-cashAdv-ppAdv-totalDed;
+  // Net = Month Salary + Food + Cleaning + Incentives + PhPe Tips + OT − Cash Adv − PhPe Adv − Deductions
+  var net=monthSalary+foodMoney+cleaningMoney+incentives+moPhTips+totalOT-cashAdv-ppAdv-totalDed;
   var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
 
   renderAdvanceLog();
 
   document.getElementById('salary-breakdown').innerHTML=
     '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+mName+' · Sales: '+fmtINR(moSales)+'</div>'+
-    '<div class="salary-row add"><span class="salary-lbl">Fixed Salary</span><span class="salary-val">'+fmtINR(fixedSalary)+'</span></div>'+
+    '<div class="salary-row" style="background:rgba(46,196,160,.07);border-radius:6px;padding:7px 10px;margin-bottom:6px">'+
+      '<span class="salary-lbl" style="font-size:11px;color:var(--muted)">Fixed Salary</span>'+
+      '<span class="salary-val" style="font-size:12px;color:var(--muted)">'+fmtINR(fixedSalary)+'</span>'+
+    '</div>'+
+    '<div class="salary-row" style="background:rgba(46,196,160,.12);border-radius:6px;padding:7px 10px;margin-bottom:6px;border-left:3px solid var(--accent)">'+
+      '<span class="salary-lbl" style="font-size:11px;font-weight:800;color:var(--accent)">Month Salary <span style="font-size:9px;font-weight:600;color:var(--muted)">('+presentDays+' full + '+halfDays+' half / '+workingDaysInMonth+' working days)</span></span>'+
+      '<span class="salary-val" style="font-size:15px;color:var(--accent);font-weight:800">'+fmtINR(monthSalary)+'</span>'+
+    '</div>'+
     '<div class="salary-row add"><span class="salary-lbl">Food Money</span><span class="salary-val">'+fmtINR(foodMoney)+'</span></div>'+
     '<div class="salary-row add"><span class="salary-lbl">Cleaning Money</span><span class="salary-val">'+fmtINR(cleaningMoney)+'</span></div>'+
     '<div class="salary-row add"><span class="salary-lbl">Incentives (Sales−Fixed)×10%</span><span class="salary-val">'+fmtINR(incentives)+'</span></div>'+

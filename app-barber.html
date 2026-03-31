@@ -952,14 +952,25 @@ var SB = {
 };
 
 // ── Bootstrap: load all data → localStorage, then call cb ───────
-// This is called once on app load. Supabase is source of truth.
+// Advances are MERGED so locally-saved entries are never lost before Supabase insert completes.
 function supaBootstrap(onDone, onError){
+  // Snapshot local advances BEFORE any clearing
+  var localAdv = LS.get('advances') || [];
   SB.readAll().then(function(data){
     ['entries','staff','salons','customers','cashIn','expenses',
      'attendance','styleCards','visits','advances','mgrCashIn','mgrExpenses'].forEach(function(k){
       localStorage.removeItem('bb_'+k);
     });
     applyRestoredData(data);
+    // Merge back any local advances whose ts is not yet in Supabase
+    var remoteAdv = LS.get('advances') || [];
+    var remoteTsSet = {};
+    remoteAdv.forEach(function(r){ if(r.ts) remoteTsSet[String(r.ts)] = true; });
+    var merged = remoteAdv.slice();
+    localAdv.forEach(function(r){
+      if(r.ts && !remoteTsSet[String(r.ts)]) merged.push(r);
+    });
+    if(merged.length !== remoteAdv.length) LS.set('advances', merged);
     if(onDone) onDone(data);
   }).catch(function(err){
     console.warn('[BB] Supabase fetch failed, using cached data:', err);
@@ -2064,13 +2075,23 @@ function addAdvance(){
   var d=document.getElementById('adv-date').value;
   var amt=parseFloat(document.getElementById('adv-amt').value)||0;
   if(!d||amt<=0){toast('Enter date and amount');return;}
-  var row={date:isoToLocal(d),amount:amt,barberId:String(ME.id),ts:Date.now(),mode:_advMode};
+  var ts=Date.now();
+  var row={date:isoToLocal(d),amount:amt,barberId:String(ME.id),ts:ts,mode:_advMode};
   var log=LS.get('advances')||[];
   log.push(row);
   LS.set('advances',log);
-  sbInsert('advances',{date:row.date,amount:amt,barberId:String(ME.id),ts:row.ts,mode:_advMode}).catch(function(){
-    appendRowToSheet('Advances',row,function(ok){if(!ok)toast('⚠ Saved locally');});
-  });
+  // Save to Supabase, then write returned id back into localStorage so merge/delete work
+  sbInsert('advances',{date:row.date,amount:amt,barberId:String(ME.id),ts:ts,mode:_advMode})
+    .then(function(saved){
+      if(saved && saved.id){
+        var cur=LS.get('advances')||[];
+        var idx=cur.findIndex(function(r){return r.ts===ts;});
+        if(idx>-1){cur[idx].id=saved.id; LS.set('advances',cur);}
+      }
+    })
+    .catch(function(){
+      toast('⚠ Advance saved locally — will sync later');
+    });
   document.getElementById('adv-amt').value='';
   renderAdvanceLog();
   renderSalary();

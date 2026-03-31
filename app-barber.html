@@ -457,6 +457,22 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <span id="ci-total-hidden" style="display:none">₹0</span>
   <div id="ci-log-hidden" style="display:none"></div>
 
+  <!-- EXPENSES SECTION (above Cash Handling) -->
+  <div class="sec">Expenses</div>
+  <div class="counter-box expense">
+    <div class="counter-title expense">
+      <span>🧾 Expenses Today</span>
+      <span class="counter-total" id="exp-total">₹0</span>
+    </div>
+    <div class="counter-row">
+      <input type="text" class="counter-inp" id="exp-desc" placeholder="Description…" style="flex:1.5">
+      <input type="number" class="counter-inp" id="exp-amt" placeholder="₹" min="0" inputmode="numeric" style="flex:.8;min-width:68px">
+      <button class="counter-btn ex" id="exp-add-btn" onclick="addExpense()">+ Add</button>
+    </div>
+    <div id="exp-edit-hint" style="display:none;font-size:10px;color:var(--warn);margin:4px 0 2px">✏️ Editing — update fields and tap Save</div>
+    <div class="counter-log" id="exp-log"><span style="color:var(--muted2);font-style:italic">No expenses yet</span></div>
+  </div>
+
   <!-- CASH HANDLING SECTION -->
   <div class="sec">Cash Handling</div>
   <div class="counter-box" style="background:rgba(91,196,240,.06);border-color:rgba(91,196,240,.3);margin-bottom:10px">
@@ -491,21 +507,6 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       <button class="counter-btn" onclick="addHandover()" style="background:rgba(155,127,212,.15);border-color:rgba(155,127,212,.4);color:var(--purple)">+ Add</button>
     </div>
     <div class="counter-log" id="handover-log"><span style="color:var(--muted2);font-style:italic">No entries yet</span></div>
-  </div>
-
-  <!-- Fix 1: Expenses moved to bottom -->
-  <div class="sec">Expenses</div>
-  <div class="counter-box expense">
-    <div class="counter-title expense">
-      <span>🧾 Expenses Today</span>
-      <span class="counter-total" id="exp-total">₹0</span>
-    </div>
-    <div class="counter-row">
-      <input type="text" class="counter-inp" id="exp-desc" placeholder="Description…" style="flex:1.5">
-      <input type="number" class="counter-inp" id="exp-amt" placeholder="₹" min="0" inputmode="numeric" style="flex:.8;min-width:68px">
-      <button class="counter-btn ex" onclick="addExpense()">+ Add</button>
-    </div>
-    <div class="counter-log" id="exp-log"><span style="color:var(--muted2);font-style:italic">No expenses yet</span></div>
   </div>
 </div>
 
@@ -1494,36 +1495,96 @@ function deleteHandover(ts){
 }
 
 // ── EXPENSES ──
+var _editExpenseTs = null; // tracks which expense is being edited
+
 function addExpense(){
   var desc=document.getElementById('exp-desc').value.trim();
   var amt=parseFloat(document.getElementById('exp-amt').value)||0;
   if(!desc){toast('Enter description');return;}
   if(amt<=0){toast('Enter amount');return;}
   var log=LS.get('expenses')||[];
-  var now=new Date();
-  log.push({desc:desc,amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),barberId:ME.id,ts:Date.now()});
-  LS.set('expenses',log);
-  appendRowToSheet('Expenses',log[log.length-1],function(ok){if(!ok)toast('⚠ Saved locally');});
+  if(_editExpenseTs!==null){
+    // UPDATE existing entry
+    var idx=log.findIndex(function(e){return e.ts===_editExpenseTs;});
+    if(idx>-1){
+      log[idx].desc=desc;
+      log[idx].amount=amt;
+      LS.set('expenses',log);
+    }
+    _editExpenseTs=null;
+    document.getElementById('exp-add-btn').textContent='+ Add';
+    document.getElementById('exp-add-btn').style.background='';
+    document.getElementById('exp-add-btn').style.borderColor='';
+    document.getElementById('exp-add-btn').style.color='';
+    document.getElementById('exp-edit-hint').style.display='none';
+    toast('🧾 Expense updated');
+  } else {
+    // NEW entry
+    var now=new Date();
+    var entry={desc:desc,amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),barberId:ME.id,ts:Date.now()};
+    log.push(entry);
+    LS.set('expenses',log);
+    appendRowToSheet('Expenses',entry,function(ok){if(!ok)toast('⚠ Saved locally');});
+    toast('🧾 Expense recorded');
+  }
   document.getElementById('exp-desc').value='';
   document.getElementById('exp-amt').value='';
   renderExpenseCounter();
-  toast('🧾 Expense recorded');
+  renderCashInCounter();
 }
+
+function editExpense(ts){
+  var log=LS.get('expenses')||[];
+  var entry=log.find(function(e){return e.ts===ts;});
+  if(!entry){return;}
+  // Only allow editing today's expenses
+  if(entry.date!==today()){toast('Only today\'s expenses can be edited');return;}
+  _editExpenseTs=ts;
+  document.getElementById('exp-desc').value=entry.desc;
+  document.getElementById('exp-amt').value=entry.amount;
+  var btn=document.getElementById('exp-add-btn');
+  btn.textContent='💾 Save';
+  btn.style.background='rgba(249,115,22,.15)';
+  btn.style.borderColor='var(--orange)';
+  btn.style.color='var(--orange)';
+  document.getElementById('exp-edit-hint').style.display='block';
+  document.getElementById('exp-desc').focus();
+}
+
+function cancelEditExpense(){
+  _editExpenseTs=null;
+  document.getElementById('exp-desc').value='';
+  document.getElementById('exp-amt').value='';
+  var btn=document.getElementById('exp-add-btn');
+  btn.textContent='+ Add';
+  btn.style.background='';
+  btn.style.borderColor='';
+  btn.style.color='';
+  document.getElementById('exp-edit-hint').style.display='none';
+}
+
 function renderExpenseCounter(){
   var log=(LS.get('expenses')||[]).filter(function(e){return e.date===today()&&String(e.barberId)===String(ME.id);});
   var total=log.reduce(function(a,e){return a+Number(e.amount||0);},0);
   document.getElementById('exp-total').textContent=fmtINR(total);
   var el=document.getElementById('exp-log');
-  el.innerHTML=!log.length?'<span style="color:var(--muted2);font-style:italic">No expenses yet</span>':
-    log.slice().reverse().map(function(e){
-      return '<div class="counter-log-item" style="display:flex;align-items:center;gap:5px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
-        '<span style="flex:1;font-size:11px">'+e.time+' — <b style="color:var(--white)">'+e.desc+'</b></span>'+
-        '<span style="color:var(--danger);font-weight:700;white-space:nowrap">'+fmtINR(e.amount)+'</span>'+
-        '<button onclick="deleteExpense('+e.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0" title="Delete">✕</button>'+
-      '</div>';
-    }).join('');
+  if(!log.length){
+    el.innerHTML='<span style="color:var(--muted2);font-style:italic">No expenses yet</span>';
+    return;
+  }
+  el.innerHTML=log.slice().reverse().map(function(e){
+    var isEditing=_editExpenseTs===e.ts;
+    return '<div class="counter-log-item" style="display:flex;align-items:center;gap:5px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.06);'+(isEditing?'background:rgba(249,115,22,.07);border-radius:6px;padding:5px 6px;':'')+'">' +
+      '<span style="flex:1;font-size:11px">'+e.time+' — <b style="color:var(--white)">'+e.desc+'</b></span>'+
+      '<span style="color:var(--danger);font-weight:700;white-space:nowrap;font-size:12px">'+fmtINR(e.amount)+'</span>'+
+      '<button onclick="editExpense('+e.ts+')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0" title="Edit">✏️</button>'+
+      '<button onclick="deleteExpense('+e.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0" title="Delete">✕</button>'+
+    '</div>';
+  }).join('');
 }
+
 function deleteExpense(ts){
+  if(_editExpenseTs===ts) cancelEditExpense();
   if(!confirm('Delete this expense?'))return;
   var log=(LS.get('expenses')||[]).filter(function(e){return e.ts!==ts;});
   LS.set('expenses',log);

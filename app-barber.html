@@ -1822,9 +1822,19 @@ function renderAttBtnWrap(){
 function recordAtt(type){
   var log=LS.get('attendance')||[];
   var now=new Date();
-  log.push({type:type,date:today(),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),ts:Date.now(),barberId:ME.id});
+  var row={type:type,date:today(),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),ts:Date.now(),barberId:ME.id};
+  log.push(row);
   LS.set('attendance',log);
-  appendRowToSheet('Attendance',log[log.length-1],function(ok){if(!ok)toast('⚠ Attendance saved locally');});
+  // Save to Supabase and write returned id back into localStorage
+  sbInsert('attendance', row)
+    .then(function(saved){
+      if(saved && saved.id){
+        var cur=LS.get('attendance')||[];
+        var idx=cur.findIndex(function(r){return r.ts===row.ts;});
+        if(idx>-1){cur[idx].id=saved.id; LS.set('attendance',cur);}
+      }
+    })
+    .catch(function(){ toast('⚠ Attendance saved locally — check connectivity'); });
   toast(type==='in'?'✅ Clocked In!':'✅ Clocked Out!');
   renderAttBtnWrap();
   renderAttBtnWrapBilling();

@@ -1020,23 +1020,27 @@ var SB = {
       sbSelect('mgr_cash_in'),
       sbSelect('mgr_expenses'),
       sbSelect('deductions'),
-      sbSelect('att_overrides')
+      sbSelect('att_overrides'),
+      sbSelect('salon_expenses'),
+      sbSelect('pnl_inputs')
     ]).then(function(results){
       return {
-        staff:        results[0]  || [],
-        salons:       results[1]  || [],
-        customers:    results[2]  || [],
-        entries:      results[3]  || [],
-        cashIn:       results[4]  || [],
-        expenses:     results[5]  || [],
-        attendance:   results[6]  || [],
-        styleCards:   results[7]  || [],
-        visits:       results[8]  || [],
-        advances:     results[9]  || [],
-        mgrCashIn:    results[10] || [],
-        mgrExpenses:  results[11] || [],
-        deductions:   results[12] || [],
-        attOverrides: results[13] || []
+        staff:         results[0]  || [],
+        salons:        results[1]  || [],
+        customers:     results[2]  || [],
+        entries:       results[3]  || [],
+        cashIn:        results[4]  || [],
+        expenses:      results[5]  || [],
+        attendance:    results[6]  || [],
+        styleCards:    results[7]  || [],
+        visits:        results[8]  || [],
+        advances:      results[9]  || [],
+        mgrCashIn:     results[10] || [],
+        mgrExpenses:   results[11] || [],
+        deductions:    results[12] || [],
+        attOverrides:  results[13] || [],
+        salonExpenses: results[14] || [],
+        pnlInputs:     results[15] || []
       };
     });
   },
@@ -1111,7 +1115,8 @@ var SB = {
 function supaBootstrap(onDone, onError){
   SB.readAll().then(function(data){
     ['entries','staff','salons','customers','cashIn','expenses',
-     'attendance','styleCards','visits','advances','mgrCashIn','mgrExpenses'].forEach(function(k){
+     'attendance','styleCards','visits','advances','mgrCashIn','mgrExpenses',
+     'salonExpenses'].forEach(function(k){
       localStorage.removeItem('bb_'+k);
     });
     applyRestoredData(data);
@@ -1142,7 +1147,24 @@ function applyRestoredData(d){
   if(d.advances     && d.advances.length)      LS.set('advances',     d.advances.map(function(r){return toStr(r,['barberId']);}));
   if(d.mgrCashIn    && d.mgrCashIn.length)     LS.set('mgrCashIn',    d.mgrCashIn.map(function(r){return toStr(r,['managerId','salonId']);}));
   if(d.mgrExpenses  && d.mgrExpenses.length)   LS.set('mgrExpenses',  d.mgrExpenses.map(function(r){return toStr(r,['managerId','salonId']);}));
+  if(d.salonExpenses && d.salonExpenses.length) LS.set('salonExpenses', d.salonExpenses);
+  if(d.pnlInputs    && d.pnlInputs.length){
+    d.pnlInputs.forEach(function(r){
+      LS.set('pnl_'+r.salon_id+'_'+r.month, r);
+    });
+  }
   if(d.deductions   && d.deductions.length){
+    // Store flat array for salary cross-check
+    LS.set('deductions', d.deductions.map(function(r){
+      return {
+        staffId: String(r.staff_id||r.staffId||''),
+        staff_id: String(r.staff_id||r.staffId||''),
+        month: r.month||'',
+        desc:  r.desc||'',
+        amount: Number(r.amount||0)
+      };
+    }));
+    // Also store per-key format for salary modal
     var dg={};
     d.deductions.forEach(function(r){
       var k='ded_'+(r.staff_id||r.staffId)+'_'+r.month;
@@ -1888,14 +1910,19 @@ function syncBillingCustomers(){
     if (!name || name==='Walk-in' || !phone || phone.length<10) return;
     var existing = customers.find(function(c){ return c.phone===phone; });
     if (!existing){
-      customers.push({
+      var newCust = {
         id:'cb'+e.id, phone:phone, name:name,
         role:'customer', hairType:'', faceShape:'', density:'', growthNotes:''
-      });
+      };
+      customers.push(newCust);
       changed=true;
+      // Save new customer directly to Supabase
+      SB.insertCustomer(newCust).catch(function(){});
     } else if (existing.name==='Customer '+phone.slice(-4) && name) {
       // upgrade auto-generated name if a real name was entered
       existing.name=name; changed=true;
+      // Update in Supabase too
+      sbUpdate('customers', existing.id, {name: name}).catch(function(){});
     }
   });
   if (changed) LS.set('customers', customers);
@@ -1960,7 +1987,12 @@ function genCustOTP(){
   var c = customers.find(function(x){return x.id===editingCustId;});
   var otp = String(Math.floor(1000+Math.random()*9000));
   document.getElementById('ec-otp-val').textContent = otp;
-  if(c){ c.loginPin = otp; LS.set('customers',customers); }
+  if(c){
+    c.loginPin = otp;
+    LS.set('customers',customers);
+    // Persist to Supabase immediately
+    sbUpdate('customers', c.id, {loginPin: otp}).catch(function(){});
+  }
 }
 
 function shareCustLogin(){
@@ -2403,8 +2435,11 @@ function saveEdit(){
     var customers = LS.get('customers')||[];
     var existing  = customers.find(function(c){ return c.phone===custPhone; });
     if (!existing){
-      customers.push({id:'ce'+editingId,phone:custPhone,name:custName,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''});
+      var newCust = {id:'ce'+editingId,phone:custPhone,name:custName,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''};
+      customers.push(newCust);
       LS.set('customers',customers);
+      // Save to Supabase
+      SB.insertCustomer(newCust).catch(function(){});
     }
   }
   closeModal('editModal');
@@ -2513,33 +2548,7 @@ function renderStaffAttModal(){
     '</div>'+
     (timeList?'<div style="margin-top:8px;max-height:160px;overflow-y:auto">'+timeList+'</div>':'');
 }
-function applyRestoredData(d){
-  var toStr=function(rec,fields){
-    if(!rec)return rec;
-    fields.forEach(function(f){if(rec[f]!==undefined&&rec[f]!==null&&rec[f]!=='')rec[f]=String(rec[f]);});
-    return rec;
-  };
-  if(d.entries&&d.entries.length)    LS.set('entries',    d.entries.map(function(r){return toStr(r,['id','barberId','salonId','customerPhone']);}));
-  if(d.staff&&d.staff.length)        LS.set('staff',      d.staff.map(function(r){return toStr(r,['id','phone','salonId','loginPin']);}));
-  if(d.salons&&d.salons.length)      LS.set('salons',     d.salons.map(function(r){return toStr(r,['id','mgrPhone']);}));
-  if(d.customers&&d.customers.length)LS.set('customers',  d.customers.map(function(r){return toStr(r,['id','phone','loginPin']);}));
-  if(d.cashIn&&d.cashIn.length)      LS.set('cashIn',     d.cashIn.map(function(r){return toStr(r,['barberId']);}));
-  if(d.expenses&&d.expenses.length)  LS.set('expenses',   d.expenses.map(function(r){return toStr(r,['barberId']);}));
-  if(d.attendance&&d.attendance.length)LS.set('attendance',d.attendance.map(function(r){return toStr(r,['barberId']);}));
-  if(d.styleCards&&d.styleCards.length)LS.set('styleCards',d.styleCards.map(function(r){return toStr(r,['id','customerId','barberId','salonId']);}));
-  if(d.visits&&d.visits.length)      LS.set('visits',     d.visits.map(function(r){return toStr(r,['id','customerId','barberId','salonId']);}));
-  if(d.advances&&d.advances.length)  LS.set('advances',   d.advances.map(function(r){return toStr(r,['barberId']);}));
-  if(d.mgrCashIn&&d.mgrCashIn.length)  LS.set('mgrCashIn',  d.mgrCashIn.map(function(r){return toStr(r,['managerId','salonId']);}));
-  if(d.mgrExpenses&&d.mgrExpenses.length)LS.set('mgrExpenses',d.mgrExpenses.map(function(r){return toStr(r,['managerId','salonId']);}));
-  if(d.deductions&&d.deductions.length){
-    var dg={};
-    d.deductions.forEach(function(r){var k='ded_'+r.staffId+'_'+r.month;if(!dg[k])dg[k]=[];dg[k].push({desc:r.desc,amount:r.amount});});
-    Object.keys(dg).forEach(function(k){LS.set(k,dg[k]);});
-  }
-  if(d.attOverrides&&d.attOverrides.length){
-    d.attOverrides.forEach(function(r){LS.set('att_'+r.staffId+'_'+r.month,{present:r.present,half:r.half,absent:r.absent});});
-  }
-}
+// applyRestoredData is defined once in the shared Supabase data layer above.
 
 
 

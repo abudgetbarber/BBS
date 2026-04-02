@@ -1822,19 +1822,9 @@ function renderAttBtnWrap(){
 function recordAtt(type){
   var log=LS.get('attendance')||[];
   var now=new Date();
-  var row={type:type,date:today(),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),ts:Date.now(),barberId:ME.id};
-  log.push(row);
+  log.push({type:type,date:today(),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),ts:Date.now(),barberId:ME.id});
   LS.set('attendance',log);
-  // Save to Supabase and write returned id back into localStorage
-  sbInsert('attendance', row)
-    .then(function(saved){
-      if(saved && saved.id){
-        var cur=LS.get('attendance')||[];
-        var idx=cur.findIndex(function(r){return r.ts===row.ts;});
-        if(idx>-1){cur[idx].id=saved.id; LS.set('attendance',cur);}
-      }
-    })
-    .catch(function(){ toast('⚠ Attendance saved locally — check connectivity'); });
+  appendRowToSheet('Attendance',log[log.length-1],function(ok){if(!ok)toast('⚠ Attendance saved locally');});
   toast(type==='in'?'✅ Clocked In!':'✅ Clocked Out!');
   renderAttBtnWrap();
   renderAttBtnWrapBilling();
@@ -2100,13 +2090,8 @@ function renderSalary(){
   var cleaningMoney = Number(me.cleaningMoney||0);
 
   // ── Attendance-prorated Month Salary ──
-  // Count working days in the month (exclude Sundays as weekly off)
+  // Use all calendar days in the month (including Sundays)
   var daysInMonth = new Date(yr,m,0).getDate();
-  var workingDaysInMonth = 0;
-  for(var d=1;d<=daysInMonth;d++){
-    var dow = new Date(yr,m-1,d).getDay();
-    if(dow!==0) workingDaysInMonth++; // 0=Sunday
-  }
 
   // Count barber's present & half days this month
   var attLog = LS.get('attendance')||[];
@@ -2118,10 +2103,10 @@ function renderSalary(){
     if(status==='present') presentDays++;
     else if(status==='half') halfDays++;
   }
-  // Month Salary = Fixed × (Present + Half×0.5) / WorkingDays
+  // Month Salary = Fixed × (Present + Half×0.5) / Total Days in Month
   var effectiveDays = presentDays + halfDays * 0.5;
-  var monthSalary = workingDaysInMonth > 0
-    ? Math.round(fixedSalary * effectiveDays / workingDaysInMonth)
+  var monthSalary = daysInMonth > 0
+    ? Math.round(fixedSalary * effectiveDays / daysInMonth)
     : 0;
 
   // Sales + tips this month
@@ -2171,7 +2156,7 @@ function renderSalary(){
       '<span class="salary-val" style="font-size:12px;color:var(--muted)">'+fmtINR(fixedSalary)+'</span>'+
     '</div>'+
     '<div class="salary-row" style="background:rgba(46,196,160,.12);border-radius:6px;padding:7px 10px;margin-bottom:6px;border-left:3px solid var(--accent)">'+
-      '<span class="salary-lbl" style="font-size:11px;font-weight:800;color:var(--accent)">Month Salary <span style="font-size:9px;font-weight:600;color:var(--muted)">('+presentDays+' full + '+halfDays+' half / '+workingDaysInMonth+' working days)</span></span>'+
+      '<span class="salary-lbl" style="font-size:11px;font-weight:800;color:var(--accent)">Month Salary <span style="font-size:9px;font-weight:600;color:var(--muted)">('+presentDays+' full + '+halfDays+' half / '+daysInMonth+' days)</span></span>'+
       '<span class="salary-val" style="font-size:15px;color:var(--accent);font-weight:800">'+fmtINR(monthSalary)+'</span>'+
     '</div>'+
     '<div class="salary-row add"><span class="salary-lbl">Food Money</span><span class="salary-val">'+fmtINR(foodMoney)+'</span></div>'+

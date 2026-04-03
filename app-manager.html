@@ -1442,19 +1442,30 @@ function addMgrBill(){
       LS.set('entries', cached);
       // Save customer to Supabase if real name + phone provided
       if(custName && custName!=='Walk-in' && custPhone.length>=10){
-        var custs=LS.get('customers')||[];
-        var existing=custs.find(function(c){return c.phone===custPhone;});
-        if(!existing){
-          var newCust={id:'cb'+entry.id,phone:custPhone,name:custName,salonId:mySalonId,
-            role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''};
-          SB.insertCustomer(newCust).then(function(saved2){
-            custs.push(saved2||newCust);
-            LS.set('customers',custs);
-          }).catch(function(){
-            custs.push(newCust);
-            LS.set('customers',custs);
+        // Check Supabase directly — don't rely on local cache alone
+        sbSelect('customers','phone=eq.'+encodeURIComponent(custPhone))
+          .then(function(found){
+            if(found && found.length>0) return; // already exists
+            var newCust={
+              phone:      custPhone,
+              name:       custName,
+              salonId:    mySalonId,
+              role:       'customer',
+              hairType:   '',
+              faceShape:  '',
+              density:    '',
+              growthNotes:'',
+              loginPin:   ''
+            };
+            return SB.insertCustomer(newCust).then(function(saved2){
+              var custs=LS.get('customers')||[];
+              custs.push(saved2||newCust);
+              LS.set('customers',custs);
+            });
+          })
+          .catch(function(err){
+            console.error('[BB] Customer save error:', err);
           });
-        }
       }
       renderDashboard();
       toast('✅ Entry saved to Supabase for ' + (barber ? barber.name : 'stylist'));
@@ -2461,18 +2472,27 @@ function saveEdit(){
 
   // Sync customer to Supabase if real name+phone given
   if (custName && custName!=='Walk-in' && custPhone.length>=10){
-    var customers = LS.get('customers')||[];
-    var existing  = customers.find(function(c){ return c.phone===custPhone; });
-    if (!existing){
-      var newCust2={id:'ce'+editingId,phone:custPhone,name:custName,salonId:mySalonId,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''};
-      SB.insertCustomer(newCust2).then(function(saved3){
-        customers.push(saved3||newCust2);
-        LS.set('customers',customers);
-      }).catch(function(){
-        customers.push(newCust2);
-        LS.set('customers',customers);
-      });
-    }
+    sbSelect('customers','phone=eq.'+encodeURIComponent(custPhone))
+      .then(function(found){
+        if(found && found.length>0) return; // already exists
+        var newCust2={
+          phone:      custPhone,
+          name:       custName,
+          salonId:    mySalonId,
+          role:       'customer',
+          hairType:   '',
+          faceShape:  '',
+          density:    '',
+          growthNotes:'',
+          loginPin:   ''
+        };
+        return SB.insertCustomer(newCust2).then(function(saved3){
+          var customers2=LS.get('customers')||[];
+          customers2.push(saved3||newCust2);
+          LS.set('customers',customers2);
+        });
+      })
+      .catch(function(err){ console.error('[BB] Customer save error (edit):', err); });
   }
   closeModal('editModal');
   toast('✓ Entry updated');

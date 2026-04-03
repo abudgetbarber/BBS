@@ -1487,13 +1487,20 @@ function addMgrPrevMonthCash(){
   var amt=parseFloat(document.getElementById('mgr-prev-cash-amt').value)||0;
   if(!desc){toast('Enter a description');return;}
   if(amt<=0){toast('Enter amount');return;}
+  var now=new Date();
+  var entry={desc:desc,amount:amt,ts:Date.now(),date:today(),
+    time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
   var log=LS.get('mgrPrevCashLog_'+ME.id)||[];
-  log.push({desc:desc,amount:amt,ts:Date.now(),date:today()});
+  log.push(entry);
   LS.set('mgrPrevCashLog_'+ME.id,log);
+  // Save to Supabase so franchise can see it
+  sbInsert('mgr_cash_in',{amount:amt,time:entry.time,date:entry.date,
+    managerId:ME.id,salonId:mySalonId,desc:desc,handedTo:'',
+    type:'prev_cash',status:'accepted'}).catch(function(){});
   document.getElementById('mgr-prev-cash-desc').value='';
   document.getElementById('mgr-prev-cash-amt').value='';
   renderMgrCashCounter();
-  toast('💵 Prev month cash added');
+  toast('Prev month cash added');
 }
 function deleteMgrPrevMonthCash(ts){
   if(!confirm('Delete this entry?'))return;
@@ -1513,7 +1520,7 @@ function addMgrHandover(){
   var row={amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,handedTo:name,ts:Date.now()};
   log.push(row);
   LS.set('mgrHandover',log);
-  sbInsert('mgr_cash_in',{amount:amt,time:row.time,date:row.date,managerId:ME.id,salonId:mySalonId,desc:'Handover from '+ME.name+' to '+name,handedTo:name}).catch(function(){});
+  sbInsert('mgr_cash_in',{amount:amt,time:row.time,date:row.date,managerId:ME.id,salonId:mySalonId,desc:'Handover from '+ME.name+' to '+name,handedTo:name,type:'handover',status:'pending'}).catch(function(){});
   document.getElementById('mgr-handover-amt').value='';
   document.getElementById('mgr-handover-name').value='';
   renderMgrCashCounter();
@@ -1596,14 +1603,18 @@ function renderMgrCashCounter(){
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Barbers)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Total Expenses</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
-  // Handover display
+  // Handover display — show status from Supabase cache
   var hTotal=document.getElementById('mgr-handover-total');
   if(hTotal) hTotal.textContent=fmtINR(totalHandover);
   var hLog=document.getElementById('mgr-handover-log');
+  var sbHandovers=LS.get('mgrCashIn')||[];
   if(hLog) hLog.innerHTML=!handovers.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No handovers yet</span>':
     handovers.slice().reverse().map(function(r){
+      var sbRec=sbHandovers.find(function(x){return String(x.managerId)===String(ME.id)&&x.date===r.date&&Number(x.amount)===Number(r.amount)&&(x.type==='handover'||!x.type);});
+      var status=sbRec?sbRec.status:'pending';
+      var badge=status==='accepted'?'<span style="font-size:9px;color:var(--green);font-weight:700">✓ Accepted</span>':status==='rejected'?'<span style="font-size:9px;color:var(--danger);font-weight:700">✕ Rejected</span>':'<span style="font-size:9px;color:var(--warn);font-weight:700">⏳ Pending</span>';
       return '<div class="mgr-ci-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
-        '<span style="flex:1;font-size:11px">'+r.time+' '+r.date+(r.handedTo?'<br><span style="color:var(--muted2)">→ '+r.handedTo+'</span>':'')+'</span>'+
+        '<span style="flex:1;font-size:11px">'+r.time+' '+r.date+(r.handedTo?'<br><span style="color:var(--muted2)">→ '+r.handedTo+'</span>':'')+' '+badge+'</span>'+
         '<span style="color:var(--purple);font-weight:700;white-space:nowrap">'+fmtINR(r.amount)+'</span>'+
         '<button onclick="deleteMgrHandover('+r.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px">✕</button>'+
       '</div>';

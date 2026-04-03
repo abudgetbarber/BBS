@@ -400,17 +400,13 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div style="font-size:12px;color:var(--muted2)" id="fr-cash-counter-log"></div>
   </div>
 
-  <!-- Received from Manager (mirrors "Cash Handed Over" in manager) -->
+  <!-- Received from Manager — Accept/Reject manager's entries only -->
   <div class="mgr-counter" style="border-color:rgba(155,127,212,.35);background:rgba(155,127,212,.06);margin-bottom:10px">
     <div class="mgr-ci-title" style="color:var(--purple)">
-      <span>🤝 Received from Manager</span>
+      <span>🤝 Cash from Manager</span>
       <span class="mgr-ci-total" id="fr-handover-total" style="color:var(--purple)">₹0</span>
     </div>
-    <div class="mgr-ci-row" style="flex-wrap:wrap;gap:6px">
-      <input type="text" class="mgr-ci-inp" id="fr-accept-from" placeholder="Manager Name" style="flex:1.4;min-width:140px">
-      <input type="number" class="mgr-ci-inp" id="fr-accept-amt" placeholder="₹ Amount" min="0" inputmode="numeric" style="flex:.8;min-width:80px">
-      <button onclick="frAcceptHandover()" style="padding:8px 12px;background:rgba(155,127,212,.15);border:1.5px solid rgba(155,127,212,.4);color:var(--purple);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">+ Accept</button>
-    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Accept or reject cash handover entries sent by the Manager.</div>
     <div class="mgr-ci-log" id="fr-handover-log"><span style="color:var(--muted2);font-size:11px;font-style:italic">No entries yet</span></div>
   </div>
 </div>
@@ -1465,12 +1461,10 @@ function frRenderCashCounter(){
   function isCM(ds){var p=(ds||'').split('/');return parseInt(p[1])===_cm&&parseInt(p[2])===_cy;}
   var styIds=(LS.get('staff')||[]).filter(function(u){return String(u.salonId)===String(mySalonId)&&u.role==='barber';}).map(function(u){return u.id;});
 
-  // Expenses today — for log box
+  // Expenses today — view only
   var allMgrExp=(LS.get('mgrExpenses')||[]).filter(function(e){return String(e.salonId)===String(mySalonId);});
   var allBarberExp=(LS.get('expenses')||[]).filter(function(e){return styIds.indexOf(String(e.barberId))>-1;});
-  var todayMgrExp=allMgrExp.filter(function(e){return e.date===today();});
-  var todayBarberExp=allBarberExp.filter(function(e){return e.date===today();});
-  var todayAllExp=todayMgrExp.concat(todayBarberExp);
+  var todayAllExp=allMgrExp.filter(function(e){return e.date===today();}).concat(allBarberExp.filter(function(e){return e.date===today();}));
   var todayExpTotal=todayAllExp.reduce(function(a,e){return a+Number(e.amount||0);},0);
   var eT=document.getElementById('fr-exp-total'); if(eT) eT.textContent=fmtINR(todayExpTotal);
   var eL=document.getElementById('fr-exp-log');
@@ -1482,7 +1476,14 @@ function frRenderCashCounter(){
         '<span style="color:var(--danger);font-weight:700">'+fmtINR(e.amount)+'</span></div>';
     }).join('');
 
-  // Cash counter — current month
+  // All mgr_cash_in entries for this salon this month
+  var allMgrCI=(LS.get('mgrCashIn')||[]).filter(function(r){return String(r.salonId)===String(mySalonId)&&isCM(r.date||'');});
+
+  // Prev month cash carry-forward — type:'prev_cash' entries (always accepted)
+  var prevCashEntries=allMgrCI.filter(function(r){return r.type==='prev_cash';});
+  var prevMonthCash=prevCashEntries.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // Cash counter — same calculation as manager
   var allE=getEntries().filter(function(e){return String(e.salonId)===String(mySalonId);});
   var moE=allE.filter(function(e){return isCM(e.date);});
   var todayCash=moE.filter(function(e){return e.date===today();}).reduce(function(a,e){return a+Number(e.cash||0);},0);
@@ -1490,44 +1491,62 @@ function frRenderCashCounter(){
   var totalMonthExp=allMgrExp.filter(function(e){return isCM(e.date||'');}).reduce(function(a,e){return a+Number(e.amount||0);},0)+
                     allBarberExp.filter(function(e){return isCM(e.date||'');}).reduce(function(a,e){return a+Number(e.amount||0);},0);
   var cashAdv=(LS.get('advances')||[]).filter(function(r){return styIds.indexOf(String(r.barberId))>-1&&(!r.mode||r.mode==='cash')&&isCM(r.date||'');}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var handovers=(LS.get('mgrCashIn')||[]).filter(function(r){return String(r.salonId)===String(mySalonId)&&isCM(r.date||'');});
-  var totalHO=handovers.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var bal=todayCash+prevCash-cashAdv-totalMonthExp-totalHO;
+
+  // Only ACCEPTED handovers count in balance
+  var acceptedHO=allMgrCI.filter(function(r){return (r.type==='handover'||!r.type)&&r.status==='accepted';});
+  var totalHO=acceptedHO.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  var bal=prevMonthCash+todayCash+prevCash-cashAdv-totalMonthExp-totalHO;
   var cT=document.getElementById('fr-cash-counter-total'); if(cT) cT.textContent=fmtINR(bal);
   var cL=document.getElementById('fr-cash-counter-log');
   if(cL) cL.innerHTML=
+    (prevMonthCash>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Prev Month Carry-Forward</span><span style="color:var(--blue)">+'+fmtINR(prevMonthCash)+'</span></div>':'')+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash Sales</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">This Month (other days)</span><span style="color:var(--green)">+'+fmtINR(prevCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (this month)</span><span style="color:var(--danger)">-'+fmtINR(cashAdv)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses (this month)</span><span style="color:var(--danger)">-'+fmtINR(totalMonthExp)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over (this month)</span><span style="color:var(--blue)">-'+fmtINR(totalHO)+'</span></div>';
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over (accepted)</span><span style="color:var(--blue)">-'+fmtINR(totalHO)+'</span></div>';
 
-  // Received from manager log
+  // Handover log — all handover entries (pending/accepted/rejected)
+  var handoverEntries=allMgrCI.filter(function(r){return r.type==='handover'||!r.type;});
   var hT=document.getElementById('fr-handover-total'); if(hT) hT.textContent=fmtINR(totalHO);
   var hL=document.getElementById('fr-handover-log');
-  if(hL) hL.innerHTML=!handovers.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No entries yet</span>':
-    handovers.slice().reverse().map(function(r){
-      return '<div class="mgr-ci-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
-        '<span style="flex:1;font-size:11px">'+r.time+' '+r.date+(r.handedTo?'<br><span style="color:var(--muted2)">from '+r.handedTo+'</span>':'')+'</span>'+
-        '<span style="color:var(--purple);font-weight:700;white-space:nowrap">'+fmtINR(r.amount)+'</span></div>';
+  if(hL) hL.innerHTML=!handoverEntries.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No entries yet</span>':
+    handoverEntries.slice().reverse().map(function(r){
+      var status=r.status||'pending';
+      var isPending=status==='pending';
+      var badge=status==='accepted'?'<span style="font-size:9px;color:var(--green);font-weight:700">✓ Accepted</span>':
+                status==='rejected'?'<span style="font-size:9px;color:var(--danger);font-weight:700">✕ Rejected</span>':
+                '<span style="font-size:9px;color:var(--warn);font-weight:700">⏳ Pending</span>';
+      return '<div class="mgr-ci-item" style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="flex:1;font-size:11px">'+r.date+' '+r.time+(r.handedTo?'<br><span style="color:var(--muted2)">from '+r.handedTo+'</span>':'')+'<br>'+badge+'</span>'+
+        '<span style="color:var(--purple);font-weight:700;white-space:nowrap;margin-right:4px">'+fmtINR(r.amount)+'</span>'+
+        (isPending && r.id ?
+          '<button onclick="frRespondHandover(\''+r.id+'\',\'accepted\')" style="padding:4px 8px;background:rgba(0,196,140,.15);border:1px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);margin-right:3px">Accept</button>'+
+          '<button onclick="frRespondHandover(\''+r.id+'\',\'rejected\')" style="padding:4px 8px;background:rgba(224,107,91,.1);border:1px solid var(--danger);color:var(--danger);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">Reject</button>'
+        : '')+
+      '</div>';
     }).join('');
 }
 
-function frAcceptHandover(){
-  var amt=parseFloat(document.getElementById('fr-accept-amt').value)||0;
-  var from=(document.getElementById('fr-accept-from').value||'').trim();
-  if(amt<=0){toast('Enter amount received');return;}
-  if(!from){toast('Enter manager name');return;}
-  var now=new Date();
-  var row={amount:amt,time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:today(),managerId:ME.id,salonId:mySalonId,desc:'Received by Franchise from '+from,handedTo:from};
-  sbInsert('mgr_cash_in',row).then(function(saved){
-    var log=LS.get('mgrCashIn')||[]; log.push(saved||row); LS.set('mgrCashIn',log);
-    document.getElementById('fr-accept-amt').value='';
-    document.getElementById('fr-accept-from').value='';
+function frRespondHandover(id, status){
+  // Update status in Supabase
+  _supaFetch('mgr_cash_in?id=eq.'+encodeURIComponent(id),{
+    method:'PATCH',
+    body:JSON.stringify({status:status})
+  }).then(function(){
+    // Update local cache
+    var log=LS.get('mgrCashIn')||[];
+    var rec=log.find(function(r){return String(r.id)===String(id);});
+    if(rec) rec.status=status;
+    LS.set('mgrCashIn',log);
     frRenderCashCounter();
-    toast('Accepted Rs.'+amt+' from '+from);
-  }).catch(function(){toast('Save failed');});
+    toast(status==='accepted'?'Handover accepted':'Handover rejected');
+  }).catch(function(){ toast('Update failed — check connectivity'); });
 }
+
+// kept for backwards compatibility — no longer creates entries
+function frAcceptHandover(){ toast('Use Accept/Reject buttons on manager entries above'); }
 
 // ── SALES ──
 var salFilterMode='day';

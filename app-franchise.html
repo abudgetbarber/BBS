@@ -412,6 +412,11 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.6">
       This Month Cash Sales − Cash Advances − Expenses − Cash Handed Over
     </div>
+    <!-- Prev Month Cash Entry (visible to franchise, sent by manager via Supabase) -->
+    <div style="margin-bottom:8px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Prev Month Cash (from Manager)</div>
+      <div id="fr-prev-cash-log" style="margin-top:4px"><span style="font-size:11px;color:var(--muted2);font-style:italic">No previous cash entries</span></div>
+    </div>
     <div style="font-size:12px;color:var(--muted2)" id="fr-cash-counter-log"></div>
   </div>
 
@@ -1497,6 +1502,19 @@ function frRenderCashCounter(){
   // Prev month cash carry-forward — type:'prev_cash' entries (always accepted)
   var prevCashEntries=allMgrCI.filter(function(r){return r.type==='prev_cash';});
   var prevMonthCash=prevCashEntries.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Render prev cash log
+  var pcEl=document.getElementById('fr-prev-cash-log');
+  if(pcEl){
+    if(!prevCashEntries.length){pcEl.innerHTML='<span style="font-size:11px;color:var(--muted2);font-style:italic">No previous cash entries</span>';}
+    else{
+      pcEl.innerHTML=prevCashEntries.map(function(r){
+        return '<div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
+          '<span style="flex:1;font-size:11px;color:var(--muted)">'+r.date+' — <b style="color:var(--white)">'+(r.desc||r["desc"]||'Carry-forward')+'</b></span>'+
+          '<span style="color:var(--blue);font-weight:700;white-space:nowrap;font-size:12px">'+fmtINR(r.amount)+'</span>'+
+        '</div>';
+      }).join('');
+    }
+  }
 
   // Cash counter — same calculation as manager
   var allE=getEntries().filter(function(e){return String(e.salonId)===String(mySalonId);});

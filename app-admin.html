@@ -234,7 +234,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <button class="nt"    id="nt-allsales"  onclick="showTab('allsales')">📋 All Sales</button>
   <button class="nt"    id="nt-reports"   onclick="showTab('reports')">📈 Reports</button>
   <button class="nt"    id="nt-salonpnl"  onclick="showTab('salonpnl')">📊 Salon PNL</button>
-  <button class="nt"    id="nt-manage"    onclick="showTab('manage')">👥 Manage</button>
+  <button class="nt"    id="nt-salonstaff" onclick="showTab('salonstaff')">👥 Salon Staff</button>
+  <button class="nt"    id="nt-manage"    onclick="showTab('manage')">⚙️ Manage</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -354,6 +355,40 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div id="spnl-content"><div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Select a salon to view P&amp;L</div></div>
 </div>
 
+
+<!-- SALON STAFF -->
+<div class="panel" id="pn-salonstaff">
+  <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px">Salon Staff</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+    <div class="ifield" style="flex:1;min-width:140px"><label>Salon</label>
+      <select id="ss-salon" onchange="renderSalonStaff()" style="padding:8px 10px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%"><option value="">Select Salon</option></select>
+    </div>
+    <div class="ifield" style="flex:1;min-width:130px"><label>Month</label>
+      <input type="month" id="ss-month" onchange="renderSalonStaff()" style="padding:8px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%">
+    </div>
+  </div>
+  <div id="ss-content"><div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Select a salon and month to view staff</div></div>
+</div>
+
+<!-- Salary detail modal for admin salon staff -->
+<div class="modal-bg" id="adminSalModal" onclick="if(event.target===this)closeModal('adminSalModal')">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-hdr"><h3 id="adm-sal-title">Salary</h3><button class="btn-close" onclick="closeModal('adminSalModal')">✕</button></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Month</label><input type="month" class="fi" id="adm-sal-month" onchange="renderAdminSalary()" style="padding:8px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%"></div>
+    <div id="adm-sal-breakdown" style="background:var(--surface2);border-radius:var(--r);padding:13px;border:1px solid rgba(0,0,0,.06)"></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('adminSalModal')">Close</button></div>
+  </div>
+</div>
+
+<!-- Attendance modal for admin salon staff -->
+<div class="modal-bg" id="adminAttModal" onclick="if(event.target===this)closeModal('adminAttModal')">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-hdr"><h3 id="adm-att-title">Attendance</h3><button class="btn-close" onclick="closeModal('adminAttModal')">✕</button></div>
+    <div class="ifield" style="margin-bottom:10px"><label>Month</label><input type="month" class="fi" id="adm-att-month" onchange="renderAdminAtt()" style="padding:8px;background:var(--surface2);border:1px solid rgba(0,0,0,.08);border-radius:var(--rs);color:var(--white);font-size:13px;outline:none;font-family:var(--BF);width:100%"></div>
+    <div id="adm-att-cal" style="margin-top:10px"></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('adminAttModal')">Close</button></div>
+  </div>
+</div>
 
 <!-- MANAGE -->
 <div class="panel" id="pn-manage">
@@ -945,7 +980,9 @@ function renderSalonPNL(){
     sbSelect('staff','"salonId"=eq.'+encodeURIComponent(sid)),
     sbSelect('salon_expenses','salon_id=eq.'+encodeURIComponent(sid)),
     sbSelect('mgr_expenses','"salonId"=eq.'+encodeURIComponent(sid)),
-    sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(sid)+'&effective_from=lte.'+encodeURIComponent(month)+'&order=effective_from.desc')
+    sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(sid)+'&effective_from=lte.'+encodeURIComponent(month)+'&order=effective_from.desc'),
+    sbSelect('att_overrides'),
+    sbSelect('attendance')
   ]).then(function(results){
     // Normalize raw Supabase rows — handle both camelCase and snake_case field names
     function norm(r, map){
@@ -977,9 +1014,38 @@ function renderSalonPNL(){
     },0);
     console.log('[BB PNL] Salon:'+sid+' Month:'+month+' Entries:'+allE.length+' Revenue:'+revenue);
     var customers=allE.length;
-    // Staff costs — all staff for this salon (barbers + manager)
-    var totalSalary=allStaff.reduce(function(a,u){return a+Number(u.fixedSalary||0)+Number(u.cleaningMoney||0);},0);
-    var totalFood  =allStaff.reduce(function(a,u){return a+Number(u.foodMoney||0);},0);
+    // Staff salaries — attendance-prorated monthly salary only (no cleaning, same as Manager PNL)
+    var attOverrides=results[5]||[];
+    var attLog      =results[6]||[];
+    var dIM2=new Date(yr,mo,0).getDate();
+    var totalSalary=0, totalFood=0;
+    var salaryDetail=[];
+    allStaff.forEach(function(u){
+      var fs=Number(u.fixedSalary||0);
+      var fm=Number(u.foodMoney||0);
+      // Attendance override takes priority
+      var ovr=attOverrides.find(function(r){return String(r.staff_id)===String(u.id)&&r.month===month;});
+      var present=0,half=0;
+      if(ovr&&(ovr.present||ovr.half||ovr.absent)){
+        present=Number(ovr.present||0); half=Number(ovr.half||0);
+      } else {
+        for(var _d=1;_d<=dIM2;_d++){
+          var _ds=_d+'/'+mo+'/'+yr;
+          var _recs=attLog.filter(function(r){return r.date===_ds&&String(r.barberId||r.barber_id)===String(u.id);});
+          var _hi=_recs.some(function(r){return r.type==='in';});
+          var _ho=_recs.some(function(r){return r.type==='out';});
+          if(_hi&&_ho) present++; else if(_hi) half++;
+        }
+      }
+      var monthSal=dIM2>0?Math.round(fs*(present+half*0.5)/dIM2):0;
+      totalSalary+=monthSal;
+      totalFood+=fm;
+      if(fs) salaryDetail.push(u.name+': '+fINR(monthSal)+' ('+present+' full+'+half+' half/'+dIM2+'d)');
+    });
+    // Royalty — Rs.5000 for non-company-managed outlets
+    var salonRec=(LS.get('salons')||[]).find(function(s){return s.id===sid;})||{};
+    var isCompany=salonRec.companyManaged==1||salonRec.companyManaged==='1'||salonRec.companyManaged===true;
+    var royalty=isCompany?0:5000;
     // Incentives — barbers only: max(0, (barberSales - fixedSalary) * 10%)
     var totalInc=0;
     allStaff.filter(function(u){return u.role==='barber';}).forEach(function(u){
@@ -1016,12 +1082,13 @@ function renderSalonPNL(){
     var avgWd=wdR.length?(wdR.reduce(function(a,v){return a+v;},0)/wdR.length):0;
     var avgWe=weR.length?(weR.reduce(function(a,v){return a+v;},0)/weR.length):0;
     var projRev=Math.round(avgWd*totWd+avgWe*totWe);
-    var totalOpex=totalSalary+totalFood+totalInc+rent+staffRent+cosmetics+ebStore+ebStaff+maid+wifi+marketing+extraFood+mgrExp;
+    var totalOpex=totalSalary+rent+staffRent+ebStore+ebStaff+maid+totalFood+extraFood+wifi+mgrExp+totalInc+royalty;
     var profit=revenue-totalOpex,projProfit=projRev-totalOpex;
     function fINR(n){return (n<0?'−₹':'₹')+Math.abs(Math.round(n)).toLocaleString('en-IN');}
     function prow(lbl,val,clr){return '<div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px"><span style="color:var(--muted)">'+lbl+'</span><span style="font-weight:700;color:'+clr+'">'+fINR(val)+'</span></div>';}
     if(el) el.innerHTML=
       '<div style="background:var(--accent);color:#fff;border-radius:10px;padding:10px 16px;text-align:center;font-weight:800;font-size:15px;margin-bottom:12px">'+salon.name+' · '+new Date(yr,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'})+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);padding:4px 0 8px;font-style:italic">'+salaryDetail.map(function(s){return '· '+s;}).join('<br>')+'</div>'+
       '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
         '<div style="background:rgba(0,196,140,.1);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent)">REVENUE</div>'+
         prow('Actual Sales',revenue,'var(--accent)')+prow('Customers',customers,'var(--blue)')+
@@ -1029,10 +1096,13 @@ function renderSalonPNL(){
       '</div>'+
       '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden">'+
         '<div style="background:rgba(255,107,91,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--danger)">OPEX</div>'+
-        prow('Salaries',totalSalary,'var(--danger)')+prow('Food Money',totalFood,'var(--danger)')+prow('Incentives',totalInc,'var(--danger)')+
-        prow('Rent',rent,'var(--danger)')+prow('Staff Room Rent',staffRent,'var(--danger)')+prow('Extra Sunday Food',extraFood,'var(--danger)')+
-        prow('Cosmetics',cosmetics,'var(--danger)')+prow('EB Store',ebStore,'var(--danger)')+prow('EB Staff',ebStaff,'var(--danger)')+
-        prow('Maid',maid,'var(--danger)')+prow('WiFi',wifi,'var(--danger)')+prow('Marketing',marketing,'var(--danger)')+prow('Daily Expenses',mgrExp,'var(--danger)')+
+        prow('Salaries (prorated)',totalSalary,'var(--danger)')+
+        prow('Rent',rent,'var(--danger)')+prow('Staff Room Rent',staffRent,'var(--danger)')+
+        prow('EB Store',ebStore,'var(--danger)')+prow('EB Staff Room',ebStaff,'var(--danger)')+
+        prow('Maid',maid,'var(--danger)')+prow('Food Money',totalFood,'var(--danger)')+
+        prow('Extra Sunday Food',extraFood,'var(--danger)')+prow('WiFi',wifi,'var(--danger)')+
+        prow('Daily Expenses',mgrExp,'var(--danger)')+prow('Actual Incentives',totalInc,'var(--danger)')+
+        (royalty>0?prow('Franchise Royalty',royalty,'var(--danger)'):'')+
         '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px;font-weight:800;background:rgba(255,107,91,.06)"><span>Total Opex</span><span style="color:var(--danger)">'+fINR(totalOpex)+'</span></div>'+
       '</div>'+
       '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);overflow:hidden">'+
@@ -1059,6 +1129,7 @@ function showTab(tab){
     if(tab==='reports'){ supaBootstrap(function(){ _populateCsvSalonFilter(); renderReports(); }, function(){ _populateCsvSalonFilter(); renderReports(); }); }
     if(tab==='manage') { supaBootstrap(function(){ renderManage(); }, function(){ renderManage(); }); }
     if(tab==='salonpnl'){ populateSalonPNLSelect(); var sm=document.getElementById('spnl-month'); if(sm&&!sm.value)sm.value=new Date().toISOString().slice(0,7); renderSalonPNL(); }
+    if(tab==='salonstaff'){ supaBootstrap(function(){ populateSalonStaffSelect(); var sm=document.getElementById('ss-month'); if(sm&&!sm.value)sm.value=new Date().toISOString().slice(0,7); renderSalonStaff(); }, function(){ populateSalonStaffSelect(); renderSalonStaff(); }); }
   }catch(e){
     toast('Tab error: '+e.message);
     console.error('[BB showTab]',e);
@@ -1412,6 +1483,18 @@ function renderManage(){
 var editingCustId=null;
 
 function renderManageCustomers(){
+  var el=document.getElementById('mg-customers');
+  var cnt=document.getElementById('mg-cust-count');
+  if(el) el.innerHTML='<div class="tbl-empty">Loading customers from Supabase…</div>';
+  // Always fetch fresh from Supabase
+  sbSelect('customers').then(function(freshCustomers){
+    if(freshCustomers&&freshCustomers.length) LS.set('customers', freshCustomers);
+    _doRenderManageCustomers();
+  }).catch(function(){
+    _doRenderManageCustomers(); // fallback to cache
+  });
+}
+function _doRenderManageCustomers(){
   var customers=LS.get('customers')||[];
   var entries=LS.get('entries')||[];
   var salons=LS.get('salons')||[];
@@ -1421,17 +1504,18 @@ function renderManageCustomers(){
   // Build salonId → salonName map
   var salonMap={};salons.forEach(function(s){salonMap[s.id]=s.name;});
 
-  // Determine which salon each customer belongs to by their most recent entry
+  // Determine salon per customer: use c.salonId first, then fall back to entry phone match
   var custSalonMap={};
   entries.forEach(function(e){
-    if(e.customerPhone&&e.salonId){
+    if(e.customerPhone&&e.salonId&&!custSalonMap[e.customerPhone]){
       custSalonMap[e.customerPhone]=e.salonId;
     }
   });
 
   // Filter customers
   var filtered=customers.filter(function(c){
-    if(salonFilter&&custSalonMap[c.phone]!==salonFilter) return false;
+    var effectiveSalon=c.salonId||custSalonMap[c.phone]||'';
+    if(salonFilter&&effectiveSalon!==salonFilter) return false;
     if(searchQ){
       var haystack=((c.name||'')+' '+(c.phone||'')).toLowerCase();
       if(haystack.indexOf(searchQ)===-1) return false;
@@ -1449,7 +1533,7 @@ function renderManageCustomers(){
   }
 
   document.getElementById('mg-customers').innerHTML=filtered.map(function(c){
-    var salonId=custSalonMap[c.phone]||'';
+    var salonId=c.salonId||custSalonMap[c.phone]||'';
     var salonName=salonId?(salonMap[salonId]||salonId):'—';
     var visits=entries.filter(function(e){return e.customerPhone===c.phone;}).length;
     var pinDisplay=c.loginPin
@@ -1976,6 +2060,188 @@ window.onerror = function(msg, src, line, col, err){
   if(d){ d.style.display='block'; d.textContent = 'JS Error L'+line+': '+msg; }
   return false;
 };
+
+// ════ SALON STAFF TAB ════
+
+var _adminSalStaffId = null;
+
+function populateSalonStaffSelect(){
+  var sel=document.getElementById('ss-salon');
+  if(!sel) return;
+  var salons=LS.get('salons')||[];
+  sel.innerHTML='<option value="">Select Salon</option>'+
+    salons.map(function(s){return '<option value="'+s.id+'">'+s.name+'</option>';}).join('');
+}
+
+function renderSalonStaff(){
+  var sid=(document.getElementById('ss-salon')||{}).value||'';
+  var month=(document.getElementById('ss-month')||{}).value||new Date().toISOString().slice(0,7);
+  var el=document.getElementById('ss-content');
+  if(!sid){if(el)el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Select a salon</div>';return;}
+  if(el)el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Loading…</div>';
+  Promise.all([
+    sbSelect('staff','"salonId"=eq.'+encodeURIComponent(sid)),
+    sbSelect('entries','"salonId"=eq.'+encodeURIComponent(sid)),
+    sbSelect('attendance'),
+    sbSelect('att_overrides'),
+    sbSelect('advances'),
+    sbSelect('deductions')
+  ]).then(function(res){
+    var staff=res[0]||[], allE=res[1]||[], attLog=res[2]||[], attOvr=res[3]||[], advances=res[4]||[], deds=res[5]||[];
+    // Cache for salary/att modals
+    LS.set('staff', (LS.get('staff')||[]).filter(function(u){return u.salonId!==sid;}).concat(staff));
+    LS.set('attendance', attLog);
+    LS.set('advances', advances);
+    LS.set('deductions', deds);
+    LS.set('entries', (LS.get('entries')||[]).filter(function(e){return e.salonId!==sid;}).concat(allE));
+
+    var yr=parseInt(month.split('-')[0]),mo=parseInt(month.split('-')[1]);
+    var dim=new Date(yr,mo,0).getDate();
+    var mName=new Date(yr,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+
+    if(!staff.length){if(el)el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">No staff found for this salon</div>';return;}
+
+    el.innerHTML='<div style="margin-bottom:8px;font-size:12px;color:var(--muted);font-weight:600">'+mName+' · '+staff.length+' staff</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">'+
+    staff.map(function(b){
+      var isBarber=b.role==='barber';
+      var fs=Number(b.fixedSalary||0);
+      var fm=Number(b.foodMoney||0);
+      var cm=Number(b.cleaningMoney||0);
+      // Attendance
+      var ovr=attOvr.find(function(r){return String(r.staff_id)===String(b.id)&&r.month===month;});
+      var present=0,half=0,absent=0;
+      if(ovr&&(ovr.present||ovr.half||ovr.absent)){
+        present=Number(ovr.present||0); half=Number(ovr.half||0); absent=Number(ovr.absent||0);
+      } else {
+        for(var dd=1;dd<=dim;dd++){
+          var ds=dd+'/'+mo+'/'+yr;
+          var recs=attLog.filter(function(r){return r.date===ds&&String(r.barberId||r.barber_id)===String(b.id);});
+          var hi=recs.some(function(r){return r.type==='in';}),ho=recs.some(function(r){return r.type==='out';});
+          if(hi&&ho) present++; else if(hi) half++;
+          else if(dd<new Date().getDate()||month<new Date().toISOString().slice(0,7)) absent++;
+        }
+      }
+      var monthSal=dim>0?Math.round(fs*(present+half*0.5)/dim):0;
+      var moE=allE.filter(function(e){var p=(e.date||'').split('/');return String(e.barberId)===String(b.id)&&parseInt(p[1])===mo&&parseInt(p[2])===yr;});
+      var moSales=moE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+      var roleColor=isBarber?'var(--accent)':'var(--blue)';
+      var roleLabel=isBarber?'Hairstylist':'Manager';
+      return '<div style="background:var(--surface);border-radius:var(--r);padding:12px;border:1px solid var(--border)">'+
+        '<div style="font-weight:700;font-size:13px;color:var(--white)">'+b.name+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+b.phone+'</div>'+
+        '<div style="font-size:10px;background:rgba(0,196,140,.1);color:'+roleColor+';border:1px solid rgba(0,196,140,.2);display:inline-block;padding:2px 8px;border-radius:20px;margin-top:4px;font-weight:700">'+roleLabel+'</div>'+
+        (fs?'<div style="font-size:10px;color:var(--muted);margin-top:4px">Fixed: '+fmtINR(fs)+' · Food: '+fmtINR(fm)+'</div>':'')+
+        '<div style="font-size:11px;color:var(--muted);margin-top:3px">Salary: <b style="color:var(--accent)">'+fmtINR(monthSal)+'</b> ('+present+'F+'+half+'H/'+dim+'d)</div>'+
+        (isBarber?'<div style="font-size:11px;color:var(--muted);margin-top:2px">Sales: <b style="color:var(--blue)">'+fmtINR(moSales)+'</b></div>':'')+
+        '<div style="display:flex;gap:6px;margin-top:8px">'+
+          '<button onclick="openAdminSalary(\''+b.id+'\',\''+b.name+'\')" style="flex:1;padding:6px;background:rgba(0,196,140,.1);border:1px solid rgba(0,196,140,.3);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">💰 Salary</button>'+
+          '<button onclick="openAdminAtt(\''+b.id+'\',\''+b.name+'\')" style="flex:1;padding:6px;background:rgba(232,166,66,.1);border:1px solid rgba(232,166,66,.3);color:var(--warn);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF)">📅 Attend</button>'+
+        '</div>'+
+      '</div>';
+    }).join('')+'</div>';
+  }).catch(function(e){
+    if(el) el.innerHTML='<div style="color:var(--danger);font-size:13px;padding:20px;text-align:center">Error: '+e+'</div>';
+  });
+}
+
+// ── Admin Salary Modal ──
+function openAdminSalary(id, name){
+  _adminSalStaffId=id;
+  document.getElementById('adm-sal-title').textContent=name+' — Salary';
+  document.getElementById('adm-sal-month').value=document.getElementById('ss-month').value||new Date().toISOString().slice(0,7);
+  renderAdminSalary();
+  openModal('adminSalModal');
+}
+function renderAdminSalary(){
+  var mo=document.getElementById('adm-sal-month').value||new Date().toISOString().slice(0,7);
+  var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
+  var staff=LS.get('staff')||[];
+  var b=staff.find(function(u){return u.id===_adminSalStaffId;})||{};
+  var fs=Number(b.fixedSalary||0),fm=Number(b.foodMoney||0),cm=Number(b.cleaningMoney||0);
+  var dim=new Date(yr,m,0).getDate();
+  var savedAtt=LS.get('att_'+_adminSalStaffId+'_'+mo)||null;
+  var present=0,half=0;
+  if(savedAtt&&(savedAtt.present||savedAtt.half||savedAtt.absent)){
+    present=Number(savedAtt.present||0); half=Number(savedAtt.half||0);
+  } else {
+    var attLog=LS.get('attendance')||[];
+    for(var dd=1;dd<=dim;dd++){
+      var ds=dd+'/'+m+'/'+yr;
+      var recs=attLog.filter(function(r){return r.date===ds&&String(r.barberId||r.barber_id)===String(_adminSalStaffId);});
+      if(recs.some(function(r){return r.type==='in';})&&recs.some(function(r){return r.type==='out';})) present++;
+      else if(recs.some(function(r){return r.type==='in';})) half++;
+    }
+  }
+  var monthSal=dim>0?Math.round(fs*(present+half*0.5)/dim):0;
+  var moE=filterByMonth((LS.get('entries')||[]).filter(function(e){return String(e.barberId)===String(_adminSalStaffId);}),mo);
+  var moSales=moE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+  var moPhTips=moE.reduce(function(a,e){return a+Number(e.phTip||0);},0);
+  var incentives=Math.max(0,Math.round((moSales-fs)*0.10));
+  var allAdv=(LS.get('advances')||[]).filter(function(r){if(String(r.barberId)!==String(_adminSalStaffId))return false;var p=(r.date||'').split('/');return parseInt(p[1])===m&&parseInt(p[2])===yr;});
+  var cashAdv=allAdv.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var ppAdv=allAdv.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var allDed=(LS.get('deductions')||[]).filter(function(r){return String(r.staff_id||r.staffId||'')===String(_adminSalStaffId)&&r.month===mo;});
+  var otAmt=Number((allDed.find(function(r){return r.desc==='__OT__';})||{}).amount||0);
+  var totalDed=allDed.filter(function(r){return r.desc!=='__OT__';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var net=monthSal+fm+cm+incentives+moPhTips+otAmt-cashAdv-ppAdv-totalDed;
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+  function fR(n){return(n<0?'−₹':'₹')+Math.abs(Math.round(n)).toLocaleString('en-IN');}
+  function mkR(lbl,amt,t){return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--muted)">'+lbl+'</span><span style="color:'+(t==='add'?'var(--green)':'var(--danger)')+';font-weight:700">'+(t==='ded'?'- ':'')+fR(amt)+'</span></div>';}
+  document.getElementById('adm-sal-breakdown').innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+mName+' · Sales: '+fmtINR(moSales)+'</div>'+
+    '<div style="background:rgba(0,196,140,.07);border-radius:6px;padding:7px 10px;margin-bottom:5px"><span style="font-size:11px;color:var(--muted)">Fixed Salary</span><span style="float:right;font-size:12px;color:var(--muted)">'+fR(fs)+'</span></div>'+
+    '<div style="background:rgba(0,196,140,.12);border-radius:6px;padding:7px 10px;margin-bottom:5px;border-left:3px solid var(--accent)"><span style="font-size:11px;font-weight:800;color:var(--accent)">Month Salary <span style="font-size:9px;color:var(--muted)">('+present+' full+'+half+' half/'+dim+'d)</span></span><span style="float:right;font-size:15px;font-weight:800;color:var(--accent)">'+fR(monthSal)+'</span></div>'+
+    mkR('Food Money',fm,'add')+mkR('Cleaning Money',cm,'add')+mkR('Incentives',incentives,'add')+mkR('PhonePe Tips',moPhTips,'add')+
+    (otAmt>0?mkR('Overtime (OT)',otAmt,'add'):'')+
+    mkR('Advances - Cash',cashAdv,'ded')+mkR('Advances - PhonePe',ppAdv,'ded')+
+    (totalDed>0?mkR('Deductions',totalDed,'ded'):'')+
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:800"><span style="color:var(--accent)">Net Salary</span><span style="color:var(--accent);font-size:18px;font-family:var(--HF)">'+fR(net)+'</span></div>';
+}
+
+// ── Admin Attendance Modal ──
+var _adminAttStaffId=null;
+function openAdminAtt(id, name){
+  _adminAttStaffId=id;
+  document.getElementById('adm-att-title').textContent=name+' — Attendance';
+  document.getElementById('adm-att-month').value=document.getElementById('ss-month').value||new Date().toISOString().slice(0,7);
+  renderAdminAtt();
+  openModal('adminAttModal');
+}
+function renderAdminAtt(){
+  var mo=document.getElementById('adm-att-month').value||new Date().toISOString().slice(0,7);
+  var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
+  var days=new Date(yr,m,0).getDate(),log=LS.get('attendance')||[];
+  var now=new Date(),curMo=now.toISOString().slice(0,7),todayD=(mo===curMo?now.getDate():0);
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+  var firstDow=new Date(yr,m-1,1).getDay(),present=0,half=0,absent=0;
+  var hdr='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px">'+
+    ['S','M','T','W','T','F','S'].map(function(d){return '<div style="text-align:center;font-size:8px;font-weight:800;color:var(--muted)">'+d+'</div>';}).join('')+'</div>';
+  var cells='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+  for(var bi=0;bi<firstDow;bi++) cells+='<div style="aspect-ratio:1;min-height:26px"></div>';
+  for(var d=1;d<=days;d++){
+    var ds=d+'/'+m+'/'+yr;
+    var recs=log.filter(function(r){return r.date===ds&&String(r.barberId||r.barber_id)===String(_adminAttStaffId);});
+    var hasIn=recs.some(function(r){return r.type==='in';}),hasOut=recs.some(function(r){return r.type==='out';});
+    var inR=recs.find(function(r){return r.type==='in';}),outR=recs.find(function(r){return r.type==='out';});
+    var bg,col;
+    if(hasIn&&hasOut){bg='rgba(0,196,140,.25)';col='var(--accent)';present++;}
+    else if(hasIn){bg='rgba(232,166,66,.2)';col='var(--warn)';half++;}
+    else if(d<todayD||mo<curMo){bg='rgba(224,107,91,.12)';col='var(--danger)';absent++;}
+    else{bg='var(--surface2)';col='var(--muted)';}
+    var border=d===todayD?'outline:1.5px solid var(--accent);outline-offset:-1px;':'';
+    var tip=ds+(hasIn?' In:'+(inR?inR.time:''):'')+(hasOut?' Out:'+(outR?outR.time:''):'');
+    cells+='<div title="'+tip+'" style="aspect-ratio:1;min-height:26px;border-radius:4px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;'+border+'">'+d+'</div>';
+  }
+  cells+='</div>';
+  document.getElementById('adm-att-cal').innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">'+mName+'</div>'+hdr+cells+
+    '<div style="display:flex;gap:10px;margin-top:8px;font-size:10px">'+
+    '<span style="color:var(--accent)">&#9632; Present ('+present+')</span>'+
+    '<span style="color:var(--warn)">&#9632; Half ('+half+')</span>'+
+    '<span style="color:var(--danger)">&#9632; Absent ('+absent+')</span></div>';
+}
+
 </script>
 </body>
 </html>

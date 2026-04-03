@@ -868,57 +868,45 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div class="pnl-section">
     <div class="pnl-sec-title" style="background:rgba(255,107,91,.1);border-color:rgba(255,107,91,.25);color:var(--danger,#FF6B5B)">OPEX (Operating Expenses)</div>
 
-    <!-- a. Salaries -->
+    <!-- AUTO from Supabase -->
     <div class="pnl-row pnl-auto"><span>Salaries (all staff)</span><span id="pnl-salaries" class="pnl-val-neg">₹0</span></div>
     <div style="font-size:10px;color:var(--muted);padding:0 14px 6px;font-style:italic" id="pnl-salary-detail"></div>
-    <!-- b. Rent -->
+
+    <!-- MANUAL inputs by manager -->
     <div class="pnl-row"><span>Rent</span>
-      <span id="pnl-rent-val" style="font-weight:700;color:var(--danger)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-rent" value="0">
+      <span id="pnl-rent-val" style="font-weight:700;color:var(--accent)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-rent" value="0">
     </div>
-    <!-- c. Staff Rent -->
     <div class="pnl-row"><span>Staff Rent</span>
-      <span id="pnl-staff-rent-val" style="font-weight:700;color:var(--danger)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-staff-rent" value="0">
+      <span id="pnl-staff-rent-val" style="font-weight:700;color:var(--accent)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-staff-rent" value="0">
     </div>
-    <!-- d. EB Store -->
+    <div class="pnl-row pnl-auto"><span>Cosmetics <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
+      <span id="pnl-cosmetics-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-cosmetics" value="0">
+    </div>
     <div class="pnl-row pnl-auto"><span>EB Store (Electricity) <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
       <span id="pnl-eb-store-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-eb-store" value="0">
     </div>
-    <!-- e. EB Staff Room -->
     <div class="pnl-row pnl-auto"><span>EB Staff Room <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
       <span id="pnl-eb-staff-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-eb-staff" value="0">
     </div>
-    <!-- f. Maid -->
     <div class="pnl-row pnl-auto"><span>Maid <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
       <span id="pnl-maid-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-maid" value="0">
     </div>
-    <!-- g. Food Money -->
-    <div class="pnl-row pnl-auto"><span>Food Money (from staff profile)</span><span id="pnl-food" class="pnl-val-neg">₹0</span></div>
-    <!-- h. Extra Sunday Food -->
-    <div class="pnl-row"><span>Extra Sunday Food</span>
-      <span id="pnl-extra-food-val" style="font-weight:700;color:var(--danger)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-extra-food" value="0">
+    <div class="pnl-row pnl-auto"><span>Marketing Expense <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
+      <span id="pnl-marketing-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-ads" value="0">
     </div>
-    <!-- i. WiFi -->
+    <div class="pnl-row pnl-auto"><span>Food Money (from staff profile)</span><span id="pnl-food" class="pnl-val-neg">₹0</span></div>
+    <div class="pnl-row"><span>Extra Sunday Food</span>
+      <span id="pnl-extra-food-val" style="font-weight:700;color:var(--accent)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-extra-food" value="0">
+    </div>
+    <div class="pnl-row pnl-auto"><span>Actual Incentives (paid out)</span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
     <div class="pnl-row pnl-auto"><span>WiFi <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
       <span id="pnl-wifi-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-wifi" value="0">
     </div>
-    <!-- j. Expenses -->
     <div class="pnl-row pnl-auto">
-      <span>Expenses (daily expenses this month)</span>
+      <span>Expenses (all daily expenses this month)</span>
       <span id="pnl-misc-val" style="font-weight:700;color:var(--danger)">₹0</span>
       <input type="hidden" id="pnl-misc" value="0">
     </div>
-    <!-- k. Actual Incentives -->
-    <div class="pnl-row pnl-auto"><span>Actual Incentives (paid out)</span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
-    <!-- l. Franchise Royalty — hidden for company-managed outlets -->
-    <div class="pnl-row pnl-auto" id="pnl-royalty-row" style="display:none">
-      <span>Franchise Royalty <span style="font-size:10px;color:var(--muted)">(fixed ₹5,000/month)</span></span>
-      <span id="pnl-royalty-val" style="font-weight:700;color:var(--danger)">₹5,000</span>
-    </div>
-    <!-- Hidden inputs kept for JS compatibility (Salon tab / savePNLInputs) -->
-    <input type="hidden" id="pnl-cosmetics" value="0">
-    <input type="hidden" id="pnl-ads" value="0">
-    <span id="pnl-cosmetics-val" style="display:none"></span>
-    <span id="pnl-marketing-val" style="display:none"></span>
 
     <!-- TOTALS -->
     <div class="pnl-row pnl-total-row" style="margin-top:4px">
@@ -1560,25 +1548,17 @@ function renderMgrCounters(){
 }
 
 function renderMgrCashCounter(){
-  // ── All figures scoped to CURRENT MONTH only ──
-  var _now=new Date();
-  var _curMo=_now.getMonth()+1, _curYr=_now.getFullYear();
-  function isCurrentMonth(dateStr){
-    var p=(dateStr||'').split('/');
-    return parseInt(p[1])===_curMo && parseInt(p[2])===_curYr;
-  }
-  // Current month cash from billing entries for this salon
+  // Today's cash from billing entries for this salon
   var allE=getEntries().filter(function(e){return String(e.salonId)===String(mySalonId);});
-  var moE=allE.filter(function(e){return isCurrentMonth(e.date);});
-  var todayCash=moE.filter(function(e){return e.date===today();}).reduce(function(a,e){return a+Number(e.cash||0);},0);
-  var prevDailyCash=moE.filter(function(e){return e.date!==today();}).reduce(function(a,e){return a+Number(e.cash||0);},0);
-  // Previous month cash log (manual carry-forward — no month filter needed)
+  var todayCash=allE.filter(function(e){return e.date===today();}).reduce(function(a,e){return a+Number(e.cash||0);},0);
+  var prevDailyCash=allE.filter(function(e){return e.date!==today();}).reduce(function(a,e){return a+Number(e.cash||0);},0);
+  // Previous month cash log
   var prevCashLog=LS.get('mgrPrevCashLog_'+ME.id)||[];
   var prevMonthCash=prevCashLog.reduce(function(a,r){return a+Number(r.amount||0);},0);
   // Render prev cash log
   var pcEl=document.getElementById('mgr-prev-cash-log');
   if(pcEl){
-    if(!prevCashLog.length){pcEl.innerHTML='<span style="color:var(--muted2);font-size:11px;font-style:italic">No previous cash entries</span>';}
+    if(!prevCashLog.length){pcEl.innerHTML='<span style="font-size:11px;color:var(--muted2);font-style:italic">No previous cash entries</span>';}
     else{
       pcEl.innerHTML=prevCashLog.map(function(r){
         return '<div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.06)">'+
@@ -1589,46 +1569,47 @@ function renderMgrCashCounter(){
       }).join('');
     }
   }
-  // Manager expenses — current month only
-  var stylistIds=(LS.get('staff')||[]).filter(function(u){return String(u.salonId)===String(mySalonId)&&u.role==='barber';}).map(function(u){return u.id;});
-  var allMgrExp=(LS.get('mgrExpenses')||[]).filter(function(e){return String(e.salonId)===String(mySalonId)&&isCurrentMonth(e.date||'');});
+  // All manager expenses (all time for this manager/salon)
+  var allMgrExp=(LS.get('mgrExpenses')||[]).filter(function(e){return String(e.salonId)===String(mySalonId);});
   var totalMgrExp=allMgrExp.reduce(function(a,e){return a+Number(e.amount||0);},0);
-  // Barber expenses — current month only
-  var barberExp=(LS.get('expenses')||[]).filter(function(e){return stylistIds.indexOf(String(e.barberId))>-1&&isCurrentMonth(e.date||'');});
+  // Barber expenses for this salon
+  var stylistIds=(LS.get('staff')||[]).filter(function(u){return String(u.salonId)===String(mySalonId)&&u.role==='barber';}).map(function(u){return u.id;});
+  var barberExp=(LS.get('expenses')||[]).filter(function(e){return stylistIds.indexOf(String(e.barberId))>-1;});
   var totalBarberExp=barberExp.reduce(function(a,e){return a+Number(e.amount||0);},0);
   var totalExp=totalMgrExp+totalBarberExp;
-  // Handovers — current month only
-  var handovers=(LS.get('mgrHandover')||[]).filter(function(r){return String(r.managerId)===String(ME.id)&&isCurrentMonth(r.date||'');});
+  // Handovers
+  var handovers=(LS.get('mgrHandover')||[]).filter(function(r){return String(r.managerId)===String(ME.id);});
   var totalHandover=handovers.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  // Cash advances — current month only
+  // Cash advances for barbers (cash mode)
   var cashAdv=(LS.get('advances')||[]).filter(function(r){
-    return stylistIds.indexOf(String(r.barberId))>-1 && (!r.mode||r.mode==='cash') && isCurrentMonth(r.date||'');
+    return stylistIds.indexOf(String(r.barberId))>-1 && (!r.mode||r.mode==='cash');
   }).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  // Balance = PrevMonthCarryForward + ThisMonthCash − CashAdv − Expenses − Handovers
+  // Balance = PrevMonth + TodayCash + PrevDailyCash − CashAdv − Expenses − Handovers
   var balance=prevMonthCash+todayCash+prevDailyCash-cashAdv-totalExp-totalHandover;
   var cTotal=document.getElementById('mgr-cash-counter-total');
   if(cTotal) cTotal.textContent=fmtINR(balance);
   var cLog=document.getElementById('mgr-cash-counter-log');
   if(cLog) cLog.innerHTML=
-    (prevMonthCash>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Prev Month Carry-Forward</span><span style="color:var(--blue)">+'+fmtINR(prevMonthCash)+'</span></div>':'')+
+    (prevMonthCash>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Prev Month Cash</span><span style="color:var(--blue)">+'+fmtINR(prevMonthCash)+'</span></div>':'')+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash Sales</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">This Month (other days)</span><span style="color:var(--green)">+'+fmtINR(prevDailyCash)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (this month)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses (this month)</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over (this month)</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
-  // Handover display — current month only
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Previous Days Cash</span><span style="color:var(--green)">+'+fmtINR(prevDailyCash)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Barbers)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Total Expenses</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
+  // Handover display
   var hTotal=document.getElementById('mgr-handover-total');
   if(hTotal) hTotal.textContent=fmtINR(totalHandover);
   var hLog=document.getElementById('mgr-handover-log');
-  if(hLog) hLog.innerHTML=!handovers.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No handovers this month</span>':
+  if(hLog) hLog.innerHTML=!handovers.length?'<span style="color:var(--muted2);font-size:11px;font-style:italic">No handovers yet</span>':
     handovers.slice().reverse().map(function(r){
       return '<div class="mgr-ci-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
-        '<span style="flex:1;font-size:11px">'+r.time+' '+r.date+(r.handedTo?'<br><span style="color:var(--muted2)">→ '+r.handedTo+'</span>':'')+' </span>'+
+        '<span style="flex:1;font-size:11px">'+r.time+' '+r.date+(r.handedTo?'<br><span style="color:var(--muted2)">→ '+r.handedTo+'</span>':'')+'</span>'+
         '<span style="color:var(--purple);font-weight:700;white-space:nowrap">'+fmtINR(r.amount)+'</span>'+
         '<button onclick="deleteMgrHandover('+r.ts+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 2px">✕</button>'+
       '</div>';
     }).join('');
 }
+
 function deleteMgrExpense(btn){
   var id = btn ? btn.getAttribute('data-id') : arguments[0];
   if(!confirm('Delete this expense entry?'))return;
@@ -1908,7 +1889,7 @@ function syncBillingCustomers(){
     var existing = customers.find(function(c){ return c.phone===phone; });
     if (!existing){
       customers.push({
-        id:'cb'+e.id, phone:phone, name:name,
+        id:'cb'+e.id, phone:phone, name:name, salonId:mySalonId,
         role:'customer', hairType:'', faceShape:'', density:'', growthNotes:''
       });
       changed=true;
@@ -1922,7 +1903,16 @@ function syncBillingCustomers(){
 
 function renderCustomers(){
   syncBillingCustomers();
-  var custs  = LS.get('customers')||[];
+  var custs  = (LS.get('customers')||[]).filter(function(c){
+    // Show customers linked to this salon, or linked via billing entry phone
+    if(c.salonId && String(c.salonId)!==String(mySalonId)) return false;
+    var allE = getEntries().filter(function(e){ return e.salonId===mySalonId; });
+    if(!c.salonId){
+      // Legacy records without salonId: only show if they have a billing entry in this salon
+      return allE.some(function(e){ return e.customerPhone===c.phone; });
+    }
+    return true;
+  });
   var visits = LS.get('visits')||[];
   var allE   = getEntries().filter(function(e){ return e.salonId===mySalonId; });
 
@@ -2422,7 +2412,7 @@ function saveEdit(){
     var customers = LS.get('customers')||[];
     var existing  = customers.find(function(c){ return c.phone===custPhone; });
     if (!existing){
-      customers.push({id:'ce'+editingId,phone:custPhone,name:custName,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''});
+      customers.push({id:'ce'+editingId,phone:custPhone,name:custName,salonId:mySalonId,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''});
       LS.set('customers',customers);
     }
   }
@@ -2946,36 +2936,17 @@ function _doRenderPNL(month){
   });
   var revenue = entries.reduce(function(a,e){ return a+Number(e.phPay||0)+Number(e.cash||0); },0);
 
-  // ── Staff salaries — attendance-prorated monthly salary only (no cleaning) ──
+  // ── Staff salaries + food money ──
   var myStaff = (LS.get('staff')||[]).filter(function(u){ return u.salonId===mySalonId; });
   var totalSalary = 0, totalFood = 0;
   var salaryDetail = [];
-  var _pnlDaysInMonth = new Date(yr, mo, 0).getDate();
-  var _pnlAttLog = LS.get('attendance')||[];
   myStaff.forEach(function(u){
     var fs = Number(u.fixedSalary||0);
     var fm = Number(u.foodMoney||0);
-    // Attendance override takes priority; else auto-compute from clock records
-    var _savedAtt = LS.get('att_'+u.id+'_'+month)||null;
-    var _present=0, _half=0;
-    if(_savedAtt && (_savedAtt.present||_savedAtt.half||_savedAtt.absent)){
-      _present = Number(_savedAtt.present||0);
-      _half    = Number(_savedAtt.half||0);
-    } else {
-      for(var _di=1; _di<=_pnlDaysInMonth; _di++){
-        var _ds = _di+'/'+mo+'/'+yr;
-        var _recs = _pnlAttLog.filter(function(r){ return r.date===_ds && String(r.barberId)===String(u.id); });
-        var _hasIn  = _recs.some(function(r){ return r.type==='in'; });
-        var _hasOut = _recs.some(function(r){ return r.type==='out'; });
-        if(_hasIn && _hasOut) _present++;
-        else if(_hasIn) _half++;
-      }
-    }
-    var _effDays  = _present + _half * 0.5;
-    var _monthSal = _pnlDaysInMonth > 0 ? Math.round(fs * _effDays / _pnlDaysInMonth) : 0;
-    totalSalary += _monthSal;
+    var cm = Number(u.cleaningMoney||0);
+    totalSalary += fs + cm;
     totalFood   += fm;
-    if(fs) salaryDetail.push(u.name+': ₹'+_monthSal+' ('+_present+' full+'+_half+' half/'+_pnlDaysInMonth+'d)');
+    if(fs||fm||cm) salaryDetail.push(u.name+': ₹'+fs+' salary, ₹'+fm+' food, ₹'+cm+' clean');
   });
 
   // ── Actual Incentives paid — sum from salary breakdown this month ──
@@ -3081,20 +3052,13 @@ function _doRenderPNL(month){
   var mMiscEl=document.getElementById('pnl-misc'); if(mMiscEl) mMiscEl.value=misc;
   var mMiscVEl=document.getElementById('pnl-misc-val'); if(mMiscVEl) mMiscVEl.textContent=fINR(misc);
 
-  // Royalty: fixed ₹5,000/month for non-company-managed outlets
-  var _pnlSalon = (LS.get('salons')||[]).find(function(s){return s.id===mySalonId;})||{};
-  var _isCompany = _pnlSalon.companyManaged==1||_pnlSalon.companyManaged==='1'||_pnlSalon.companyManaged===true;
-  var royalty = _isCompany ? 0 : 5000;
+  var actualOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
+                   ebStaff + maid + ads + totalFood + extraFood +
+                   totalActualIncentives + wifi + misc;
 
-  // Order matches display: Salaries, Rent, StaffRent, EBStore, EBStaff, Maid,
-  // Food, ExtraFood, WiFi, Expenses, Incentives, Royalty
-  var actualOpex = totalSalary + rent + staffRent + ebStore + ebStaff + maid +
-                   totalFood + extraFood + wifi + misc +
-                   totalActualIncentives + royalty;
-
-  var projOpex   = totalSalary + rent + staffRent + ebStore + ebStaff + maid +
-                   totalFood + extraFood + wifi + misc +
-                   totalProjIncentives + royalty;
+  var projOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
+                 ebStaff + maid + ads + totalFood + extraFood +
+                 totalProjIncentives + wifi + misc;
 
   var profit     = revenue - actualOpex;
   var projProfit = projRev - projOpex;
@@ -3114,11 +3078,6 @@ function _doRenderPNL(month){
   document.getElementById('pnl-total-opex').textContent  = fINR(actualOpex);
   document.getElementById('pnl-proj-incentives').textContent = fINR(totalProjIncentives);
   document.getElementById('pnl-proj-opex').textContent   = fINR(projOpex);
-  // Royalty row — visible only for non-company-managed outlets
-  var _royRow = document.getElementById('pnl-royalty-row');
-  if(_royRow){ _royRow.style.display = _isCompany ? 'none' : 'flex'; }
-  var _royVal = document.getElementById('pnl-royalty-val');
-  if(_royVal){ _royVal.textContent = fINR(royalty); }
 
   var profEl = document.getElementById('pnl-profit');
   profEl.textContent = fINR(profit);
@@ -3176,18 +3135,19 @@ function exportPNL(){
     ['Projected Revenue', document.getElementById('pnl-proj-rev').value||'0'],
     [''],
     ['OPEX',''],
-    ['Salaries',          document.getElementById('pnl-salaries').textContent],
-    ['Rent',              document.getElementById('pnl-rent').value||'0'],
-    ['Staff Rent',        document.getElementById('pnl-staff-rent').value||'0'],
-    ['EB Store',          document.getElementById('pnl-eb-store').value||'0'],
-    ['EB Staff Room',     document.getElementById('pnl-eb-staff').value||'0'],
-    ['Maid',              document.getElementById('pnl-maid').value||'0'],
-    ['Food Money',        document.getElementById('pnl-food').textContent],
+    ['Salaries', document.getElementById('pnl-salaries').textContent],
+    ['Rent', document.getElementById('pnl-rent').value||'0'],
+    ['Staff Rent', document.getElementById('pnl-staff-rent').value||'0'],
+    ['Cosmetics', document.getElementById('pnl-cosmetics').value||'0'],
+    ['EB Store', document.getElementById('pnl-eb-store').value||'0'],
+    ['EB Staff Room', document.getElementById('pnl-eb-staff').value||'0'],
+    ['Maid', document.getElementById('pnl-maid').value||'0'],
+    ['Ads', document.getElementById('pnl-ads').value||'0'],
+    ['Food Money', document.getElementById('pnl-food').textContent],
     ['Extra Sunday Food', document.getElementById('pnl-extra-food').value||'0'],
-    ['WiFi',              document.getElementById('pnl-wifi').value||'0'],
-    ['Expenses',          document.getElementById('pnl-misc').value||'0'],
     ['Actual Incentives', document.getElementById('pnl-incentives').textContent],
-    ['Franchise Royalty', (function(){ var r=document.getElementById('pnl-royalty-row'); return (r&&r.style.display!=='none') ? (document.getElementById('pnl-royalty-val')||{}).textContent||'0' : '0'; })()],
+    ['WiFi', document.getElementById('pnl-wifi').value||'0'],
+    ['Misc', document.getElementById('pnl-misc').value||'0'],
     ['Actual Total Opex', document.getElementById('pnl-total-opex').textContent],
     ['Projected Total Opex', document.getElementById('pnl-proj-opex').textContent],
     [''],

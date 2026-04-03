@@ -2024,7 +2024,7 @@ function openEditCustomer(id){
   document.getElementById('ec-face').value  = c.faceShape  || '';
   document.getElementById('ec-notes').value = c.growthNotes|| '';
   // Load or generate OTP for customer login
-  var otp = c.loginPin || String(Math.floor(1000+Math.random()*9000));
+  var otp = c.loginPin || String(Math.floor(100000+Math.random()*900000));
   if(!c.loginPin){
     customers.find(function(x){return x.id===id;}).loginPin=otp;
     LS.set('customers',customers);
@@ -2036,7 +2036,7 @@ function openEditCustomer(id){
 function genCustOTP(){
   var customers = LS.get('customers')||[];
   var c = customers.find(function(x){return x.id===editingCustId;});
-  var otp = String(Math.floor(1000+Math.random()*9000));
+  var otp = String(Math.floor(100000+Math.random()*900000));
   document.getElementById('ec-otp-val').textContent = otp;
   if(c){ c.loginPin = otp; LS.set('customers',customers); }
 }
@@ -2395,7 +2395,7 @@ function addBarber(){
   if(!name||ph.length<10){ toast('Enter full name and 10-digit phone'); return; }
   var staff=LS.get('staff')||[];
   if(staff.find(function(u){return u.phone===ph;})){ toast('❌ Phone already registered'); return; }
-  lastGeneratedOTP = String(Math.floor(1000+Math.random()*9000));
+  lastGeneratedOTP = String(Math.floor(100000+Math.random()*900000));
   var newStylist={id:'u'+Date.now(),name:name,phone:ph,role:'barber',salonId:mySalonId,
     loginPin:lastGeneratedOTP,fixedSalary:salary,foodMoney:food,cleaningMoney:clean};
   staff.push(newStylist);

@@ -42,7 +42,7 @@ input::placeholder{color:#AAAAAA}
     <div><span class="role-title">Franchise Owner</span><span class="role-sub">View your outlet's performance</span></div>
   </div>
   <h2>Franchise Portal</h2>
-  <p class="sub">Enter your phone number and 4-digit PIN</p>
+  <p class="sub">Enter your phone number and 6-digit PIN</p>
   <div id="errMsg" class="err">Wrong phone or PIN. Please try again.</div>
   <div class="fg">
     <label>Mobile Number</label>
@@ -50,7 +50,7 @@ input::placeholder{color:#AAAAAA}
   </div>
   <div class="fg">
     <label>PIN</label>
-    <input type="password" id="pinInput" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
+    <input type="password" id="pinInput" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
   </div>
   
   <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Login →</button>
@@ -118,7 +118,7 @@ function doLogin(){
   var pin   = document.getElementById('pinInput').value.trim();
   var errEl = document.getElementById('errMsg');
   if(phone.length < 8){ errEl.textContent='Enter a valid phone number'; errEl.style.display='block'; return; }
-  if(pin.length < 4){   errEl.textContent='Enter your 4-digit PIN';    errEl.style.display='block'; return; }
+  if(pin.length < 6){   errEl.textContent='Enter your 6-digit PIN';    errEl.style.display='block'; return; }
   errEl.style.display = 'none';
   var staffList = JSON.parse(localStorage.getItem('bb_staff') || '[]');
   var sm = staffList.find(function(u){ return String(u.phone)===phone && u.role==='franchise'; });

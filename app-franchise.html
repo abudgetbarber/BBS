@@ -558,9 +558,9 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div style="background:rgba(255,209,0,.08);border:1.5px solid rgba(255,209,0,.3);border-radius:var(--rs);padding:12px;margin-bottom:11px">
       <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🔐 Login PIN</div>
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="es-pin" maxlength="4" inputmode="numeric" placeholder="4-digit PIN"
+        <input type="text" id="es-pin" maxlength="6" inputmode="numeric" placeholder="6-digit PIN"
           style="flex:1;padding:9px 12px;background:var(--bg);border:1.5px solid rgba(0,196,140,.3);border-radius:var(--rs);color:var(--accent);font-family:monospace;font-size:20px;font-weight:800;letter-spacing:4px;outline:none"
-          oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
+          oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)">
         <button onclick="regenEditPin()" style="padding:8px 12px;background:rgba(0,196,140,.12);border:1.5px solid rgba(0,196,140,.3);color:var(--accent);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">🔄 New PIN</button>
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:6px">Share this PIN with the staff member to log in.</div>
@@ -1246,12 +1246,12 @@ var lastStaffPIN = '';
 var editingStaffId = null;
 
 function regenAddPin(){
-  var pin = String(Math.floor(1000+Math.random()*9000));
+  var pin = String(Math.floor(100000+Math.random()*900000));
   document.getElementById('as-pin-val').textContent = pin;
   lastStaffPIN = pin;
 }
 function regenEditPin(){
-  var pin = String(Math.floor(1000+Math.random()*9000));
+  var pin = String(Math.floor(100000+Math.random()*900000));
   document.getElementById('es-pin').value = pin;
 }
 
@@ -1299,7 +1299,7 @@ function addStaff(){
   if(!name||phone.length<10){toast('Enter full name and 10-digit phone');return;}
   var staff=LS.get('staff')||[];
   if(staff.find(function(u){return u.phone===phone;})){toast('❌ Phone already registered');return;}
-  lastStaffPIN=String(Math.floor(1000+Math.random()*9000));
+  lastStaffPIN=String(Math.floor(100000+Math.random()*900000));
   staff.push({id:'u'+Date.now(),name:name,phone:phone,role:role,salonId:mySalonId,
     loginPin:lastStaffPIN,fixedSalary:salary,foodMoney:food,cleaningMoney:clean});
   LS.set('staff',staff);
@@ -1346,7 +1346,7 @@ function saveStaffEdit(){
   var newPhone=document.getElementById('es-phone').value.trim();
   if(newPhone.length<10){toast('Enter valid 10-digit phone');return;}
   var newPin=document.getElementById('es-pin').value.trim();
-  if(newPin.length>0&&newPin.length<4){toast('PIN must be exactly 4 digits');return;}
+  if(newPin.length>0&&newPin.length<6){toast('PIN must be exactly 6 digits');return;}
   staff[idx].name         =document.getElementById('es-name').value.trim()||staff[idx].name;
   staff[idx].phone        =newPhone;
   staff[idx].role         =document.getElementById('es-role').value;

@@ -610,86 +610,79 @@ function _supaGet(table){
     var customers = res[0], entries = res[1], styleCards = res[2],
         visits = res[3], staff = res[4], salons = res[5];
     function toStr(r, keys){ keys.forEach(function(k){ if(r[k]!=null) r[k]=String(r[k]); }); return r; }
-    if(customers.length) LS.set('customers', customers.map(function(r){ return toStr(r,['id','phone','loginPin']); }));
-    if(entries.length)   LS.set('entries',   entries.map(function(r){ return toStr(r,['id','barberId','salonId']); }));
-    if(styleCards.length)LS.set('styleCards',styleCards.map(function(r){ return toStr(r,['id','customerId','barberId','salonId']); }));
-    if(visits.length)    LS.set('visits',    visits.map(function(r){ return toStr(r,['id','customerId','barberId','salonId']); }));
-    if(staff.length)     LS.set('staff',     staff.map(function(r){ return toStr(r,['id','phone','salonId']); }));
-    if(salons.length)    LS.set('salons',    salons.map(function(r){ return toStr(r,['id']); }));
-    // Re-find ME with fresh data
+    // Always overwrite localStorage with fresh Supabase data
+    LS.set('customers', customers.map(function(r){ return toStr(r,['id','phone','loginPin']); }));
+    LS.set('entries',   entries.map(function(r){ return toStr(r,['id','barberId','salonId']); }));
+    LS.set('styleCards',styleCards.map(function(r){ return toStr(r,['id','customerId','barberId','salonId']); }));
+    LS.set('visits',    visits.map(function(r){ return toStr(r,['id','customerId','barberId','salonId']); }));
+    LS.set('staff',     staff.map(function(r){ return toStr(r,['id','phone','salonId']); }));
+    LS.set('salons',    salons.map(function(r){ return toStr(r,['id']); }));
+    // Re-find ME with fresh Supabase data
     var custs = LS.get('customers') || [];
-    ME = custs.find(function(c){ return c.phone === SESSION_PHONE; }) || ME;
+    var freshMe = custs.find(function(c){ return c.phone === SESSION_PHONE; });
+    if(freshMe){
+      ME = freshMe;
+      // Update all DOM elements with fresh name/profile
+      applyMeToDOM();
+    }
     renderAll();
   }).catch(function(err){
     console.warn('[BB] Customer bootstrap failed, using cached data:', err);
+    renderAll();
   });
 })();
 
-// ── SEED DEMO DATA ──
-function seedDemo() {
-  if (LS.get('seeded')) return;
-  var salons = [{id:'s1',name:'Budget Barber – Koramangala',location:'Koramangala, Bengaluru',mgrPhone:'9100000001'},{id:'s2',name:'Budget Barber – Indiranagar',location:'Indiranagar, Bengaluru',mgrPhone:'9100000002'}];
-  var staff  = [
-    {id:'u1',name:'James Okafor', phone:'9876543211',role:'barber', salonId:'s1'},
-    {id:'u2',name:'Arjun Singh',  phone:'9876543222',role:'barber', salonId:'s1'},
-    {id:'u3',name:'Tony B.',      phone:'9876543233',role:'barber', salonId:'s2'},
-    {id:'u4',name:'Ravi Manager', phone:'9000000001',role:'manager',salonId:'s1'},
-    {id:'u6',name:'Admin',        phone:'0000000000',role:'admin',  salonId:null}
-  ];
-  var customers = [{id:'c1',phone:SESSION_PHONE,name:'Marcus Williams',role:'customer',hairType:'Wavy',faceShape:'Oval',density:'Thick',growthNotes:'Cowlick at crown'}];
-  var CUSTID = 'c1';
-  var cards = [
-    {id:1,customerId:'c1',barberId:'u1',salonId:'s1',name:'Classic Fade',cardId:'BB-2841',topLength:'2 inches',texture:'Blunt',fade:'Mid Fade',guard:'#2',neckline:'Natural',beard:'Stubble',product:'Matte Pomade',notes:'Cowlick at crown. Left parting.',zones:{front:'2"',top:'2"',crown:'1.5"',left:'#2',right:'#2',back:'#1.5'},photos:{front:null,side:null,back:null},createdAt:today(),isDefault:true},
-    {id:2,customerId:'c1',barberId:'u1',salonId:'s1',name:'Textured Crop',cardId:'BB-3302',topLength:'1.5 inches',texture:'Textured',fade:'High Fade',guard:'#1',neckline:'Blocked',beard:'Clean Shave',product:'Clay',notes:'Razor line on sides.',zones:{front:'1.5"',top:'1.5"',crown:'1.5"',left:'Skin',right:'Skin',back:'#0.5'},photos:{front:null,side:null,back:null},createdAt:today(),isDefault:false}
-  ];
-  var SVCS = ['Haircut','Shave','Combo','Color','Trim','Facial'];
-  var entries = []; var visits = []; var eid=1000; var vid=100;
-  var now = new Date();
-  // Generate 3 months of history
-  for (var d=0; d<90; d++) {
-    var date = new Date(now); date.setDate(date.getDate()-d);
-    var dateStr = date.toLocaleDateString('en-IN');
-    // customer visits every ~7 days
-    if (d % 7 === 0) {
-      var barber = staff[d%2]; // alternates between James and Arjun
-      var svc = SVCS[d % SVCS.length];
-      var ph  = d%3===0 ? (Math.floor(Math.random()*3)+1)*100 : 0;
-      var cash= d%3!==0 ? (Math.floor(Math.random()*3)+1)*100 : 0;
-      var total = ph + cash;
-      if (total === 0) { ph=150; total=150; }
-      visits.push({id:vid++,customerId:'c1',barberId:barber.id,barberName:barber.name,salonId:barber.salonId,salonName:'Budget Barber',styleName:d===0?'Classic Fade':'Classic Fade',date:dateStr,note:d===0?'Left parting. Go easy on the crown.':''});
-      entries.push({id:eid++,date:dateStr,time:'11:30',barberId:barber.id,barberName:barber.name,salonId:barber.salonId,customerId:'c1',customerPhone:SESSION_PHONE,services:svc,phPay:ph,cash:cash,tip:0,total:ph+cash,customerName:'Marcus Williams'});
-    }
-  }
-  LS.set('salons',salons);LS.set('staff',staff);LS.set('entries',entries);
-  LS.set('customers',customers);LS.set('styleCards',cards);LS.set('visits',visits);
-  // removed LS.set sheetUrl ('');// removed LS.set sheetName ('Sheet1');LS.set('cashIn',[]);LS.set('expenses',[]);LS.set('advances',[]);LS.set('attendance',[]);LS.set('seeded',true);
+// ── Apply ME to DOM ──
+function applyMeToDOM(){
+  if(!ME) return;
+  var parts = ME.name.split(' ');
+  var html = parts[0];
+  for(var i=1;i<parts.length;i++) html += ' <span>'+parts[i]+'</span>';
+  var el;
+  el=document.getElementById('heroName'); if(el) el.innerHTML=html;
+  el=document.getElementById('tbName');   if(el) el.textContent=parts[0];
+  el=document.getElementById('profName'); if(el) el.textContent=ME.name;
+  el=document.getElementById('profPhone');if(el) el.textContent='+91 '+ME.phone;
+  el=document.getElementById('pHair');    if(el) el.textContent=ME.hairType    ||'—';
+  el=document.getElementById('pFace');    if(el) el.textContent=ME.faceShape   ||'—';
+  el=document.getElementById('pDensity'); if(el) el.textContent=ME.density     ||'—';
+  el=document.getElementById('pNotes');   if(el) el.textContent=ME.growthNotes ||'—';
+  var init=ME.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  el=document.getElementById('ava'); if(el) el.textContent=init;
 }
-seedDemo();
 
-// ── FIND ME ──
+// ── renderAll: refresh current visible tab ──
+function renderAll(){
+  var activePage = document.querySelector('.page.active');
+  if(!activePage) return;
+  var id = activePage.id.replace('pg-','');
+  if(id==='home')    loadHome();
+  if(id==='bills')   loadBills();
+  if(id==='cards')   loadCards();
+  if(id==='history') loadHistory();
+  if(id==='profile') loadProfile();
+}
+
+
+
+// seedDemo() removed — was overwriting real customer data with demo "Marcus Williams" entries
+// Data now comes exclusively from Supabase via bootCustomer()
+
+
+
+// ── FIND ME (from localStorage cache — Supabase will update this shortly) ──
 var ME = null;
 (function() {
   var customers = getCustomers();
   ME = customers.find(function(c){ return c.phone === SESSION_PHONE; });
   if (!ME) {
-    ME = {id:'c'+Date.now(),phone:SESSION_PHONE,name:'Customer '+SESSION_PHONE.slice(-4),role:'customer',hairType:'',faceShape:'',density:'',growthNotes:''};
-    customers.push(ME); LS.set('customers', customers);
+    // Not in cache yet — show placeholder until Supabase loads
+    ME = {id:'',phone:SESSION_PHONE,name:'Loading…',role:'customer',hairType:'',faceShape:'',density:'',growthNotes:''};
   }
-  var parts = ME.name.split(' ');
-  var html = parts[0];
-  for (var i=1;i<parts.length;i++) html += ' <span>'+parts[i]+'</span>';
-  document.getElementById('heroName').innerHTML = html;
-  document.getElementById('tbName').textContent  = parts[0];
-  document.getElementById('profName').textContent = ME.name;
-  document.getElementById('profPhone').textContent = '+91 ' + ME.phone;
-  document.getElementById('pHair').textContent    = ME.hairType    || '—';
-  document.getElementById('pFace').textContent    = ME.faceShape   || '—';
-  document.getElementById('pDensity').textContent = ME.density     || '—';
-  document.getElementById('pNotes').textContent   = ME.growthNotes || '—';
-  var init = ME.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-  document.getElementById('ava').textContent = init;
+  applyMeToDOM();
 })();
+
+
 
 // ── GET MY BILLS ──
 // Entries can be linked by customerId, customerPhone, or matched by visit date+barber

@@ -2947,17 +2947,32 @@ function _doRenderPNL(month){
   });
   var revenue = entries.reduce(function(a,e){ return a+Number(e.phPay||0)+Number(e.cash||0); },0);
 
-  // ── Staff salaries + food money ──
+  // ── Staff salaries — attendance-prorated monthly salary only (no cleaning, no food) ──
   var myStaff = (LS.get('staff')||[]).filter(function(u){ return u.salonId===mySalonId; });
   var totalSalary = 0, totalFood = 0;
   var salaryDetail = [];
+  var _pnlDays = new Date(yr, mo, 0).getDate();
+  var _pnlAttLog = LS.get('attendance')||[];
   myStaff.forEach(function(u){
     var fs = Number(u.fixedSalary||0);
     var fm = Number(u.foodMoney||0);
-    var cm = Number(u.cleaningMoney||0);
-    totalSalary += fs + cm;
+    var _savedAtt = LS.get('att_'+u.id+'_'+month)||null;
+    var _present=0, _half=0;
+    if(_savedAtt && (_savedAtt.present||_savedAtt.half||_savedAtt.absent)){
+      _present = Number(_savedAtt.present||0);
+      _half    = Number(_savedAtt.half||0);
+    } else {
+      for(var _di=1; _di<=_pnlDays; _di++){
+        var _ds=_di+'/'+mo+'/'+yr;
+        var _recs=_pnlAttLog.filter(function(r){return r.date===_ds&&String(r.barberId)===String(u.id);});
+        if(_recs.some(function(r){return r.type==='in';})&&_recs.some(function(r){return r.type==='out';})) _present++;
+        else if(_recs.some(function(r){return r.type==='in';})) _half++;
+      }
+    }
+    var _monthSal = _pnlDays>0 ? Math.round(fs*(_present+_half*0.5)/_pnlDays) : 0;
+    totalSalary += _monthSal;
     totalFood   += fm;
-    if(fs||fm||cm) salaryDetail.push(u.name+': ₹'+fs+' salary, ₹'+fm+' food, ₹'+cm+' clean');
+    if(fs) salaryDetail.push(u.name+': '+fmtINR(_monthSal)+' ('+_present+' full+'+_half+' half/'+_pnlDays+'d)');
   });
 
   // ── Actual Incentives paid — sum from salary breakdown this month ──

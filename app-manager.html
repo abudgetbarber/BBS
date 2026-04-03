@@ -1440,6 +1440,22 @@ function addMgrBill(){
       var cached = LS.get('entries')||[];
       cached.push(saved||entry);
       LS.set('entries', cached);
+      // Save customer to Supabase if real name + phone provided
+      if(custName && custName!=='Walk-in' && custPhone.length>=10){
+        var custs=LS.get('customers')||[];
+        var existing=custs.find(function(c){return c.phone===custPhone;});
+        if(!existing){
+          var newCust={id:'cb'+entry.id,phone:custPhone,name:custName,salonId:mySalonId,
+            role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''};
+          SB.insertCustomer(newCust).then(function(saved2){
+            custs.push(saved2||newCust);
+            LS.set('customers',custs);
+          }).catch(function(){
+            custs.push(newCust);
+            LS.set('customers',custs);
+          });
+        }
+      }
       renderDashboard();
       toast('✅ Entry saved to Supabase for ' + (barber ? barber.name : 'stylist'));
     })
@@ -1925,16 +1941,29 @@ function syncBillingCustomers(){
 }
 
 function renderCustomers(){
-  syncBillingCustomers();
+  var tbEl=document.getElementById('cust-tbody');
+  if(tbEl) tbEl.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted2)">Loading from Supabase…</td></tr>';
+  // Always fetch fresh from Supabase
+  sbSelect('customers','"salonId"=eq.'+encodeURIComponent(mySalonId))
+    .then(function(freshCusts){
+      if(freshCusts&&freshCusts.length){
+        // Merge into cache: keep other salons, replace this salon's customers
+        var cached=(LS.get('customers')||[]).filter(function(c){return c.salonId&&String(c.salonId)!==String(mySalonId);});
+        LS.set('customers', cached.concat(freshCusts));
+      }
+      _doRenderCustomers();
+    })
+    .catch(function(){
+      _doRenderCustomers(); // fallback to cache
+    });
+}
+
+function _doRenderCustomers(){
   var custs  = (LS.get('customers')||[]).filter(function(c){
-    // Show customers linked to this salon, or linked via billing entry phone
-    if(c.salonId && String(c.salonId)!==String(mySalonId)) return false;
-    var allE = getEntries().filter(function(e){ return e.salonId===mySalonId; });
-    if(!c.salonId){
-      // Legacy records without salonId: only show if they have a billing entry in this salon
-      return allE.some(function(e){ return e.customerPhone===c.phone; });
-    }
-    return true;
+    // Show customers linked to this salon by salonId, or by billing entry phone for legacy records
+    if(c.salonId) return String(c.salonId)===String(mySalonId);
+    var allE2 = getEntries().filter(function(e){ return e.salonId===mySalonId; });
+    return allE2.some(function(e){ return e.customerPhone===c.phone; });
   });
   var visits = LS.get('visits')||[];
   var allE   = getEntries().filter(function(e){ return e.salonId===mySalonId; });
@@ -2023,7 +2052,7 @@ function saveCustomerEdit(){
   customers[idx].growthNotes = document.getElementById('ec-notes').value.trim();
   customers[idx].loginPin    = document.getElementById('ec-otp-val').textContent;
   LS.set('customers', customers);
-  updateRowInSheet('Customers',customers[idx],function(ok){if(!ok)toast('⚠ Saved locally');});
+  SB.updateCustomer(customers[idx]).catch(function(){ toast('⚠ Saved locally only'); });
   closeModal('editCustModal');
   toast('✓ Customer updated');
   renderCustomers();
@@ -2430,13 +2459,19 @@ function saveEdit(){
   LS.set('entries',entries);
   updateRowInSheet('Entries',entries[idx],function(ok){if(!ok)toast('⚠ Saved locally');});
 
-  // Fix 3: sync customer to directory if real name+phone given
+  // Sync customer to Supabase if real name+phone given
   if (custName && custName!=='Walk-in' && custPhone.length>=10){
     var customers = LS.get('customers')||[];
     var existing  = customers.find(function(c){ return c.phone===custPhone; });
     if (!existing){
-      customers.push({id:'ce'+editingId,phone:custPhone,name:custName,salonId:mySalonId,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''});
-      LS.set('customers',customers);
+      var newCust2={id:'ce'+editingId,phone:custPhone,name:custName,salonId:mySalonId,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginOtp:''};
+      SB.insertCustomer(newCust2).then(function(saved3){
+        customers.push(saved3||newCust2);
+        LS.set('customers',customers);
+      }).catch(function(){
+        customers.push(newCust2);
+        LS.set('customers',customers);
+      });
     }
   }
   closeModal('editModal');

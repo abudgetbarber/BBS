@@ -661,7 +661,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 
   <!-- PROFIT SHARE (company-managed only) -->
   <div class="pnl-section" id="pnl-share-section" style="display:none">
-    <div class="pnl-sec-title" style="background:rgba(91,200,255,.08);border-color:rgba(91,200,255,.2);color:var(--blue)">PROFIT SHARE (Company Managed)</div>
+    <div class="pnl-sec-title" style="background:rgba(109,40,217,.08);border-color:rgba(109,40,217,.25);color:var(--purple)">PROFIT SHARE</div>
     <div id="pnl-share-rows"></div>
   </div>
 </div>
@@ -2339,33 +2339,42 @@ function _doRenderPNL(month){
   var detEl = document.getElementById('pnl-salary-detail');
   if(detEl) detEl.innerHTML = salaryDetail.map(function(s){ return '· '+s; }).join('<br>');
 
-  // Profit share — auto from salon partners (company managed only)
-  var myS = (LS.get('salons')||[]).find(function(s){return s.id===mySalonId;});
+  // Profit share — company-managed salons only
+  var myS = (LS.get('salons')||[]).find(function(s){return s.id===mySalonId;})||{};
   var isCompany = myS && (myS.companyManaged==1||myS.companyManaged==='1'||myS.companyManaged===true);
   var shareSection = document.getElementById('pnl-share-section');
   if(shareSection) shareSection.style.display = isCompany ? 'block' : 'none';
   if(isCompany){
-    var partners = [];
-    try{ partners = JSON.parse(myS.partners||'[]'); }catch(e){}
-    var companyPct = Number(myS.companyPct||0);
-    var partnerTotal = partners.reduce(function(a,p){return a+Number(p.pct||0);},0);
-    if(!companyPct) companyPct = Math.max(0,100-partnerTotal);
-    var shareEl = document.getElementById('pnl-share-rows');
+    var franchisePct = Number(myS.franchisePct||0);
+    var companyPct   = Number(myS.companyPct||0);
+    // Auto-correct: if only one is set, derive the other to make total = 100%
+    if(franchisePct && !companyPct)  companyPct   = 100 - franchisePct;
+    if(companyPct   && !franchisePct) franchisePct = 100 - companyPct;
+    // Fallback to partners array for older records
+    if(!franchisePct && !companyPct){
+      var partners=[];
+      try{ partners=JSON.parse(myS.partners||'[]'); }catch(e){}
+      var partnerTotal=partners.reduce(function(a,p){return a+Number(p.pct||0);},0);
+      franchisePct=partnerTotal;
+      companyPct=Math.max(0,100-partnerTotal);
+    }
+    var total=franchisePct+companyPct;
+    var franchiseAmt=Math.round(profit*franchisePct/100);
+    var companyAmt  =Math.round(profit*companyPct/100);
+    var shareEl=document.getElementById('pnl-share-rows');
     if(shareEl){
-      var rows = partners.map(function(p){
-        var amt = Math.round(profit * Number(p.pct||0) / 100);
-        return '<div class="pnl-share-row">'+
-          '<span style="flex:1">'+p.name+' ('+p.pct+'%)</span>'+
-          '<span style="color:'+colr(amt)+';font-weight:700">'+fINR(amt)+'</span>'+
-        '</div>';
-      });
-      // Company share
-      var compAmt = Math.round(profit * companyPct / 100);
-      rows.push('<div class="pnl-share-row" style="font-weight:800">'+
-        '<span style="flex:1">Company ('+companyPct+'%)</span>'+
-        '<span style="color:'+colr(compAmt)+';font-weight:800;font-size:15px">'+fINR(compAmt)+'</span>'+
-      '</div>');
-      shareEl.innerHTML = rows.join('');
+      shareEl.innerHTML=
+        '<div class="pnl-share-row" style="font-weight:800">'+
+          '<span style="flex:1">Franchise Owner ('+franchisePct+'%)</span>'+
+          '<span style="color:'+colr(franchiseAmt)+';font-weight:800;font-size:15px">'+fINR(franchiseAmt)+'</span>'+
+        '</div>'+
+        '<div class="pnl-share-row" style="font-weight:800">'+
+          '<span style="flex:1">Company ('+companyPct+'%)</span>'+
+          '<span style="color:'+colr(companyAmt)+';font-weight:800;font-size:15px">'+fINR(companyAmt)+'</span>'+
+        '</div>'+
+        (total!==100?
+          '<div style="font-size:10px;color:var(--warn);padding:4px 0;font-style:italic">⚠ Franchise ('+franchisePct+'%) + Company ('+companyPct+'%) = '+total+'% — must equal 100%. Ask Admin to fix.</div>'
+          :'<div style="font-size:10px;color:var(--muted2);padding:4px 0">Based on actual profit '+fINR(profit)+'</div>');
     }
   }
 }

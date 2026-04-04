@@ -677,13 +677,13 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 <div class="modal-bg" id="staffSalaryModal" onclick="if(event.target===this)closeModal('staffSalaryModal')">
   <div class="modal-box" style="max-width:500px">
     <div class="modal-hdr"><h3 id="ss-title">Salary & Attendance</h3><button class="btn-close" onclick="closeModal('staffSalaryModal')">✕</button></div>
-    <div class="ifield" style="margin-bottom:12px"><label>Month</label><input type="month" class="fi" id="ss-month" onchange="renderStaffSalary()"></div>
+    <div class="ifield" style="margin-bottom:12px"><label>Month</label><input type="month" class="fi" id="ss-month" onchange="_attInputLocked=false;renderStaffSalary()"></div>
     <div style="margin-bottom:12px">
       <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px">Attendance Override</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-        <div class="ifield"><label>Present Days</label><input type="number" class="fi" id="ss-present" placeholder="0" min="0" onchange="renderStaffSalary()"></div>
-        <div class="ifield"><label>Half Days</label><input type="number" class="fi" id="ss-half" placeholder="0" min="0" onchange="renderStaffSalary()"></div>
-        <div class="ifield"><label>Absent Days</label><input type="number" class="fi" id="ss-absent" placeholder="0" min="0" onchange="renderStaffSalary()"></div>
+        <div class="ifield"><label>Present Days</label><input type="number" class="fi" id="ss-present" placeholder="0" min="0"></div>
+        <div class="ifield"><label>Half Days</label><input type="number" class="fi" id="ss-half" placeholder="0" min="0"></div>
+        <div class="ifield"><label>Absent Days</label><input type="number" class="fi" id="ss-absent" placeholder="0" min="0"></div>
       </div>
       <button onclick="saveAttendanceOverride()" style="padding:7px 14px;background:rgba(0,196,140,.15);border:1.5px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">✓ Save Attendance</button>
     </div>
@@ -987,35 +987,11 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 
   <!-- Salary Calculator -->
   <div style="background:var(--surface);border-radius:var(--r);padding:14px;margin-bottom:12px;border:1px solid var(--border)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent)">💰 My Salary</div>
       <input type="month" id="mgr-sal-month" class="fi" style="width:auto;padding:4px 8px;font-size:12px" onchange="renderMgrSalary()">
     </div>
-    <!-- Prorated salary display -->
     <div id="mgr-salary-breakdown"></div>
-    <!-- Franchise-entered fields -->
-    <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Entered by Franchise Owner</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div class="ifield"><label style="font-size:10px">Food Money (₹)</label>
-          <input type="number" id="mgr-sal-food" class="fi" placeholder="0" min="0" inputmode="numeric" oninput="renderMgrSalary()">
-        </div>
-        <div class="ifield"><label style="font-size:10px">Monthly Incentives (₹)</label>
-          <input type="number" id="mgr-sal-incentive" class="fi" placeholder="0" min="0" inputmode="numeric" oninput="renderMgrSalary()">
-        </div>
-      </div>
-      <!-- Deductions -->
-      <div style="margin-bottom:8px">
-        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px">Deductions</div>
-        <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-          <input type="text" id="mgr-sal-ded-desc" class="fi" placeholder="Description" style="flex:2;min-width:120px">
-          <input type="number" id="mgr-sal-ded-amt" class="fi" placeholder="₹" min="0" inputmode="numeric" style="flex:1;min-width:70px">
-          <button onclick="addMgrSalDed()" style="padding:8px 12px;background:rgba(220,53,69,.1);border:1.5px solid rgba(220,53,69,.3);color:var(--danger);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Add</button>
-        </div>
-        <div id="mgr-sal-ded-log"></div>
-      </div>
-      <div id="mgr-salary-net"></div>
-    </div>
   </div>
 </div>
 
@@ -1226,11 +1202,27 @@ var SB = {
 // This is called once on app load. Supabase is source of truth.
 function supaBootstrap(onDone, onError){
   SB.readAll().then(function(data){
+    // Preserve locally-saved attendance records before wiping LS
+    // (manager may have clocked in/out and Supabase hasn't confirmed yet)
+    var localAtt = LS.get('attendance') || [];
     ['entries','staff','salons','customers','cashIn','expenses',
      'attendance','styleCards','visits','advances','mgrCashIn','mgrExpenses'].forEach(function(k){
       localStorage.removeItem('bb_'+k);
     });
     applyRestoredData(data);
+    // Merge back any local attendance records not yet in Supabase
+    if(localAtt.length){
+      var freshAtt = LS.get('attendance') || [];
+      var freshIds = freshAtt.map(function(r){ return String(r.id||''); });
+      var freshTs  = freshAtt.map(function(r){ return Number(r.ts||0); });
+      localAtt.forEach(function(r){
+        // Only add if not already present (match by ts or id)
+        var alreadyIn = (r.id && freshIds.indexOf(String(r.id))>-1) ||
+                        (r.ts && freshTs.indexOf(Number(r.ts))>-1);
+        if(!alreadyIn) freshAtt.push(r);
+      });
+      LS.set('attendance', freshAtt);
+    }
     if(onDone) onDone(data);
   }).catch(function(err){
     console.warn('[BB] Supabase fetch failed, using cached data:', err);
@@ -1483,16 +1475,39 @@ function renderMgrAttBtn(wrapId){
   el.innerHTML=html;
 }
 function recordMgrAtt(type){
-  var log=LS.get('attendance')||[];
   var now=new Date();
-  var rec={type:type,date:today(),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),ts:Date.now(),barberId:ME.id};
+  var rec={
+    type:     type,
+    date:     today(),
+    time:     now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+    ts:       Date.now(),
+    barberId: ME.id
+  };
+  // 1. Save to localStorage immediately
+  var log=LS.get('attendance')||[];
   log.push(rec);
   LS.set('attendance',log);
-  appendRowToSheet('Attendance',rec,function(ok){if(!ok)toast('⚠ Attendance saved locally');});
-  toast(type==='in'?'✅ Clocked In!':'✅ Clocked Out!');
+  // 2. Render immediately — timestamp is visible right away
   renderMgrAttBtn('mgr-att-btn-wrap');
   renderMgrAttBtn('mgr-profile-att-wrap');
   renderMgrAttCalendar();
+  toast(type==='in'?'✅ Clocked In!':'✅ Clocked Out!');
+  // 3. Save to Supabase in background — merge result back into LS without full bootstrap wipe
+  sbInsert('attendance', rec).then(function(saved){
+    // Merge saved row back — don't call supaBootstrap which would wipe LS
+    var latest=LS.get('attendance')||[];
+    // Replace the last matching ts entry with Supabase version if returned
+    if(saved && saved.id){
+      var idx=latest.findIndex(function(r){return r.ts===rec.ts;});
+      if(idx>-1) latest[idx]=Object.assign({},rec,saved);
+      else latest.push(saved);
+      LS.set('attendance',latest);
+    }
+    renderMgrAttBtn('mgr-att-btn-wrap');
+    renderMgrAttBtn('mgr-profile-att-wrap');
+  }).catch(function(){
+    toast('⚠ Attendance saved locally only');
+  });
 }
 
 // ── MANAGER PROFILE ──
@@ -1595,17 +1610,18 @@ function renderMgrSalary(){
   var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
   var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
   var dim=new Date(yr,m,0).getDate();
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
 
-  // Get ME's staff record for fixed salary
+  // Fixed salary from staff record
   var staff=LS.get('staff')||[];
-  var me=staff.find(function(u){return String(u.id)===String(ME.id);})||{fixedSalary:0,foodMoney:0};
+  var me=staff.find(function(u){return String(u.id)===String(ME.id);})||{};
   var fs=Number(me.fixedSalary||0);
 
   // Attendance — from override or raw log
   var attKey='att_'+ME.id+'_'+mo;
   var attOvr=LS.get(attKey);
   var present=0,half=0;
-  if(attOvr&&(attOvr.present||attOvr.half)){
+  if(attOvr&&(attOvr.present!=null||attOvr.half!=null)){
     present=Number(attOvr.present||0); half=Number(attOvr.half||0);
   } else {
     var log=LS.get('attendance')||[];
@@ -1616,97 +1632,45 @@ function renderMgrSalary(){
       if(hi&&ho)present++;else if(hi)half++;
     }
   }
-  // Prorated salary = FixedSalary × (Present + Half×0.5) / dim
-  var monthSal=dim>0?Math.round(fs*(present+half*0.5)/dim):0;
 
-  // Read franchise-entered fields
-  var foodEl=document.getElementById('mgr-sal-food');
-  var incEl =document.getElementById('mgr-sal-incentive');
-  var fm  = foodEl  ? (parseFloat(foodEl.value)||0)  : 0;
-  var inc = incEl   ? (parseFloat(incEl.value)||0)   : 0;
+  // Prorated salary = FixedSalary × (Present + Half×0.5) / TotalDays
+  var effectiveDays=present+half*0.5;
+  var monthSal=dim>0?Math.round(fs*effectiveDays/dim):0;
+  var formula=fmtINR(fs)+' × ('+present+'F + '+half+'H) / '+dim+' days';
 
-  // Load saved values from LS on first render (so values persist across month changes)
-  var salKey='mgr_sal_inputs_'+ME.id+'_'+mo;
-  var saved=LS.get(salKey)||{};
-  if(foodEl){ foodEl._mgrLoaded=false; }
-  if(incEl) { incEl._mgrLoaded=false;  }
-  if(foodEl && !foodEl._mgrLoaded){ foodEl.value=saved.food||''; foodEl._mgrLoaded=true; fm=parseFloat(foodEl.value)||0; }
-  if(incEl  && !incEl._mgrLoaded) { incEl.value =saved.inc||'';  incEl._mgrLoaded=true;  inc=parseFloat(incEl.value)||0; }
-
-  // Save inputs to LS when they change
-  if(foodEl) LS.set(salKey,{food:foodEl.value,inc:incEl?incEl.value:''});
-
-  // Advances this month
-  var advances=(LS.get('advances')||[]).filter(function(r){
-    return String(r.barberId)===String(ME.id)&&(r.date||'').slice(0,7)===mo;
-  });
-  var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
-
-  // Deductions (stored per manager per month)
-  var dedKey='mgr_ded_'+ME.id+'_'+mo;
-  var deds=LS.get(dedKey)||[];
-  var totalDed=deds.reduce(function(a,r){return a+Number(r.amount||0);},0);
-
-  // Render deduction log
-  var dedLogEl=document.getElementById('mgr-sal-ded-log');
-  if(dedLogEl){
-    dedLogEl.innerHTML=!deds.length
-      ?'<div style="font-size:11px;color:var(--muted2);font-style:italic">No deductions added</div>'
-      :deds.map(function(r,i){
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px">'+
-          '<span style="flex:1;color:var(--white)">'+r.desc+'</span>'+
-          '<span style="color:var(--danger);font-weight:700;margin-left:8px">−'+fmtINR(r.amount)+'</span>'+
-          '<button onclick="removeMgrSalDed('+i+')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:11px;margin-left:4px">✕</button>'+
-        '</div>';
-      }).join('');
-  }
-
-  // Prorated salary breakdown (read-only display)
   var el=document.getElementById('mgr-salary-breakdown');
-  if(el){
-    el.innerHTML=
-      '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Fixed Salary</span><span>'+fmtINR(fs)+'</span></div>'+
-      '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Attendance</span><span>'+present+' Full + '+half+' Half / '+dim+' days</span></div>'+
-      '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Prorated Salary</span><span style="color:var(--accent);font-weight:700">'+fmtINR(monthSal)+'</span></div>';
-  }
-
-  // Net = ProrateSalary + FoodMoney + Incentives − Advances − Deductions
-  var net=monthSal+fm+inc-totalAdv-totalDed;
-  var netEl=document.getElementById('mgr-salary-net');
-  if(netEl){
-    netEl.innerHTML=
-      (totalAdv>0?'<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px"><span style="color:var(--muted)">Advances</span><span style="color:var(--danger)">−'+fmtINR(totalAdv)+'</span></div>':'')+
-      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:1.5px solid rgba(255,255,255,.12);margin-top:6px">'+
-        '<span>Net Salary</span>'+
-        '<span style="color:'+(net>=0?'var(--accent)':'var(--danger)')+'">'+fmtINR(net)+'</span>'+
-      '</div>';
-  }
+  if(!el)return;
+  el.innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+mName+'</div>'+
+    // Salary value — large and prominent
+    '<div style="background:rgba(0,196,140,.08);border:1.5px solid rgba(0,196,140,.2);border-radius:var(--rs);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+      '<div>'+
+        '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Monthly Salary</div>'+
+        '<div style="font-family:var(--HF);font-size:32px;color:var(--accent);letter-spacing:1px;line-height:1">'+fmtINR(monthSal)+'</div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Formula</div>'+
+        '<div style="font-size:11px;color:var(--muted2);font-family:monospace;line-height:1.5">'+formula+'</div>'+
+      '</div>'+
+    '</div>'+
+    // Attendance summary
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+      '<div style="text-align:center;background:var(--surface2);border-radius:var(--rs);padding:8px 4px">'+
+        '<div style="font-size:18px;font-weight:800;color:var(--accent)">'+present+'</div>'+
+        '<div style="font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px">Full Days</div>'+
+      '</div>'+
+      '<div style="text-align:center;background:var(--surface2);border-radius:var(--rs);padding:8px 4px">'+
+        '<div style="font-size:18px;font-weight:800;color:var(--warn)">'+half+'</div>'+
+        '<div style="font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px">Half Days</div>'+
+      '</div>'+
+      '<div style="text-align:center;background:var(--surface2);border-radius:var(--rs);padding:8px 4px">'+
+        '<div style="font-size:18px;font-weight:800;color:var(--muted)">'+dim+'</div>'+
+        '<div style="font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px">Total Days</div>'+
+      '</div>'+
+    '</div>'+
+    (fs===0?'<div style="margin-top:8px;font-size:11px;color:var(--warn);font-style:italic">⚠ Fixed salary not set — contact Franchise Owner to update your staff record.</div>':'');
 }
 
-function addMgrSalDed(){
-  var desc=(document.getElementById('mgr-sal-ded-desc').value||'').trim();
-  var amt=parseFloat(document.getElementById('mgr-sal-ded-amt').value)||0;
-  if(!desc){toast('Enter description');return;}
-  if(amt<=0){toast('Enter amount');return;}
-  var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
-  var dedKey='mgr_ded_'+ME.id+'_'+mo;
-  var deds=LS.get(dedKey)||[];
-  deds.push({desc:desc,amount:amt});
-  LS.set(dedKey,deds);
-  document.getElementById('mgr-sal-ded-desc').value='';
-  document.getElementById('mgr-sal-ded-amt').value='';
-  renderMgrSalary();
-  toast('✓ Deduction added');
-}
-
-function removeMgrSalDed(idx){
-  var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
-  var dedKey='mgr_ded_'+ME.id+'_'+mo;
-  var deds=LS.get(dedKey)||[];
-  deds.splice(idx,1);
-  LS.set(dedKey,deds);
-  renderMgrSalary();
-}
 function renderMgrProfile(){
   renderMgrAttBtn('mgr-profile-att-wrap');
   renderMgrAttCalendar();
@@ -2012,8 +1976,15 @@ function renderMgrCashCounter(){
   }).reduce(function(a,r){return a+Number(r.amount||0);},0);
 
   // Manager's own cash advances — current month
+  // Note: mgr advances are saved with ISO date (yyyy-mm-dd) from date input
+  var curMoStr=_cy+'-'+(_cm<10?'0':'')+_cm;
   var mgrAdvances=(LS.get('advances')||[]).filter(function(r){
-    return String(r.barberId)===String(ME.id)&&(!r.mode||r.mode==='cash')&&isCM(r.date||'');
+    if(String(r.barberId)!==String(ME.id)) return false;
+    if(!r.mode||r.mode!=='cash') return false;
+    var d=r.date||'';
+    // Support both ISO format (yyyy-mm-dd) and d/m/yyyy format
+    if(d.indexOf('-')>-1) return d.slice(0,7)===curMoStr;
+    return isCM(d);
   });
   var mgrCashAdv=mgrAdvances.reduce(function(a,r){return a+Number(r.amount||0);},0);
 
@@ -2033,7 +2004,7 @@ function renderMgrCashCounter(){
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash Sales</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Previous Days Cash</span><span style="color:var(--green)">+'+fmtINR(prevDailyCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Barbers)</span><span style="color:var(--danger)">−'+fmtINR(cashAdv)+'</span></div>'+
-    (mgrCashAdv>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Manager)</span><span style="color:var(--danger)">−'+fmtINR(mgrCashAdv)+'</span></div>':'')+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Manager)</span><span style="color:var(--danger)">−'+fmtINR(mgrCashAdv)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Total Expenses</span><span style="color:var(--danger)">−'+fmtINR(totalExp)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over (accepted)</span><span style="color:var(--blue)">−'+fmtINR(totalHandover)+'</span></div>';
 
@@ -2566,9 +2537,11 @@ function saveStaffEdit(){
 }
 
 var salaryStaffId=null;
+var _attInputLocked=false;  // true while user has typed overrides — prevents renderStaffSalary from resetting inputs
 function openStaffSalary(id){
   window._curStaffId = arguments[0];
   salaryStaffId=id;
+  _attInputLocked=false;  // reset lock when opening a new staff member
   var staff=LS.get('staff')||[];
   var b=staff.find(function(u){return u.id===id;});
   if(!b)return;
@@ -2612,9 +2585,17 @@ function renderStaffSalary(){
     else if(dd<new Date().getDate()||mo<new Date().toISOString().slice(0,7)) absent++;
   }
   if(savedAtt){present=savedAtt.present;half=savedAtt.half;absent=savedAtt.absent;}
-  document.getElementById('ss-present').value=present;
-  document.getElementById('ss-half').value=half;
-  document.getElementById('ss-absent').value=absent;
+  // Only update input fields if not locked (locked = user has typed values, waiting to save)
+  if(!_attInputLocked){
+    document.getElementById('ss-present').value=present;
+    document.getElementById('ss-half').value=half;
+    document.getElementById('ss-absent').value=absent;
+  } else {
+    // Read from inputs instead (user's typed values take priority)
+    present=parseInt(document.getElementById('ss-present').value)||0;
+    half   =parseInt(document.getElementById('ss-half').value)||0;
+    absent =parseInt(document.getElementById('ss-absent').value)||0;
+  }
 
   // Month Salary = Fixed × (Present + Half×0.5) / WorkingDays
   var effectiveDays=present+half*0.5;
@@ -2739,6 +2720,8 @@ function saveAttendanceOverride(){
   // Save to localStorage with correct key
   var attKey='att_'+salaryStaffId+'_'+mo;
   LS.set(attKey,_attData);
+  // Lock inputs so renderStaffSalary reads from LS override (which we just saved)
+  _attInputLocked=false;
   // Save to Supabase using salaryStaffId directly
   SB.upsertAttOverride(salaryStaffId, mo, _attData)
     .then(function(){ toast('✓ Attendance saved to Supabase'); })

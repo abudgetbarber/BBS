@@ -482,7 +482,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       <span class="mgr-ci-total" id="mgr-cash-counter-total" style="color:var(--blue)">₹0</span>
     </div>
     <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.6">
-      Today Cash Sales + All Previous Cash − Cash Advances − Expenses − Cash Handed Over
+      Today Cash Sales + All Previous Cash − Cash Advances (Barbers + Manager) − Expenses − Cash Handed Over
     </div>
     <!-- Previous Month Cash -->
     <div style="margin-bottom:8px">
@@ -967,6 +967,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       <div style="text-align:center"><div id="mgr-att-half" style="font-size:18px;font-weight:800;color:var(--warn)">0</div><div style="font-size:9px;color:var(--muted2)">Half</div></div>
       <div style="text-align:center"><div id="mgr-att-absent" style="font-size:18px;font-weight:800;color:var(--danger)">0</div><div style="font-size:9px;color:var(--muted2)">Absent</div></div>
     </div>
+    <div id="mgr-att-day-detail" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
   </div>
 
   <!-- Advance Taken -->
@@ -990,7 +991,31 @@ select option { background: var(--surface) !important; color: var(--white) !impo
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent)">💰 My Salary</div>
       <input type="month" id="mgr-sal-month" class="fi" style="width:auto;padding:4px 8px;font-size:12px" onchange="renderMgrSalary()">
     </div>
+    <!-- Prorated salary display -->
     <div id="mgr-salary-breakdown"></div>
+    <!-- Franchise-entered fields -->
+    <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Entered by Franchise Owner</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="ifield"><label style="font-size:10px">Food Money (₹)</label>
+          <input type="number" id="mgr-sal-food" class="fi" placeholder="0" min="0" inputmode="numeric" oninput="renderMgrSalary()">
+        </div>
+        <div class="ifield"><label style="font-size:10px">Monthly Incentives (₹)</label>
+          <input type="number" id="mgr-sal-incentive" class="fi" placeholder="0" min="0" inputmode="numeric" oninput="renderMgrSalary()">
+        </div>
+      </div>
+      <!-- Deductions -->
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px">Deductions</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+          <input type="text" id="mgr-sal-ded-desc" class="fi" placeholder="Description" style="flex:2;min-width:120px">
+          <input type="number" id="mgr-sal-ded-amt" class="fi" placeholder="₹" min="0" inputmode="numeric" style="flex:1;min-width:70px">
+          <button onclick="addMgrSalDed()" style="padding:8px 12px;background:rgba(220,53,69,.1);border:1.5px solid rgba(220,53,69,.3);color:var(--danger);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">+ Add</button>
+        </div>
+        <div id="mgr-sal-ded-log"></div>
+      </div>
+      <div id="mgr-salary-net"></div>
+    </div>
   </div>
 </div>
 
@@ -1483,7 +1508,9 @@ function renderMgrAttCalendar(){
   var days=new Date(yr,mo,0).getDate();
   var firstDow=new Date(yr,mo-1,1).getDay();
   var log=LS.get('attendance')||[];
-  var now=new Date(),curMo=now.toISOString().slice(0,7),todayD=(yr===now.getFullYear()&&mo===now.getMonth()+1?now.getDate():0);
+  var now=new Date(),curMoStr=now.toISOString().slice(0,7);
+  var moStr=yr+'-'+(mo<10?'0':'')+mo;
+  var todayD=(moStr===curMoStr?now.getDate():0);
   var present=0,half=0,absent=0;
   var lbl=document.getElementById('mgr-att-month-label');
   if(lbl) lbl.textContent=new Date(yr,mo-1,1).toLocaleString('default',{month:'short',year:'numeric'});
@@ -1498,15 +1525,30 @@ function renderMgrAttCalendar(){
     var bg,col;
     if(hasIn&&hasOut){bg='rgba(0,196,140,.25)';col='var(--accent)';present++;}
     else if(hasIn){bg='rgba(232,166,66,.2)';col='var(--warn)';half++;}
-    else if(d<todayD||(yr+'-'+(mo<10?'0':'')+mo)<curMo){bg='rgba(224,107,91,.12)';col='var(--danger)';absent++;}
+    else if(d<todayD||moStr<curMoStr){bg='rgba(224,107,91,.12)';col='var(--danger)';absent++;}
     else{bg='var(--surface2)';col='var(--muted2)';}
     var border=d===todayD?'outline:1.5px solid var(--accent);outline-offset:-1px;':'';
-    cells+='<div style="aspect-ratio:1;min-height:26px;border-radius:4px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;'+border+'">'+d+'</div>';
+    cells+='<div onclick="mgrShowDayDetail(\''+ds+'\')" title="'+ds+'" style="aspect-ratio:1;min-height:26px;border-radius:4px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:pointer;'+border+'">'+d+'</div>';
   }
   cal.innerHTML=cells;
   var pe=document.getElementById('mgr-att-present'); if(pe) pe.textContent=present;
   var he=document.getElementById('mgr-att-half');    if(he) he.textContent=half;
   var ae=document.getElementById('mgr-att-absent');  if(ae) ae.textContent=absent;
+  // Clear day detail on month change
+  var dd=document.getElementById('mgr-att-day-detail'); if(dd) dd.innerHTML='';
+}
+function mgrShowDayDetail(ds){
+  var el=document.getElementById('mgr-att-day-detail');
+  if(!el)return;
+  var log=LS.get('attendance')||[];
+  var recs=log.filter(function(r){return r.date===ds&&String(r.barberId)===String(ME.id);});
+  if(!recs.length){el.innerHTML='<div style="padding:6px 0;color:var(--muted2);font-style:italic">No records for '+ds+'</div>';return;}
+  var inR=recs.filter(function(r){return r.type==='in';}),outR=recs.filter(function(r){return r.type==='out';});
+  el.innerHTML='<div style="background:var(--surface2);border-radius:var(--rs);padding:8px 10px;margin-top:4px">'+
+    '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">'+ds+'</div>'+
+    (inR.length?'<div style="color:var(--accent);font-size:12px">🟢 In: '+inR.map(function(r){return r.time;}).join(', ')+'</div>':'')+
+    (outR.length?'<div style="color:var(--danger);font-size:12px;margin-top:3px">🔴 Out: '+outR.map(function(r){return r.time;}).join(', ')+'</div>':'')+
+  '</div>';
 }
 
 var _mgrAdvMode='cash';
@@ -1551,16 +1593,21 @@ function renderMgrAdvLog(){
 }
 function renderMgrSalary(){
   var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
-  var staff=LS.get('staff')||[];
-  var me=staff.find(function(u){return u.id===ME.id;})||{fixedSalary:0,foodMoney:0};
-  var fs=Number(me.fixedSalary||0),fm=Number(me.foodMoney||0);
-  var attKey='att_'+ME.id+'_'+mo;
-  var attOvr=LS.get(attKey);
   var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
   var dim=new Date(yr,m,0).getDate();
+
+  // Get ME's staff record for fixed salary
+  var staff=LS.get('staff')||[];
+  var me=staff.find(function(u){return String(u.id)===String(ME.id);})||{fixedSalary:0,foodMoney:0};
+  var fs=Number(me.fixedSalary||0);
+
+  // Attendance — from override or raw log
+  var attKey='att_'+ME.id+'_'+mo;
+  var attOvr=LS.get(attKey);
   var present=0,half=0;
-  if(attOvr&&(attOvr.present||attOvr.half)){present=Number(attOvr.present||0);half=Number(attOvr.half||0);}
-  else{
+  if(attOvr&&(attOvr.present||attOvr.half)){
+    present=Number(attOvr.present||0); half=Number(attOvr.half||0);
+  } else {
     var log=LS.get('attendance')||[];
     for(var d=1;d<=dim;d++){
       var ds=d+'/'+m+'/'+yr;
@@ -1569,19 +1616,96 @@ function renderMgrSalary(){
       if(hi&&ho)present++;else if(hi)half++;
     }
   }
+  // Prorated salary = FixedSalary × (Present + Half×0.5) / dim
   var monthSal=dim>0?Math.round(fs*(present+half*0.5)/dim):0;
-  var advances=(LS.get('advances')||[]).filter(function(r){return String(r.barberId)===String(ME.id)&&(r.date||'').slice(0,7)===mo;});
+
+  // Read franchise-entered fields
+  var foodEl=document.getElementById('mgr-sal-food');
+  var incEl =document.getElementById('mgr-sal-incentive');
+  var fm  = foodEl  ? (parseFloat(foodEl.value)||0)  : 0;
+  var inc = incEl   ? (parseFloat(incEl.value)||0)   : 0;
+
+  // Load saved values from LS on first render (so values persist across month changes)
+  var salKey='mgr_sal_inputs_'+ME.id+'_'+mo;
+  var saved=LS.get(salKey)||{};
+  if(foodEl){ foodEl._mgrLoaded=false; }
+  if(incEl) { incEl._mgrLoaded=false;  }
+  if(foodEl && !foodEl._mgrLoaded){ foodEl.value=saved.food||''; foodEl._mgrLoaded=true; fm=parseFloat(foodEl.value)||0; }
+  if(incEl  && !incEl._mgrLoaded) { incEl.value =saved.inc||'';  incEl._mgrLoaded=true;  inc=parseFloat(incEl.value)||0; }
+
+  // Save inputs to LS when they change
+  if(foodEl) LS.set(salKey,{food:foodEl.value,inc:incEl?incEl.value:''});
+
+  // Advances this month
+  var advances=(LS.get('advances')||[]).filter(function(r){
+    return String(r.barberId)===String(ME.id)&&(r.date||'').slice(0,7)===mo;
+  });
   var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var net=monthSal+fm-totalAdv;
+
+  // Deductions (stored per manager per month)
+  var dedKey='mgr_ded_'+ME.id+'_'+mo;
+  var deds=LS.get(dedKey)||[];
+  var totalDed=deds.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // Render deduction log
+  var dedLogEl=document.getElementById('mgr-sal-ded-log');
+  if(dedLogEl){
+    dedLogEl.innerHTML=!deds.length
+      ?'<div style="font-size:11px;color:var(--muted2);font-style:italic">No deductions added</div>'
+      :deds.map(function(r,i){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px">'+
+          '<span style="flex:1;color:var(--white)">'+r.desc+'</span>'+
+          '<span style="color:var(--danger);font-weight:700;margin-left:8px">−'+fmtINR(r.amount)+'</span>'+
+          '<button onclick="removeMgrSalDed('+i+')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:11px;margin-left:4px">✕</button>'+
+        '</div>';
+      }).join('');
+  }
+
+  // Prorated salary breakdown (read-only display)
   var el=document.getElementById('mgr-salary-breakdown');
-  if(!el)return;
-  el.innerHTML=
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Fixed Salary</span><span>'+fmtINR(fs)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Attendance</span><span>'+present+'F + '+half+'H / '+dim+'d</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Attendance Salary</span><span style="color:var(--accent)">'+fmtINR(monthSal)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Food Money</span><span style="color:var(--accent)">'+fmtINR(fm)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Advances</span><span style="color:var(--danger)">−'+fmtINR(totalAdv)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:800;border-top:1px solid rgba(255,255,255,.1);margin-top:4px"><span>Net Salary</span><span style="color:'+(net>=0?'var(--accent)':'var(--danger)')+'">'+fmtINR(net)+'</span></div>';
+  if(el){
+    el.innerHTML=
+      '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Fixed Salary</span><span>'+fmtINR(fs)+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Attendance</span><span>'+present+' Full + '+half+' Half / '+dim+' days</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:var(--muted)">Prorated Salary</span><span style="color:var(--accent);font-weight:700">'+fmtINR(monthSal)+'</span></div>';
+  }
+
+  // Net = ProrateSalary + FoodMoney + Incentives − Advances − Deductions
+  var net=monthSal+fm+inc-totalAdv-totalDed;
+  var netEl=document.getElementById('mgr-salary-net');
+  if(netEl){
+    netEl.innerHTML=
+      (totalAdv>0?'<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px"><span style="color:var(--muted)">Advances</span><span style="color:var(--danger)">−'+fmtINR(totalAdv)+'</span></div>':'')+
+      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:1.5px solid rgba(255,255,255,.12);margin-top:6px">'+
+        '<span>Net Salary</span>'+
+        '<span style="color:'+(net>=0?'var(--accent)':'var(--danger)')+'">'+fmtINR(net)+'</span>'+
+      '</div>';
+  }
+}
+
+function addMgrSalDed(){
+  var desc=(document.getElementById('mgr-sal-ded-desc').value||'').trim();
+  var amt=parseFloat(document.getElementById('mgr-sal-ded-amt').value)||0;
+  if(!desc){toast('Enter description');return;}
+  if(amt<=0){toast('Enter amount');return;}
+  var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
+  var dedKey='mgr_ded_'+ME.id+'_'+mo;
+  var deds=LS.get(dedKey)||[];
+  deds.push({desc:desc,amount:amt});
+  LS.set(dedKey,deds);
+  document.getElementById('mgr-sal-ded-desc').value='';
+  document.getElementById('mgr-sal-ded-amt').value='';
+  renderMgrSalary();
+  toast('✓ Deduction added');
+}
+
+function removeMgrSalDed(idx){
+  var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
+  var dedKey='mgr_ded_'+ME.id+'_'+mo;
+  var deds=LS.get(dedKey)||[];
+  deds.splice(idx,1);
+  LS.set(dedKey,deds);
+  renderMgrSalary();
 }
 function renderMgrProfile(){
   renderMgrAttBtn('mgr-profile-att-wrap');
@@ -2030,6 +2154,8 @@ function renderDashboard(){
     todayE.length+' customer'+(todayE.length!==1?'s':'')+
     (todayE.length?(' · Total: <b style="color:var(--accent)">'+fmtINR(todayTot)+'</b> · Avg: <b style="color:var(--blue)">'+fmtINR(todayE.length?Math.round(todayTot/todayE.length):0)+'</b> per customer'):'')+'</div>';
   document.getElementById('dash-bills').innerHTML=todaySummary+renderEntriesTable(todayE,true);
+  // Always refresh clock button after dashboard re-render
+  renderMgrAttBtn('mgr-att-btn-wrap');
 }
 function goToBarber(uid){
   showTab('sales');
@@ -2606,20 +2732,24 @@ function clearOT(){
 
 function saveAttendanceOverride(){
   var mo=document.getElementById('ss-month').value || new Date().toISOString().slice(0,7);
+  var present=parseInt(document.getElementById('ss-present').value)||0;
+  var half=parseInt(document.getElementById('ss-half').value)||0;
+  var absent=parseInt(document.getElementById('ss-absent').value)||0;
+  var _attData={present:present,half:half,absent:absent};
+  // Save to localStorage with correct key
   var attKey='att_'+salaryStaffId+'_'+mo;
-  var _attData={
-    present:parseInt(document.getElementById('ss-present').value)||0,
-    half:parseInt(document.getElementById('ss-half').value)||0,
-    absent:parseInt(document.getElementById('ss-absent').value)||0
-  };
   LS.set(attKey,_attData);
-  // Use salaryStaffId and mo directly — not the stale _curStaffId/_curMonth globals
-  SB.upsertAttOverride(salaryStaffId, mo, _attData).catch(function(e){console.warn('[BB]att override:',e);});
-  // Re-render salary with updated attendance
+  // Save to Supabase using salaryStaffId directly
+  SB.upsertAttOverride(salaryStaffId, mo, _attData)
+    .then(function(){ toast('✓ Attendance saved to Supabase'); })
+    .catch(function(e){
+      console.warn('[BB]att override:',e);
+      toast('✓ Attendance saved locally');
+    });
+  // Sync globals then re-render — savedAtt will now be found in LS so inputs won't be reset
   window._curStaffId = salaryStaffId;
   window._curMonth   = mo;
   renderStaffSalary();
-  toast('✓ Attendance saved');
 }
 
 function addDeduction(){
@@ -2878,7 +3008,10 @@ function applyRestoredData(d){
     Object.keys(dg).forEach(function(k){LS.set(k,dg[k]);});
   }
   if(d.attOverrides&&d.attOverrides.length){
-    d.attOverrides.forEach(function(r){LS.set('att_'+r.staffId+'_'+r.month,{present:r.present,half:r.half,absent:r.absent});});
+    d.attOverrides.forEach(function(r){
+      var sid = r.staff_id || r.staffId || r.staffid || '';
+      if(sid) LS.set('att_'+sid+'_'+r.month,{present:Number(r.present||0),half:Number(r.half||0),absent:Number(r.absent||0)});
+    });
   }
 }
 

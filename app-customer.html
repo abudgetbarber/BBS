@@ -690,20 +690,28 @@ var ME = null;
 // Entries can be linked by customerId, customerPhone, or matched by visit date+barber
 function myBills() {
   var all = getEntries();
-  var visits = myVisits();
-  // Build a set of (date+barberId) from my visits for cross-matching
-  var visitKeys = {};
-  visits.forEach(function(v){ visitKeys[v.date+'|'+v.barberId] = true; });
   return all.filter(function(e){
-    if (e.customerId === ME.id) return true;
-    if (e.customerPhone === ME.phone) return true;
-    // match by visit: same barber visited me on that date
-    if (visitKeys[e.date+'|'+e.barberId]) return true;
+    if(String(e.customerId) === String(ME.id)) return true;
+    if(e.customerPhone && e.customerPhone === ME.phone) return true;
     return false;
   });
 }
 function myVisits() {
-  return getVisits().filter(function(v){ return v.customerId === ME.id; });
+  var visits = getVisits();
+  var entries = getEntries();
+  // Build a set of visit ids matched by phone through entries
+  // A visit belongs to ME if:
+  //   1. customerId directly matches ME.id, OR
+  //   2. There is a billing entry for ME.phone on the same date with the same barber
+  var phoneMatchKeys = {};
+  entries.filter(function(e){ return e.customerPhone === ME.phone; })
+    .forEach(function(e){ phoneMatchKeys[e.date+'|'+String(e.barberId)] = true; });
+
+  return visits.filter(function(v){
+    if(String(v.customerId) === String(ME.id)) return true;
+    if(phoneMatchKeys[v.date+'|'+String(v.barberId)]) return true;
+    return false;
+  });
 }
 function myCards() {
   return getStyleCards().filter(function(c){ return c.customerId === ME.id; });
@@ -946,13 +954,13 @@ function loadHistory() {
     return;
   }
 
-  // Pair each visit with any bill on the same date
+  // Pair each visit with bills for ME on the same date (match by phone to avoid cross-customer bleed)
   var html = '<div class="card"><div class="card-body">';
   visits.forEach(function(v,i){
-    var dayBills = bills.filter(function(e){ return e.date===v.date; });
+    var dayBills = bills.filter(function(e){ return e.date===v.date && e.customerPhone===ME.phone; });
     var billsHtml = dayBills.length ?
       '<div class="vt-bills">'+dayBills.map(function(e){
-        return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--accent);background:rgba(0,61,43,.07);border:1px solid rgba(0,61,43,.15);padding:4px 10px;border-radius:12px;margin-right:5px;margin-top:4px">'+e.services+' · '+fmtINR(e.total)+'</span>';
+        return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--accent);background:rgba(0,122,86,.07);border:1px solid rgba(0,122,86,.15);padding:4px 10px;border-radius:12px;margin-right:5px;margin-top:4px">'+e.services+' · '+fmtINR(e.total)+'</span>';
       }).join('')+'</div>' : '';
     html +=
       '<div class="vt">' +

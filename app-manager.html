@@ -901,7 +901,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="pnl-row"><span>Extra Sunday Food</span>
       <span id="pnl-extra-food-val" style="font-weight:700;color:var(--accent)">₹0</span><span style="font-size:10px;color:var(--muted);margin-left:6px">(set by Franchise)</span><input type="hidden" id="pnl-extra-food" value="0">
     </div>
-    <div class="pnl-row pnl-auto"><span>Actual Incentives (paid out)</span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
+    <div class="pnl-row pnl-auto"><span>Actual Incentives <span style="font-size:10px;color:var(--muted)">(from deductions — all staff)</span></span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
+    <div class="pnl-row pnl-auto"><span>Overtime (OT) <span style="font-size:10px;color:var(--muted)">(from deductions — all staff)</span></span><span id="pnl-ot" class="pnl-val-neg">₹0</span></div>
     <div class="pnl-row pnl-auto"><span>WiFi <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span>
       <span id="pnl-wifi-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-wifi" value="0">
     </div>
@@ -1680,22 +1681,36 @@ function renderMgrSalary(){
   var effectiveDays=present+half*0.5;
   var monthSal=dim>0?Math.round(fs*effectiveDays/dim):0;
 
-  // ── OT — from deductions table (__OT__ special entry) ──
+  // ── OT — from overtime table ──
   var allDedRaw=LS.get('ded_'+ME.id+'_'+mo)||[];
-  var otEntry=allDedRaw.find(function(r){return r.desc==='__OT__';});
-  var totalOT=otEntry?Number(otEntry.amount||0):0;
-  // Also check Supabase-loaded deductions
   var supaDeds=(LS.get('deductions')||[]).filter(function(r){
     return String(r.staff_id||r.staffId||'')===String(ME.id)&&r.month===mo;
   });
-  if(!otEntry){ var supaOT=supaDeds.find(function(r){return r.desc==='__OT__';}); if(supaOT) totalOT=Number(supaOT.amount||0); }
+  // OT from dedicated overtime table
+  var overtimeRows=(LS.get('pnlOvertime')||[]).filter(function(r){
+    return String(r.staff_id||r.staffId||'')===String(ME.id);
+  });
+  var totalOT=overtimeRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Fallback to deductions __OT__ if overtime table not yet populated
+  if(!totalOT){
+    var otEntry=allDedRaw.find(function(r){return r.desc==='__OT__';});
+    if(!otEntry){var supaOT=supaDeds.find(function(r){return r.desc==='__OT__';});if(supaOT)otEntry=supaOT;}
+    totalOT=otEntry?Number(otEntry.amount||0):0;
+  }
 
-  // ── Incentive — entered by Franchise Owner (stored as __INC__ in deductions) ──
-  var incEntry=allDedRaw.find(function(r){return r.desc==='__INC__';});
-  var incentive=incEntry?Number(incEntry.amount||0):0;
-  if(!incEntry){ var supaInc=supaDeds.find(function(r){return r.desc==='__INC__';}); if(supaInc) incentive=Number(supaInc.amount||0); }
+  // ── Incentive — from dedicated incentives table ──
+  var incentiveRows=(LS.get('pnlIncentives')||[]).filter(function(r){
+    return String(r.staff_id||r.staffId||'')===String(ME.id);
+  });
+  var incentive=incentiveRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Fallback to deductions __INC__ if incentives table not yet populated
+  if(!incentive){
+    var incEntry=allDedRaw.find(function(r){return r.desc==='__INC__';});
+    if(!incEntry){var supaInc=supaDeds.find(function(r){return r.desc==='__INC__';});if(supaInc)incEntry=supaInc;}
+    incentive=incEntry?Number(incEntry.amount||0):0;
+  }
 
-  // ── Regular Deductions (set by Franchise) ──
+  // ── Regular Deductions (set by Franchise) — exclude legacy __OT__ and __INC__ ──
   var regularDeds=supaDeds.filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
   if(!regularDeds.length) regularDeds=allDedRaw.filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
   var totalDed=regularDeds.reduce(function(a,r){return a+Number(r.amount||0);},0);
@@ -2686,33 +2701,44 @@ function renderStaffSalary(){
   var moSales=moEntries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
   var moPhTips=moEntries.reduce(function(a,e){return a+Number(e.phTip||0);},0);
 
-  // Incentives = max(0, (Sales − Fixed) × 10%)
-  var incentives=Math.max(0,Math.round((moSales-fixedSalary)*0.10));
+  // Incentives — from dedicated incentives table (entered by Franchise Owner)
+  var incRows=(LS.get('pnlIncentives')||[]).filter(function(r){
+    return String(r.staff_id||r.staffId||'')===String(salaryStaffId)&&r.month===mo;
+  });
+  var incentives=incRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Fallback: old __INC__ in deductions
+  if(!incentives){
+    var allDedRaw2=LS.get('ded_'+salaryStaffId+'_'+mo)||[];
+    var incLeg=allDedRaw2.find(function(r){return r.desc==='__INC__';});
+    if(!incLeg){var supaInc2=(LS.get('deductions')||[]).find(function(r){return String(r.staff_id||r.staffId||'')===String(salaryStaffId)&&r.month===mo&&r.desc==='__INC__';});if(supaInc2)incLeg=supaInc2;}
+    incentives=incLeg?Number(incLeg.amount||0):0;
+  }
 
-  // Advances this month (cash + phonePe separate)
+  // OT — from dedicated overtime table (entered by Franchise Owner)
+  var otRows=(LS.get('pnlOvertime')||[]).filter(function(r){
+    return String(r.staff_id||r.staffId||'')===String(salaryStaffId)&&r.month===mo;
+  });
+  var totalOT=otRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Fallback: old __OT__ in deductions
+  if(!totalOT){
+    var allDedRaw=LS.get('ded_'+salaryStaffId+'_'+mo)||[];
+    var otEntry=allDedRaw.find(function(r){return r.desc==='__OT__';});
+    if(!otEntry){var supaOT2=(LS.get('deductions')||[]).find(function(r){return String(r.staff_id||r.staffId||'')===String(salaryStaffId)&&r.month===mo&&r.desc==='__OT__';});if(supaOT2)otEntry=supaOT2;}
+    totalOT=otEntry?Number(otEntry.amount||0):0;
+  }
+  LS.set('ot_'+salaryStaffId+'_'+mo,{amount:totalOT});
+  // Populate OT input field
+  var otInp=document.getElementById('ss-ot-amt');
+  if(otInp) otInp.value=totalOT>0?totalOT:'';
+
+  // Advances this month
   var advances=(LS.get('advances')||[]).filter(function(r){
     if(String(r.barberId)!==String(salaryStaffId))return false;
     var p=(r.date||'').split('/');
     return parseInt(p[1])===m&&parseInt(p[2])===yr;
   });
-  var cashAdv  =advances.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var ppAdv    =advances.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var totalAdv =cashAdv+ppAdv;
-
-  // OT — read from __OT__ special row in the local deductions cache (set by saveOT → Supabase)
-  var allDedRaw=LS.get('ded_'+salaryStaffId+'_'+mo)||[];
-  var otEntry=allDedRaw.find(function(r){return r.desc==='__OT__';});
-  var totalOT=otEntry?Number(otEntry.amount||0):0;
-  // Sync from Supabase-loaded deductions cache too
-  var supaAllDed=(LS.get('deductions')||[]).filter(function(r){
-    return String(r.staff_id||r.staffId||'')===String(salaryStaffId) && r.month===mo && r.desc==='__OT__';
-  });
-  if(!otEntry && supaAllDed.length) totalOT=Number(supaAllDed[0].amount||0);
-  // Also update local ot_ key for display consistency
-  LS.set('ot_'+salaryStaffId+'_'+mo,{amount:totalOT});
-  // Populate OT input field
-  var otInp=document.getElementById('ss-ot-amt');
-  if(otInp) otInp.value=totalOT>0?totalOT:'';
+  var cashAdv=advances.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var ppAdv  =advances.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
   var otDisp=document.getElementById('ss-ot-display');
   if(otDisp) otDisp.innerHTML=totalOT>0?
     '<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,196,140,.08);border-radius:6px;padding:6px 10px">'+
@@ -2755,7 +2781,7 @@ function renderStaffSalary(){
     '</div>'+
     mkSalRow('Food Money',foodMoney,'inc')+
     mkSalRow('Cleaning Money',cleaningMoney,'inc')+
-    mkSalRow('Incentives (Sales−Fixed)×10%',incentives,'inc')+
+    mkSalRow('Incentives (Franchise)',incentives,'inc')+
     mkSalRow('PhonePe Tips',moPhTips,'inc')+
     (totalOT>0?mkSalRow('Overtime (OT)',totalOT,'inc'):'')+
     mkSalRow('Advances — Cash',cashAdv,'ded')+
@@ -3440,6 +3466,12 @@ function renderPNL(){
     sbSelect('mgr_expenses',   '"salonId"=eq.'+encodeURIComponent(mySalonId))
       .then(function(rows){ LS.set('mgrExpenses', rows||[]); return rows; })
       .catch(function(){ return LS.get('mgrExpenses')||[]; }),
+    sbSelect('incentives', 'salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(document.getElementById('pnl-month').value||new Date().toISOString().slice(0,7)))
+      .then(function(rows){ LS.set('pnlIncentives', rows||[]); return rows; })
+      .catch(function(){ return LS.get('pnlIncentives')||[]; }),
+    sbSelect('overtime', 'salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(document.getElementById('pnl-month').value||new Date().toISOString().slice(0,7)))
+      .then(function(rows){ LS.set('pnlOvertime', rows||[]); return rows; })
+      .catch(function(){ return LS.get('pnlOvertime')||[]; }),
     new Promise(function(resolve){
       loadFranchiseInputs(month, function(){ resolve(); });
     })
@@ -3492,25 +3524,12 @@ function _doRenderPNL(month){
     if(fs) salaryDetail.push(u.name+': '+fmtINR(_monthSal)+' ('+_present+' full+'+_half+' half/'+_pnlDays+'d)');
   });
 
-  // ── Actual Incentives paid — sum from salary breakdown this month ──
-  // Incentive = max(0, (barberMoSales - fixedSalary) * 10%)
-  var totalActualIncentives = 0;
-  var totalProjIncentives   = 0;
-  myStaff.filter(function(u){ return u.role==='barber'; }).forEach(function(u){
-    var bEntries = entries.filter(function(e){ return e.barberId===u.id; });
-    var bSales   = bEntries.reduce(function(a,e){ return a+Number(e.phPay||0)+Number(e.cash||0); },0);
-    var inc = Math.max(0, Math.round((bSales - Number(u.fixedSalary||0)) * 0.10));
-    totalActualIncentives += inc;
-    // Projected incentive: assume projected revenue distributed proportionally
-    var projRevTotal = parseFloat(document.getElementById('pnl-proj-rev').value)||0;
-    if(projRevTotal && revenue > 0){
-      var bShare = bSales / revenue;
-      var projBSales = bShare * projRevTotal;
-      totalProjIncentives += Math.max(0, Math.round((projBSales - Number(u.fixedSalary||0)) * 0.10));
-    } else {
-      totalProjIncentives += inc;
-    }
-  });
+  // ── Incentives + OT — from dedicated tables (entered by Franchise Owner) ──
+  var pnlIncentives = LS.get('pnlIncentives') || [];
+  var pnlOvertime   = LS.get('pnlOvertime')   || [];
+  var totalActualIncentives = pnlIncentives.reduce(function(a,r){ return a+Number(r.amount||0); }, 0);
+  var totalActualOT         = pnlOvertime.reduce(function(a,r){   return a+Number(r.amount||0); }, 0);
+  var totalProjIncentives   = totalActualIncentives; // proj = actual (franchise-entered)
 
   // ── Manual inputs (ads only; rest auto-fetched) ──
   function val(id){ return parseFloat((document.getElementById(id)||{}).value)||0; }
@@ -3597,11 +3616,11 @@ function _doRenderPNL(month){
 
   var actualOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
                    ebStaff + maid + ads + totalFood + extraFood +
-                   totalActualIncentives + wifi + misc;
+                   totalActualIncentives + totalActualOT + wifi + misc;
 
   var projOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
                  ebStaff + maid + ads + totalFood + extraFood +
-                 totalProjIncentives + wifi + misc;
+                 totalProjIncentives + totalActualOT + wifi + misc;
 
   var profit     = revenue - actualOpex;
   var projProfit = projRev - projOpex;
@@ -3618,6 +3637,7 @@ function _doRenderPNL(month){
   document.getElementById('pnl-salaries').textContent    = fINR(totalSalary);
   document.getElementById('pnl-food').textContent        = fINR(totalFood);
   document.getElementById('pnl-incentives').textContent  = fINR(totalActualIncentives);
+  var otEl=document.getElementById('pnl-ot'); if(otEl) otEl.textContent=fINR(totalActualOT);
   document.getElementById('pnl-total-opex').textContent  = fINR(actualOpex);
   document.getElementById('pnl-proj-incentives').textContent = fINR(totalProjIncentives);
   document.getElementById('pnl-proj-opex').textContent   = fINR(projOpex);

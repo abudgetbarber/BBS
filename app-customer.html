@@ -691,27 +691,42 @@ var ME = null;
 function myBills() {
   var all = getEntries();
   return all.filter(function(e){
-    if(String(e.customerId) === String(ME.id)) return true;
     if(e.customerPhone && e.customerPhone === ME.phone) return true;
     return false;
   });
 }
 function myVisits() {
-  var visits = getVisits();
+  var visits  = getVisits();
   var entries = getEntries();
-  // Build a set of visit ids matched by phone through entries
-  // A visit belongs to ME if:
-  //   1. customerId directly matches ME.id, OR
-  //   2. There is a billing entry for ME.phone on the same date with the same barber
-  var phoneMatchKeys = {};
-  entries.filter(function(e){ return e.customerPhone === ME.phone; })
-    .forEach(function(e){ phoneMatchKeys[e.date+'|'+String(e.barberId)] = true; });
-
-  return visits.filter(function(v){
-    if(String(v.customerId) === String(ME.id)) return true;
-    if(phoneMatchKeys[v.date+'|'+String(v.barberId)]) return true;
-    return false;
+  // Collect ALL customer IDs associated with ME's phone number
+  // (handles cases where barber used a different local id vs Supabase id)
+  var myIds = {};
+  if(ME.id) myIds[String(ME.id)] = true;
+  // Also find any customer records with same phone
+  var allCusts = getCustomers();
+  allCusts.filter(function(c){ return c.phone === ME.phone; })
+    .forEach(function(c){ if(c.id) myIds[String(c.id)] = true; });
+  // Also find customer IDs from style cards that link to entries with my phone
+  var myStyleCards = getStyleCards().filter(function(sc){
+    return myIds[String(sc.customerId)];
   });
+  myStyleCards.forEach(function(sc){ if(sc.customerId) myIds[String(sc.customerId)]=true; });
+
+  // Filter visits by any of my known customer IDs
+  var matched = visits.filter(function(v){
+    return myIds[String(v.customerId)];
+  });
+
+  // Fallback: also match visits by date+barberId against my billing entries
+  if(matched.length === 0){
+    var myEntryKeys = {};
+    entries.filter(function(e){ return e.customerPhone === ME.phone; })
+      .forEach(function(e){ myEntryKeys[e.date+'|'+String(e.barberId)] = true; });
+    matched = visits.filter(function(v){
+      return myEntryKeys[v.date+'|'+String(v.barberId)];
+    });
+  }
+  return matched;
 }
 function myCards() {
   return getStyleCards().filter(function(c){ return c.customerId === ME.id; });
@@ -938,6 +953,34 @@ function loadCards() {
 function loadHistory() {
   var visits  = myVisits().sort(function(a,b){ return parseDate(b.date)-parseDate(a.date); });
   var bills   = myBills();
+
+  // ── DEBUG: show data summary so mismatch can be diagnosed ──
+  var allVisits  = getVisits();
+  var allEntries = getEntries();
+  var allCusts   = getCustomers();
+  var sampleV    = allVisits[0] ? 'customerId='+allVisits[0].customerId+' date='+allVisits[0].date : 'none';
+  var sampleE    = allEntries[0] ? 'phone='+allEntries[0].customerPhone+' date='+allEntries[0].date : 'none';
+  var debugEl = document.getElementById('bb-debug-info');
+  if(!debugEl){
+    debugEl = document.createElement('div');
+    debugEl.id = 'bb-debug-info';
+    debugEl.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin:10px 0;font-size:11px;font-family:monospace;line-height:1.6;color:#333';
+    var histEl = document.getElementById('histList');
+    if(histEl && histEl.parentNode) histEl.parentNode.insertBefore(debugEl, histEl);
+  }
+  debugEl.innerHTML =
+    '<b>🔍 Debug Info</b><br>'+
+    'ME.id: <b>'+ME.id+'</b><br>'+
+    'ME.phone: <b>'+ME.phone+'</b><br>'+
+    'All visits in DB: <b>'+allVisits.length+'</b><br>'+
+    'My matched visits: <b>'+visits.length+'</b><br>'+
+    'All entries in DB: <b>'+allEntries.length+'</b><br>'+
+    'My matched bills: <b>'+bills.length+'</b><br>'+
+    'All customers in DB: <b>'+allCusts.length+'</b><br>'+
+    'Sample visit: '+sampleV+'<br>'+
+    'Sample entry: '+sampleE+'<br>'+
+    '<small>Remove this panel once fixed.</small>';
+  // ── END DEBUG ──
 
   // Build monthly bar chart — last 6 months
   var mCounts = {};

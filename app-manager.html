@@ -1733,10 +1733,10 @@ function renderMgrSalary(){
     // Component rows
     row('Food Money',          fmtINR(fm),  'var(--accent)',  'Set by Franchise Owner')+
     row('Cleaning Money',      fmtINR(cm),  'var(--accent)',  'Set by Franchise Owner')+
-    (incentive>0?row('Incentives', fmtINR(incentive), 'var(--blue)', 'Entered by Franchise Owner'):'')+
-    (totalOT>0?row('Overtime (OT)', fmtINR(totalOT), 'var(--blue)', 'Set by Franchise Owner'):'')+
-    (totalDed>0?row('Deductions', '−'+fmtINR(totalDed), 'var(--danger)', regularDeds.map(function(r){return r.desc+': '+fmtINR(r.amount);}).join(' · ')):'')+
-    (totalAdv>0?row('Advances',   '−'+fmtINR(totalAdv), 'var(--danger)', advances.map(function(r){return r.date+': '+fmtINR(r.amount);}).join(' · ')):'')+
+    row('Incentives',    fmtINR(incentive), 'var(--blue)',   'Entered by Franchise Owner')+
+    row('Overtime (OT)', fmtINR(totalOT),   'var(--blue)',   'Entered by Franchise Owner')+
+    row('Deductions',   '−'+fmtINR(totalDed), 'var(--danger)', totalDed>0?regularDeds.map(function(r){return r.desc+': '+fmtINR(r.amount);}).join(' · '):'None this month')+
+    row('Advances',     '−'+fmtINR(totalAdv), 'var(--danger)', totalAdv>0?advances.map(function(r){return r.date+': '+fmtINR(r.amount);}).join(' · '):'None this month')+
     // Net salary
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;margin-top:4px;border-top:1.5px solid rgba(255,255,255,.12)">'+
       '<span style="font-size:13px;font-weight:800">Net Salary</span>'+

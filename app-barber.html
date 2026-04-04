@@ -1755,62 +1755,81 @@ function saveCard(){
     var customers=LS.get('customers')||[];
     var custId=null;
     for(var i=0;i<customers.length;i++){if(customers[i].phone===cphone){custId=customers[i].id;break;}}
-    if(!custId){
-      custId='c'+ts;
-      var finalName=custName||('Customer '+cphone.slice(-4));
-      customers.push({id:custId,phone:cphone,name:finalName,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:''});
-      if(!LS.set('customers',customers)){btn.disabled=false;btn.textContent='✓ Save Style Card';toast('❌ Storage full');return;}
-    } else if(custName) {
-      // update name if better name provided
-      customers.forEach(function(c){if(c.id===custId && c.name.startsWith('Customer '))c.name=custName;});
-      LS.set('customers',customers);
-    }
-    var newCard={id:cardCode+'-'+ts,customerId:custId,barberId:ME.id,salonId:ME.salonId,name:name,cardId:cardCode,
-      topLength:document.getElementById('csTop').value,texture:cv('cg-tex'),fade:cv('cg-fade'),guard:cv('cg-grd'),
-      neckline:cv('cg-nck'),beard:cv('cg-brd'),product:document.getElementById('csProduct').value,
-      notes:document.getElementById('csNotes').value.trim(),zones:zones,
-      photos:{front:photos.front,back:photos.back,left:photos.left,right:photos.right,top:photos.top},createdAt:today(),isDefault:false};
-    var cards=LS.get('styleCards')||[];
-    cards.push(newCard);
-    if(!LS.set('styleCards',cards)){newCard.photos={front:null,back:null,left:null,right:null,top:null};cards[cards.length-1]=newCard;if(!LS.set('styleCards',cards)){cards.pop();btn.disabled=false;btn.textContent='✓ Save Style Card';toast('❌ Storage full');return;}}
-    var visits=LS.get('visits')||[];
-    visits.push({id:ts+1,customerId:custId,barberId:ME.id,barberName:ME.name,salonId:ME.salonId,salonName:'Budget Barber',styleName:name,date:today(),note:''});
-    LS.set('visits',visits);
-    // reset
-    document.getElementById('csPhone').value='';document.getElementById('csCustName').value='';
-    document.getElementById('csName').value='';document.getElementById('csNotes').value='';
-    photos={front:null,back:null,left:null,right:null,top:null};
-    var photoLabels={front:'Front',back:'Back',left:'Left Side',right:'Right Side',top:'Top'};
-    ['front','back','left','right','top'].forEach(function(s){var el=document.getElementById('ps-'+s);if(el){el.classList.remove('has');el.innerHTML='<span style="font-size:20px">📷</span><span>'+(photoLabels[s]||s)+'</span>';}});
-    var zd={fr:'2"',to:'2"',cr:'1.5"',le:'#2',ri:'#2',ba:'#1.5'};
-    Object.keys(zd).forEach(function(k){var el=document.getElementById('zv-'+k);if(el)el.textContent=zd[k];var zc=document.querySelector('.zc[data-z="'+k+'"]');if(zc)zc.classList.remove('lit');});
-    function rg(gid,di){var chips=document.querySelectorAll('#'+gid+' .cchip');chips.forEach(function(c,i){c.classList.toggle('on',i===di);});}
-    rg('cg-tex',0);rg('cg-fade',1);rg('cg-grd',3);rg('cg-nck',0);rg('cg-brd',1);
-    btn.disabled=false;btn.textContent='✓ Save Style Card';
-    // Show inline success status
-    var statusEl=document.getElementById('card-save-status');
-// Write StyleCard directly to Sheets
-    appendRowToSheet('StyleCards',{id:newCard.id,cardId:cardCode,customerId:custId,
-      barberId:ME.id,salonId:ME.salonId,name:newCard.name,createdAt:newCard.createdAt,
-      topLength:newCard.topLength,texture:newCard.texture,fade:newCard.fade,
-      guard:newCard.guard,neckline:newCard.neckline,beard:newCard.beard,
-      product:newCard.product,notes:newCard.notes,
-      zoneFront:zones.front||'',zoneTop:zones.top||'',zoneCrown:zones.crown||'',
-      zoneLeft:zones.left||'',zoneRight:zones.right||'',zoneBack:zones.back||''},function(){});
-    // Write Customer and Visit rows to Sheets
-    var _custs=LS.get('customers')||[];
-    var _thisCust=_custs.find(function(c){return c.id===custId;});
-    if(_thisCust) appendRowToSheet('Customers',_thisCust,function(){});
-    var _visits=LS.get('visits')||[];
-    var _lastVisit=_visits[_visits.length-1];
-    if(_lastVisit) appendRowToSheet('Visits',_lastVisit,function(){});
 
-    if(statusEl){
-      statusEl.style.display='block';
-      statusEl.innerHTML='<div style="background:rgba(0,196,140,.15);border:1.5px solid var(--accent);border-radius:var(--rs);padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:var(--accent)">✅ Style Card Saved! Code: <span style="font-family:var(--HF);font-size:18px;letter-spacing:2px">'+cardCode+'</span></div>';
-      setTimeout(function(){statusEl.style.display='none';},5000);
+    // Build the style card and visit save function — called after custId is confirmed
+    function _saveCardAndVisit(confirmedCustId){
+      var newCard={id:cardCode+'-'+ts,customerId:confirmedCustId,barberId:ME.id,salonId:ME.salonId,name:name,cardId:cardCode,
+        topLength:document.getElementById('csTop').value,texture:cv('cg-tex'),fade:cv('cg-fade'),guard:cv('cg-grd'),
+        neckline:cv('cg-nck'),beard:cv('cg-brd'),product:document.getElementById('csProduct').value,
+        notes:document.getElementById('csNotes').value.trim(),zones:zones,
+        photos:{front:photos.front,back:photos.back,left:photos.left,right:photos.right,top:photos.top},createdAt:today(),isDefault:false};
+      var cards=LS.get('styleCards')||[];
+      cards.push(newCard);
+      if(!LS.set('styleCards',cards)){newCard.photos={front:null,back:null,left:null,right:null,top:null};cards[cards.length-1]=newCard;if(!LS.set('styleCards',cards)){cards.pop();btn.disabled=false;btn.textContent='✓ Save Style Card';toast('❌ Storage full');return;}}
+      var visits=LS.get('visits')||[];
+      visits.push({id:ts+1,customerId:confirmedCustId,barberId:ME.id,barberName:ME.name,salonId:ME.salonId,salonName:'Budget Barber',styleName:name,date:today(),note:''});
+      LS.set('visits',visits);
+      // Save to Supabase
+      appendRowToSheet('StyleCards',{id:newCard.id,cardId:cardCode,customerId:confirmedCustId,
+        barberId:ME.id,salonId:ME.salonId,name:newCard.name,createdAt:newCard.createdAt,
+        topLength:newCard.topLength,texture:newCard.texture,fade:newCard.fade,
+        guard:newCard.guard,neckline:newCard.neckline,beard:newCard.beard,
+        product:newCard.product,notes:newCard.notes,
+        zoneFront:zones.front||'',zoneTop:zones.top||'',zoneCrown:zones.crown||'',
+        zoneLeft:zones.left||'',zoneRight:zones.right||'',zoneBack:zones.back||''},function(){});
+      var _visits=LS.get('visits')||[];
+      var _lastVisit=_visits[_visits.length-1];
+      if(_lastVisit) appendRowToSheet('Visits',_lastVisit,function(){});
+      // Reset form
+      document.getElementById('csPhone').value='';document.getElementById('csCustName').value='';
+      document.getElementById('csName').value='';document.getElementById('csNotes').value='';
+      photos={front:null,back:null,left:null,right:null,top:null};
+      var photoLabels={front:'Front',back:'Back',left:'Left Side',right:'Right Side',top:'Top'};
+      ['front','back','left','right','top'].forEach(function(s){var el=document.getElementById('ps-'+s);if(el){el.classList.remove('has');el.innerHTML='<span style="font-size:20px">📷</span><span>'+(photoLabels[s]||s)+'</span>';}});
+      var zd={fr:'2"',to:'2"',cr:'1.5"',le:'#2',ri:'#2',ba:'#1.5'};
+      Object.keys(zd).forEach(function(k){var el=document.getElementById('zv-'+k);if(el)el.textContent=zd[k];var zc=document.querySelector('.zc[data-z="'+k+'"]');if(zc)zc.classList.remove('lit');});
+      function rg(gid,di){var chips=document.querySelectorAll('#'+gid+' .cchip');chips.forEach(function(c,i){c.classList.toggle('on',i===di);});}
+      rg('cg-tex',0);rg('cg-fade',1);rg('cg-grd',3);rg('cg-nck',0);rg('cg-brd',1);
+      btn.disabled=false;btn.textContent='✓ Save Style Card';
+      var statusEl=document.getElementById('card-save-status');
+      if(statusEl){
+        statusEl.style.display='block';
+        statusEl.innerHTML='<div style="background:rgba(0,196,140,.15);border:1.5px solid var(--accent);border-radius:var(--rs);padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:var(--accent)">✅ Style Card Saved! Code: <span style="font-family:var(--HF);font-size:18px;letter-spacing:2px">'+cardCode+'</span></div>';
+        setTimeout(function(){statusEl.style.display='none';},5000);
+      }
+      toast('✅ "'+name+'" saved! Code: '+cardCode);
     }
-    toast('✅ "'+name+'" saved! Code: '+cardCode);
+
+    if(custId){
+      // Existing customer — update name if better name provided
+      if(custName){
+        customers.forEach(function(c){if(c.id===custId && c.name.startsWith('Customer '))c.name=custName;});
+        LS.set('customers',customers);
+      }
+      _saveCardAndVisit(custId);
+    } else {
+      // New customer — save to Supabase FIRST to get the real persisted ID
+      var finalName=custName||('Customer '+cphone.slice(-4));
+      var newCustRow={phone:cphone,name:finalName,salonId:ME.salonId,role:'customer',hairType:'',faceShape:'',density:'',growthNotes:'',loginPin:''};
+      sbInsert('customers', newCustRow).then(function(saved){
+        // Use the Supabase-assigned ID so visits and style cards link correctly
+        var confirmedId = (saved && saved.id) ? String(saved.id) : ('c'+ts);
+        newCustRow.id = confirmedId;
+        var custs=LS.get('customers')||[];
+        custs.push(newCustRow);
+        LS.set('customers',custs);
+        _saveCardAndVisit(confirmedId);
+      }).catch(function(){
+        // Fallback — use local id but warn
+        var fallbackId='c'+ts;
+        newCustRow.id=fallbackId;
+        var custs=LS.get('customers')||[];
+        custs.push(newCustRow);
+        LS.set('customers',custs);
+        _saveCardAndVisit(fallbackId);
+        toast('⚠ Customer saved locally only — check connectivity');
+      });
+    }
   }catch(err){console.error(err);btn.disabled=false;btn.textContent='✓ Save Style Card';toast('❌ Error: '+(err.message||'Try again'));}
 }
 

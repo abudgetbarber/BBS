@@ -1598,13 +1598,54 @@ function renderMgrAdvLog(){
   if(!el)return;
   if(!log.length){el.innerHTML='<span style="font-size:11px;color:var(--muted2);font-style:italic">No advances recorded</span>';return;}
   var total=log.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  el.innerHTML=log.slice().reverse().map(function(r){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">'+
-      '<span style="color:var(--muted)">'+r.date+' <span style="color:var(--white);font-weight:600">'+(r.mode==='phonePe'?'📱':'💵')+'</span></span>'+
-      '<span style="color:var(--danger);font-weight:700">−'+fmtINR(r.amount)+'</span>'+
+  // Use full log indices (not reversed) so edit/delete can find correct entry
+  var reversed=log.slice().reverse();
+  el.innerHTML=reversed.map(function(r,ri){
+    // Find original index in full log (needed for edit/delete)
+    var origIdx=log.length-1-ri;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">'+
+      '<span style="color:var(--muted);flex:1">'+r.date+' <span style="color:var(--white);font-weight:600">'+(r.mode==='phonePe'?'📱':'💵')+'</span></span>'+
+      '<span style="color:var(--danger);font-weight:700;margin-right:8px">−'+fmtINR(r.amount)+'</span>'+
+      '<button onclick="editMgrAdvance('+origIdx+')" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;padding:0 4px" title="Edit">✏️</button>'+
+      '<button onclick="deleteMgrAdvance('+origIdx+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0 4px" title="Delete">🗑</button>'+
     '</div>';
   }).join('')+
   '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:800;border-top:1px solid rgba(255,255,255,.1);margin-top:4px"><span>Total</span><span style="color:var(--danger)">−'+fmtINR(total)+'</span></div>';
+}
+
+function editMgrAdvance(idx){
+  var log=LS.get('advances')||[];
+  var allMine=log.filter(function(r){return String(r.barberId)===String(ME.id);});
+  var r=allMine[idx];
+  if(!r)return;
+  // Load values back into the form
+  document.getElementById('mgr-adv-date').value=r.date||'';
+  document.getElementById('mgr-adv-amt').value=r.amount||'';
+  setMgrAdvMode(r.mode||'cash');
+  // Remove old entry from LS (will be re-added on save)
+  var fullIdx=log.indexOf(r);
+  if(fullIdx>-1) log.splice(fullIdx,1);
+  LS.set('advances',log);
+  // Delete from Supabase if it has an id
+  if(r.id) sbDelete('advances',r.id).catch(function(){});
+  renderMgrAdvLog();
+  renderMgrCashCounter();
+  toast('✏️ Edit the entry and click + Add to save');
+}
+
+function deleteMgrAdvance(idx){
+  if(!confirm('Delete this advance entry?'))return;
+  var log=LS.get('advances')||[];
+  var allMine=log.filter(function(r){return String(r.barberId)===String(ME.id);});
+  var r=allMine[idx];
+  if(!r)return;
+  var fullIdx=log.indexOf(r);
+  if(fullIdx>-1) log.splice(fullIdx,1);
+  LS.set('advances',log);
+  if(r.id) sbDelete('advances',r.id).catch(function(){});
+  renderMgrAdvLog();
+  renderMgrCashCounter();
+  toast('Advance deleted');
 }
 function renderMgrSalary(){
   var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
@@ -1612,63 +1653,102 @@ function renderMgrSalary(){
   var dim=new Date(yr,m,0).getDate();
   var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
 
-  // Fixed salary from staff record
+  // ── Staff record (set by Franchise) ──
   var staff=LS.get('staff')||[];
   var me=staff.find(function(u){return String(u.id)===String(ME.id);})||{};
   var fs=Number(me.fixedSalary||0);
+  var fm=Number(me.foodMoney||0);
+  var cm=Number(me.cleaningMoney||0);
 
-  // Attendance — from override or raw log
+  // ── Attendance — from override or raw log ──
   var attKey='att_'+ME.id+'_'+mo;
   var attOvr=LS.get(attKey);
   var present=0,half=0;
   if(attOvr&&(attOvr.present!=null||attOvr.half!=null)){
     present=Number(attOvr.present||0); half=Number(attOvr.half||0);
   } else {
-    var log=LS.get('attendance')||[];
+    var attLog=LS.get('attendance')||[];
     for(var d=1;d<=dim;d++){
       var ds=d+'/'+m+'/'+yr;
-      var recs=log.filter(function(r){return r.date===ds&&String(r.barberId)===String(ME.id);});
+      var recs=attLog.filter(function(r){return r.date===ds&&String(r.barberId)===String(ME.id);});
       var hi=recs.some(function(r){return r.type==='in';}),ho=recs.some(function(r){return r.type==='out';});
       if(hi&&ho)present++;else if(hi)half++;
     }
   }
 
-  // Prorated salary = FixedSalary × (Present + Half×0.5) / TotalDays
+  // ── Prorated Salary ──
   var effectiveDays=present+half*0.5;
   var monthSal=dim>0?Math.round(fs*effectiveDays/dim):0;
-  var formula=fmtINR(fs)+' × ('+present+'F + '+half+'H) / '+dim+' days';
+
+  // ── OT — from deductions table (__OT__ special entry) ──
+  var allDedRaw=LS.get('ded_'+ME.id+'_'+mo)||[];
+  var otEntry=allDedRaw.find(function(r){return r.desc==='__OT__';});
+  var totalOT=otEntry?Number(otEntry.amount||0):0;
+  // Also check Supabase-loaded deductions
+  var supaDeds=(LS.get('deductions')||[]).filter(function(r){
+    return String(r.staff_id||r.staffId||'')===String(ME.id)&&r.month===mo;
+  });
+  if(!otEntry){ var supaOT=supaDeds.find(function(r){return r.desc==='__OT__';}); if(supaOT) totalOT=Number(supaOT.amount||0); }
+
+  // ── Incentive — entered by Franchise Owner (stored as __INC__ in deductions) ──
+  var incEntry=allDedRaw.find(function(r){return r.desc==='__INC__';});
+  var incentive=incEntry?Number(incEntry.amount||0):0;
+  if(!incEntry){ var supaInc=supaDeds.find(function(r){return r.desc==='__INC__';}); if(supaInc) incentive=Number(supaInc.amount||0); }
+
+  // ── Regular Deductions (set by Franchise) ──
+  var regularDeds=supaDeds.filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
+  if(!regularDeds.length) regularDeds=allDedRaw.filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
+  var totalDed=regularDeds.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // ── Advances this month ──
+  var advances=(LS.get('advances')||[]).filter(function(r){
+    var d=r.date||'';
+    return String(r.barberId)===String(ME.id)&&(d.indexOf('-')>-1?d.slice(0,7)===mo:isCM_sal(d,m,yr));
+  });
+  var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // ── Net Salary ──
+  var net=monthSal+fm+cm+incentive+totalOT-totalDed-totalAdv;
+
+  // ── Render ──
+  function row(lbl,val,col,sub){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px">'+
+      '<span style="color:var(--muted);flex:1">'+lbl+(sub?'<br><span style="font-size:10px;color:var(--muted2)">'+sub+'</span>':'')+'</span>'+
+      '<span style="font-weight:700;color:'+(col||'var(--white)')+'">'+val+'</span>'+
+    '</div>';
+  }
 
   var el=document.getElementById('mgr-salary-breakdown');
   if(!el)return;
   el.innerHTML=
     '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+mName+'</div>'+
-    // Salary value — large and prominent
-    '<div style="background:rgba(0,196,140,.08);border:1.5px solid rgba(0,196,140,.2);border-radius:var(--rs);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
-      '<div>'+
-        '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Monthly Salary</div>'+
-        '<div style="font-family:var(--HF);font-size:32px;color:var(--accent);letter-spacing:1px;line-height:1">'+fmtINR(monthSal)+'</div>'+
-      '</div>'+
-      '<div style="text-align:right">'+
-        '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Formula</div>'+
-        '<div style="font-size:11px;color:var(--muted2);font-family:monospace;line-height:1.5">'+formula+'</div>'+
+    // Prorated salary — prominent
+    '<div style="background:rgba(0,196,140,.08);border:1.5px solid rgba(0,196,140,.2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Prorated Salary</div>'+
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">'+
+        '<div style="font-family:var(--HF);font-size:30px;color:var(--accent);letter-spacing:1px;line-height:1">'+fmtINR(monthSal)+'</div>'+
+        '<div style="font-size:11px;color:var(--muted2);font-family:monospace;text-align:right">'+fmtINR(fs)+' × ('+present+'F+'+half+'H) / '+dim+'d</div>'+
       '</div>'+
     '</div>'+
-    // Attendance summary
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
-      '<div style="text-align:center;background:var(--surface2);border-radius:var(--rs);padding:8px 4px">'+
-        '<div style="font-size:18px;font-weight:800;color:var(--accent)">'+present+'</div>'+
-        '<div style="font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px">Full Days</div>'+
-      '</div>'+
-      '<div style="text-align:center;background:var(--surface2);border-radius:var(--rs);padding:8px 4px">'+
-        '<div style="font-size:18px;font-weight:800;color:var(--warn)">'+half+'</div>'+
-        '<div style="font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px">Half Days</div>'+
-      '</div>'+
-      '<div style="text-align:center;background:var(--surface2);border-radius:var(--rs);padding:8px 4px">'+
-        '<div style="font-size:18px;font-weight:800;color:var(--muted)">'+dim+'</div>'+
-        '<div style="font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px">Total Days</div>'+
-      '</div>'+
+    // Component rows
+    row('Food Money',          fmtINR(fm),  'var(--accent)',  'Set by Franchise Owner')+
+    row('Cleaning Money',      fmtINR(cm),  'var(--accent)',  'Set by Franchise Owner')+
+    (incentive>0?row('Incentives', fmtINR(incentive), 'var(--blue)', 'Entered by Franchise Owner'):'')+
+    (totalOT>0?row('Overtime (OT)', fmtINR(totalOT), 'var(--blue)', 'Set by Franchise Owner'):'')+
+    (totalDed>0?row('Deductions', '−'+fmtINR(totalDed), 'var(--danger)', regularDeds.map(function(r){return r.desc+': '+fmtINR(r.amount);}).join(' · ')):'')+
+    (totalAdv>0?row('Advances',   '−'+fmtINR(totalAdv), 'var(--danger)', advances.map(function(r){return r.date+': '+fmtINR(r.amount);}).join(' · ')):'')+
+    // Net salary
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;margin-top:4px;border-top:1.5px solid rgba(255,255,255,.12)">'+
+      '<span style="font-size:13px;font-weight:800">Net Salary</span>'+
+      '<span style="font-family:var(--HF);font-size:24px;color:'+(net>=0?'var(--accent)':'var(--danger)')+'">'+fmtINR(net)+'</span>'+
     '</div>'+
-    (fs===0?'<div style="margin-top:8px;font-size:11px;color:var(--warn);font-style:italic">⚠ Fixed salary not set — contact Franchise Owner to update your staff record.</div>':'');
+    (fs===0?'<div style="margin-top:8px;font-size:11px;color:var(--warn);font-style:italic">⚠ Fixed salary not set — contact Franchise Owner.</div>':'');
+}
+
+// Helper: check if a d/m/yyyy date is in month m, year yr
+function isCM_sal(ds,m,yr){
+  var p=(ds||'').split('/');
+  return parseInt(p[1])===m&&parseInt(p[2])===yr;
 }
 
 function renderMgrProfile(){

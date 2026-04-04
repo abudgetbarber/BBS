@@ -439,12 +439,12 @@ select option { background: var(--surface) !important; color: var(--white) !impo
         <input type="number" id="mgr-bill-cash-tip" class="fi" placeholder="0" min="0" inputmode="numeric">
       </div>
       <div>
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Customer Name</label>
-        <input type="text" id="mgr-bill-name" class="fi" placeholder="Walk-in">
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Customer Phone</label>
+        <input type="tel" id="mgr-bill-phone" class="fi" placeholder="Enter phone no." maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');mgrBillAutoFill(this.value)">
       </div>
       <div>
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Customer Phone</label>
-        <input type="tel" id="mgr-bill-phone" class="fi" placeholder="optional" maxlength="10" inputmode="numeric">
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Customer Name &nbsp;<span id="mgr-bill-name-status" style="font-size:9px;font-weight:700;color:var(--accent)"></span></label>
+        <input type="text" id="mgr-bill-name" class="fi" placeholder="Walk-in">
       </div>
     </div>
     <button onclick="addMgrBill()" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:800;cursor:pointer;font-family:var(--BF)">✓ Add Entry</button>
@@ -1416,6 +1416,39 @@ function populateMgrBillBarbers(){
   sel.innerHTML = '<option value="">Select Stylist</option>' +
     myBarbers.map(function(u){return '<option value="'+u.id+'">'+u.name+'</option>';}).join('');
 }
+function mgrBillAutoFill(phone){
+  var nameEl   = document.getElementById('mgr-bill-name');
+  var statusEl = document.getElementById('mgr-bill-name-status');
+  if(!nameEl) return;
+  // Clear status if phone not yet 10 digits
+  if(phone.length < 10){
+    if(statusEl) statusEl.textContent = '';
+    return;
+  }
+  // 1. Look up customers table (cached in localStorage after Supabase load)
+  var customers = LS.get('customers') || [];
+  var found = customers.find(function(c){ return String(c.phone) === String(phone); });
+  if(found && found.name){
+    nameEl.value = found.name;
+    if(statusEl) statusEl.textContent = '✓ Found';
+    return;
+  }
+  // 2. Fallback — look up previous entries for this salon with same phone
+  var entries = getEntries().filter(function(e){
+    return String(e.salonId) === String(mySalonId) &&
+           e.customerPhone === phone &&
+           e.customerName && e.customerName !== 'Walk-in';
+  });
+  if(entries.length){
+    nameEl.value = entries[entries.length-1].customerName;
+    if(statusEl) statusEl.textContent = '✓ Found';
+    return;
+  }
+  // 3. Not found — clear name field, show New
+  nameEl.value = '';
+  if(statusEl) statusEl.textContent = 'New';
+}
+
 function addMgrBill(){
   var barberId   = document.getElementById('mgr-bill-barber').value;
   var services   = mgrSelectedSvcs.map(function(s){return s.label;}).join(', ');

@@ -643,7 +643,8 @@ select option { background: var(--surface) !important; color: var(--white) !impo
     <div class="pnl-row pnl-auto"><span>Marketing <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span><span id="pnl-marketing-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-ads" value="0"></div>
     <div class="pnl-row pnl-auto"><span>Food Money (from staff profile)</span><span id="pnl-food" class="pnl-val-neg">₹0</span></div>
     <div class="pnl-row pnl-auto"><span>Extra Sunday Food <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span><span id="pnl-extra-food-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-extra-food" value="0"></div>
-    <div class="pnl-row pnl-auto"><span>Actual Incentives (paid out)</span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
+    <div class="pnl-row pnl-auto"><span>Actual Incentives <span style="font-size:10px;color:var(--muted)">(from incentives table)</span></span><span id="pnl-incentives" class="pnl-val-neg">₹0</span></div>
+    <div class="pnl-row pnl-auto"><span>Overtime (OT) <span style="font-size:10px;color:var(--muted)">(from overtime table)</span></span><span id="pnl-ot" class="pnl-val-neg">₹0</span></div>
     <div class="pnl-row pnl-auto"><span>WiFi <span style="font-size:10px;color:var(--muted)">(from Salon tab)</span></span><span id="pnl-wifi-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-wifi" value="0"></div>
     <div class="pnl-row pnl-auto"><span>Expenses (daily manager expenses)</span><span id="pnl-misc-val" style="font-weight:700;color:var(--danger)">₹0</span><input type="hidden" id="pnl-misc" value="0"></div>
     <div class="pnl-row pnl-total-row" style="margin-top:4px"><span>Actual Total Opex</span><span id="pnl-total-opex" style="color:var(--danger);font-weight:800;font-size:15px">₹0</span></div>
@@ -1140,7 +1141,10 @@ function applyRestoredData(d){
     Object.keys(dg).forEach(function(k){LS.set(k,dg[k]);});
   }
   if(d.attOverrides&&d.attOverrides.length){
-    d.attOverrides.forEach(function(r){LS.set('att_'+r.staffId+'_'+r.month,{present:r.present,half:r.half,absent:r.absent});});
+    d.attOverrides.forEach(function(r){
+      var sid=r.staff_id||r.staffId||r.staffid||'';
+      if(sid) LS.set('att_'+sid+'_'+r.month,{present:Number(r.present||0),half:Number(r.half||0),absent:Number(r.absent||0)});
+    });
   }
 }
 
@@ -1396,6 +1400,278 @@ function buildTable(entries){
 }
 
 // ── DASHBOARD ──
+// ── FRANCHISE STAFF SALARY MODAL ─────────────────────────────────
+var frSalStaffId=null;
+function openFrStaffSalary(id){
+  frSalStaffId=id;
+  var staff=LS.get('staff')||[];
+  var b=staff.find(function(u){return u.id===id;});
+  if(!b)return;
+  document.getElementById('fr-sal-title').textContent=b.name+' — Salary';
+  var mo=document.getElementById('fr-sal-month');
+  if(mo&&!mo.value) mo.value=new Date().toISOString().slice(0,7);
+  // Pre-fetch incentives and overtime for this staff from Supabase
+  var month=document.getElementById('fr-sal-month').value||new Date().toISOString().slice(0,7);
+  Promise.all([
+    sbSelect('incentives','staff_id=eq.'+encodeURIComponent(id)+'&month=eq.'+encodeURIComponent(month)).catch(function(){return[];}),
+    sbSelect('overtime',  'staff_id=eq.'+encodeURIComponent(id)+'&month=eq.'+encodeURIComponent(month)).catch(function(){return[];}),
+    sbSelect('deductions','staff_id=eq.'+encodeURIComponent(id)+'&month=eq.'+encodeURIComponent(month)).catch(function(){return[];})
+  ]).then(function(res){
+    LS.set('frInc_'+id+'_'+month, res[0]||[]);
+    LS.set('frOT_'+id+'_'+month,  res[1]||[]);
+    LS.set('frDed_'+id+'_'+month, res[2]||[]);
+    renderFrSalary();
+  }).catch(function(){ renderFrSalary(); });
+  openModal('frSalaryModal');
+}
+
+function renderFrSalary(){
+  var mo=document.getElementById('fr-sal-month').value||new Date().toISOString().slice(0,7);
+  var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
+  var dim=new Date(yr,m,0).getDate();
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+  var staff=LS.get('staff')||[];
+  var b=staff.find(function(u){return u.id===frSalStaffId;})||{};
+  var fs=Number(b.fixedSalary||0),fm=Number(b.foodMoney||0),cm=Number(b.cleaningMoney||0);
+
+  // Attendance
+  var attKey='att_'+frSalStaffId+'_'+mo;
+  var attOvr=LS.get(attKey);
+  var present=0,half=0;
+  if(attOvr&&(attOvr.present!=null||attOvr.half!=null)){
+    present=Number(attOvr.present||0);half=Number(attOvr.half||0);
+  } else {
+    var log=LS.get('attendance')||[];
+    for(var d=1;d<=dim;d++){
+      var ds=d+'/'+m+'/'+yr;
+      var recs=log.filter(function(r){return r.date===ds&&String(r.barberId)===String(frSalStaffId);});
+      if(recs.some(function(r){return r.type==='in';})&&recs.some(function(r){return r.type==='out';})) present++;
+      else if(recs.some(function(r){return r.type==='in';})) half++;
+    }
+  }
+  var monthSal=dim>0?Math.round(fs*(present+half*0.5)/dim):0;
+
+  // Incentive, OT from dedicated tables
+  var incRows=LS.get('frInc_'+frSalStaffId+'_'+mo)||[];
+  var otRows =LS.get('frOT_'+frSalStaffId+'_'+mo)||[];
+  var dedRows=(LS.get('frDed_'+frSalStaffId+'_'+mo)||[]).filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
+  var totalInc=incRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var totalOT =otRows.reduce(function(a,r){ return a+Number(r.amount||0);},0);
+  var totalDed=dedRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // Advances
+  var advances=(LS.get('advances')||[]).filter(function(r){
+    if(String(r.barberId)!==String(frSalStaffId))return false;
+    var p=(r.date||'').split('/');
+    return parseInt(p[1])===m&&parseInt(p[2])===yr;
+  });
+  var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var net=monthSal+fm+cm+totalInc+totalOT-totalDed-totalAdv;
+
+  function row(lbl,val,col,sub){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px">'+
+      '<span style="color:var(--muted);flex:1">'+lbl+(sub?'<br><span style="font-size:10px;color:var(--muted2)">'+sub+'</span>':'')+'</span>'+
+      '<span style="font-weight:700;color:'+(col||'var(--white)')+'">'+val+'</span></div>';
+  }
+
+  var el=document.getElementById('fr-sal-breakdown');
+  if(!el)return;
+  el.innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+mName+'</div>'+
+    '<div style="background:rgba(0,196,140,.08);border:1.5px solid rgba(0,196,140,.2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Prorated Salary</div>'+
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">'+
+        '<div style="font-family:var(--HF);font-size:28px;color:var(--accent)">'+fmtINR(monthSal)+'</div>'+
+        '<div style="font-size:11px;color:var(--muted2);font-family:monospace">'+fmtINR(fs)+' × ('+present+'F+'+half+'H) / '+dim+'d</div>'+
+      '</div>'+
+    '</div>'+
+    row('Food Money',     fmtINR(fm),  'var(--accent)')+
+    row('Cleaning Money', fmtINR(cm),  'var(--accent)')+
+    row('Incentives',     fmtINR(totalInc), 'var(--blue)', frSalEntryRow('inc',incRows,mo))+
+    row('Overtime (OT)',  fmtINR(totalOT),  'var(--blue)', frSalEntryRow('ot',otRows,mo))+
+    row('Deductions',    '−'+fmtINR(totalDed),'var(--danger)', frDedEntryRow(dedRows,mo))+
+    row('Advances',      '−'+fmtINR(totalAdv),'var(--danger)',
+      totalAdv>0?advances.map(function(r){return r.date+': '+fmtINR(r.amount);}).join(' · '):'None')+
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;border-top:1.5px solid rgba(255,255,255,.12);margin-top:4px">'+
+      '<span style="font-size:13px;font-weight:800">Net Salary</span>'+
+      '<span style="font-family:var(--HF);font-size:24px;color:'+(net>=0?'var(--accent)':'var(--danger)')+'">'+fmtINR(net)+'</span>'+
+    '</div>'+
+    // Entry forms
+    '<div style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">'+
+      '<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Enter for '+mName+'</div>'+
+      // Incentive
+      '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">'+
+        '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">Incentive ₹</span>'+
+        '<input type="number" id="fr-sal-inc-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
+        '<input type="text" id="fr-sal-inc-note" class="fi" placeholder="Note (optional)" style="flex:2;padding:7px 10px">'+
+        '<button onclick="frSaveIncentive()" style="padding:7px 12px;background:rgba(29,109,181,.15);border:1.5px solid var(--blue);color:var(--blue);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Save</button>'+
+      '</div>'+
+      // OT
+      '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">'+
+        '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">OT ₹</span>'+
+        '<input type="number" id="fr-sal-ot-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
+        '<input type="text" id="fr-sal-ot-note" class="fi" placeholder="Note (optional)" style="flex:2;padding:7px 10px">'+
+        '<button onclick="frSaveOT()" style="padding:7px 12px;background:rgba(29,109,181,.15);border:1.5px solid var(--blue);color:var(--blue);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Save</button>'+
+      '</div>'+
+      // Deduction
+      '<div style="display:flex;gap:6px;align-items:center">'+
+        '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">Deduction ₹</span>'+
+        '<input type="number" id="fr-sal-ded-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
+        '<input type="text" id="fr-sal-ded-desc" class="fi" placeholder="Reason" style="flex:2;padding:7px 10px">'+
+        '<button onclick="frSaveDeduction()" style="padding:7px 12px;background:rgba(220,53,69,.12);border:1.5px solid rgba(220,53,69,.3);color:var(--danger);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Add</button>'+
+      '</div>'+
+    '</div>';
+}
+
+function frSalEntryRow(type, rows, mo){
+  if(!rows.length) return 'None entered for '+mo;
+  return rows.map(function(r){ return fmtINR(r.amount)+(r.note?' ('+r.note+')':''); }).join(' + ');
+}
+function frDedEntryRow(rows, mo){
+  if(!rows.length) return 'None';
+  return rows.map(function(r){ return r.desc+': '+fmtINR(r.amount); }).join(' · ');
+}
+
+function frSaveIncentive(){
+  var amt=parseFloat(document.getElementById('fr-sal-inc-amt').value)||0;
+  var note=(document.getElementById('fr-sal-inc-note').value||'').trim();
+  if(amt<=0){toast('Enter incentive amount');return;}
+  var mo=document.getElementById('fr-sal-month').value||new Date().toISOString().slice(0,7);
+  // Delete existing for this staff+month then insert fresh
+  _supaFetch('incentives?staff_id=eq.'+encodeURIComponent(frSalStaffId)+'&month=eq.'+encodeURIComponent(mo),{method:'DELETE'})
+    .then(function(){
+      return sbInsert('incentives',{staff_id:frSalStaffId,salon_id:mySalonId,month:mo,amount:amt,note:note});
+    })
+    .then(function(saved){
+      LS.set('frInc_'+frSalStaffId+'_'+mo,[saved||{amount:amt,note:note}]);
+      document.getElementById('fr-sal-inc-amt').value='';
+      document.getElementById('fr-sal-inc-note').value='';
+      renderFrSalary();
+      toast('✓ Incentive saved');
+    }).catch(function(e){toast('⚠ Error: '+e);});
+}
+
+function frSaveOT(){
+  var amt=parseFloat(document.getElementById('fr-sal-ot-amt').value)||0;
+  var note=(document.getElementById('fr-sal-ot-note').value||'').trim();
+  if(amt<=0){toast('Enter OT amount');return;}
+  var mo=document.getElementById('fr-sal-month').value||new Date().toISOString().slice(0,7);
+  _supaFetch('overtime?staff_id=eq.'+encodeURIComponent(frSalStaffId)+'&month=eq.'+encodeURIComponent(mo),{method:'DELETE'})
+    .then(function(){
+      return sbInsert('overtime',{staff_id:frSalStaffId,salon_id:mySalonId,month:mo,amount:amt,note:note});
+    })
+    .then(function(saved){
+      LS.set('frOT_'+frSalStaffId+'_'+mo,[saved||{amount:amt,note:note}]);
+      document.getElementById('fr-sal-ot-amt').value='';
+      document.getElementById('fr-sal-ot-note').value='';
+      renderFrSalary();
+      toast('✓ OT saved');
+    }).catch(function(e){toast('⚠ Error: '+e);});
+}
+
+function frSaveDeduction(){
+  var amt=parseFloat(document.getElementById('fr-sal-ded-amt').value)||0;
+  var desc=(document.getElementById('fr-sal-ded-desc').value||'').trim();
+  if(amt<=0){toast('Enter deduction amount');return;}
+  if(!desc){toast('Enter deduction reason');return;}
+  var mo=document.getElementById('fr-sal-month').value||new Date().toISOString().slice(0,7);
+  var existing=LS.get('frDed_'+frSalStaffId+'_'+mo)||[];
+  var regular=existing.filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
+  regular.push({desc:desc,amount:amt});
+  // Upsert all regular deductions
+  _supaFetch('deductions?staff_id=eq.'+encodeURIComponent(frSalStaffId)+'&month=eq.'+encodeURIComponent(mo)+'&not.desc=eq.__OT__&not.desc=eq.__INC__',{method:'DELETE'})
+    .catch(function(){})
+    .then(function(){
+      var rows=regular.map(function(r){return {staff_id:frSalStaffId,month:mo,desc:r.desc,amount:r.amount};});
+      return Promise.all(rows.map(function(r){return sbInsert('deductions',r).catch(function(){});}));
+    })
+    .then(function(){
+      LS.set('frDed_'+frSalStaffId+'_'+mo, regular);
+      document.getElementById('fr-sal-ded-amt').value='';
+      document.getElementById('fr-sal-ded-desc').value='';
+      renderFrSalary();
+      toast('✓ Deduction saved');
+    }).catch(function(e){toast('⚠ Error: '+e);});
+}
+
+// ── FRANCHISE STAFF ATTENDANCE MODAL ─────────────────────────────
+var frAttStaffId=null, frAttStaffName='';
+function openFrStaffAtt(id, name){
+  frAttStaffId=id; frAttStaffName=name;
+  document.getElementById('fr-att-title').textContent=name+' — Attendance';
+  var mo=document.getElementById('fr-att-month');
+  if(mo&&!mo.value) mo.value=new Date().toISOString().slice(0,7);
+  renderFrAtt();
+  openModal('frAttModal');
+}
+
+function renderFrAtt(){
+  var mo=document.getElementById('fr-att-month').value||new Date().toISOString().slice(0,7);
+  var yr=parseInt(mo.split('-')[0]),m=parseInt(mo.split('-')[1]);
+  var dim=new Date(yr,m,0).getDate();
+  var firstDow=new Date(yr,m-1,1).getDay();
+  var log=LS.get('attendance')||[];
+  var attKey='att_'+frAttStaffId+'_'+mo;
+  var attOvr=LS.get(attKey);
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+  var now=new Date(),curMoStr=now.toISOString().slice(0,7),todayD=(mo===curMoStr?now.getDate():0);
+  var present=0,half=0,absent=0;
+  var dayHeaders='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:2px">'+
+    ['S','M','T','W','T','F','S'].map(function(d){return '<div style="text-align:center;font-size:8px;font-weight:800;color:var(--muted2)">'+d+'</div>';}).join('')+'</div>';
+  var cells='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+  for(var b=0;b<firstDow;b++) cells+='<div style="aspect-ratio:1;min-height:26px"></div>';
+  for(var d=1;d<=dim;d++){
+    var ds=d+'/'+m+'/'+yr;
+    var recs=log.filter(function(r){return r.date===ds&&String(r.barberId)===String(frAttStaffId);});
+    var hasIn=recs.some(function(r){return r.type==='in';}),hasOut=recs.some(function(r){return r.type==='out';});
+    var bg,col;
+    if(hasIn&&hasOut){bg='rgba(0,196,140,.25)';col='var(--accent)';present++;}
+    else if(hasIn){bg='rgba(232,166,66,.2)';col='var(--warn)';half++;}
+    else if(d<todayD||mo<curMoStr){bg='rgba(224,107,91,.12)';col='var(--danger)';absent++;}
+    else{bg='var(--surface2)';col='var(--muted2)';}
+    var border=d===todayD?'outline:1.5px solid var(--accent);outline-offset:-1px;':'';
+    cells+='<div style="aspect-ratio:1;min-height:26px;border-radius:4px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;'+border+'">'+d+'</div>';
+  }
+  cells+='</div>';
+
+  // Use override values if set, otherwise computed
+  var ovPresent = attOvr ? Number(attOvr.present||0) : present;
+  var ovHalf    = attOvr ? Number(attOvr.half||0)    : half;
+  var ovAbsent  = attOvr ? Number(attOvr.absent||0)  : absent;
+
+  document.getElementById('fr-att-cal-wrap').innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">'+mName+'</div>'+
+    dayHeaders+cells+
+    '<div style="display:flex;gap:8px;margin:8px 0;font-size:10px">'+
+      '<span style="color:var(--accent)">■ Present ('+present+')</span>'+
+      '<span style="color:var(--warn)">■ Half ('+half+')</span>'+
+      '<span style="color:var(--danger)">■ Absent ('+absent+')</span>'+
+    '</div>'+
+    // Override inputs
+    '<div style="background:var(--surface2);border-radius:var(--rs);padding:10px 12px;margin-top:8px">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Override Attendance</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">'+
+        '<div class="ifield"><label style="font-size:10px">Present</label><input type="number" id="fr-att-present" class="fi" value="'+ovPresent+'" min="0"></div>'+
+        '<div class="ifield"><label style="font-size:10px">Half Day</label><input type="number" id="fr-att-half" class="fi" value="'+ovHalf+'" min="0"></div>'+
+        '<div class="ifield"><label style="font-size:10px">Absent</label><input type="number" id="fr-att-absent" class="fi" value="'+ovAbsent+'" min="0"></div>'+
+      '</div>'+
+      '<button onclick="frSaveAttOverride()" style="width:100%;padding:9px;background:rgba(0,196,140,.15);border:1.5px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--BF)">✓ Save Attendance Override</button>'+
+    '</div>';
+}
+
+function frSaveAttOverride(){
+  var mo=document.getElementById('fr-att-month').value||new Date().toISOString().slice(0,7);
+  var present=parseInt(document.getElementById('fr-att-present').value)||0;
+  var half   =parseInt(document.getElementById('fr-att-half').value)||0;
+  var absent =parseInt(document.getElementById('fr-att-absent').value)||0;
+  var attData={present:present,half:half,absent:absent};
+  LS.set('att_'+frAttStaffId+'_'+mo, attData);
+  SB.upsertAttOverride(frAttStaffId, mo, attData)
+    .then(function(){ toast('✓ Attendance saved'); })
+    .catch(function(){ toast('✓ Attendance saved locally'); });
+  renderFrAtt();
+}
+
 function renderDashboard(){
   var allE    = getEntries().filter(function(e){return e.salonId===mySalonId;});
   var todayE  = allE.filter(function(e){return e.date===today();});
@@ -1524,19 +1800,29 @@ function frRenderCashCounter(){
   var totalMonthExp=allMgrExp.filter(function(e){return isCM(e.date||'');}).reduce(function(a,e){return a+Number(e.amount||0);},0)+
                     allBarberExp.filter(function(e){return isCM(e.date||'');}).reduce(function(a,e){return a+Number(e.amount||0);},0);
   var cashAdv=(LS.get('advances')||[]).filter(function(r){return styIds.indexOf(String(r.barberId))>-1&&(!r.mode||r.mode==='cash')&&isCM(r.date||'');}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  // Manager's own cash advances — handle both ISO (yyyy-mm-dd) and d/m/yyyy date formats
+  var curMoStr=_cy+'-'+(_cm<10?'0':'')+_cm;
+  var mgrAdvances=(LS.get('advances')||[]).filter(function(r){
+    if(String(r.barberId)!==String(ME.id)) return false;
+    if(!r.mode||r.mode!=='cash') return false;
+    var d=r.date||'';
+    return d.indexOf('-')>-1 ? d.slice(0,7)===curMoStr : isCM(d);
+  });
+  var mgrCashAdv=mgrAdvances.reduce(function(a,r){return a+Number(r.amount||0);},0);
 
   // Only ACCEPTED handovers count in balance
   var acceptedHO=allMgrCI.filter(function(r){return (r.type==='handover'||!r.type)&&r.status==='accepted';});
   var totalHO=acceptedHO.reduce(function(a,r){return a+Number(r.amount||0);},0);
 
-  var bal=prevMonthCash+todayCash+prevCash-cashAdv-totalMonthExp-totalHO;
+  var bal=prevMonthCash+todayCash+prevCash-cashAdv-mgrCashAdv-totalMonthExp-totalHO;
   var cT=document.getElementById('fr-cash-counter-total'); if(cT) cT.textContent=fmtINR(bal);
   var cL=document.getElementById('fr-cash-counter-log');
   if(cL) cL.innerHTML=
     (prevMonthCash>0?'<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Prev Month Carry-Forward</span><span style="color:var(--blue)">+'+fmtINR(prevMonthCash)+'</span></div>':'')+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Today Cash Sales</span><span style="color:var(--green)">+'+fmtINR(todayCash)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">This Month (other days)</span><span style="color:var(--green)">+'+fmtINR(prevCash)+'</span></div>'+
-    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (this month)</span><span style="color:var(--danger)">-'+fmtINR(cashAdv)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Barbers)</span><span style="color:var(--danger)">-'+fmtINR(cashAdv)+'</span></div>'+
+    '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Cash Advances (Manager)</span><span style="color:var(--danger)">-'+fmtINR(mgrCashAdv)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Expenses (this month)</span><span style="color:var(--danger)">-'+fmtINR(totalMonthExp)+'</span></div>'+
     '<div style="font-size:11px;padding:3px 0;display:flex;justify-content:space-between"><span style="color:var(--muted2)">Handed Over (accepted)</span><span style="color:var(--blue)">-'+fmtINR(totalHO)+'</span></div>';
 
@@ -1832,6 +2118,12 @@ function renderPNL(){
     sbSelect('mgr_expenses',   '"salonId"=eq.'+encodeURIComponent(mySalonId))
       .then(function(rows){ LS.set('mgrExpenses', rows||[]); return rows; })
       .catch(function(){ return LS.get('mgrExpenses')||[]; }),
+    sbSelect('incentives', 'salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(document.getElementById('pnl-month').value||new Date().toISOString().slice(0,7)))
+      .then(function(rows){ LS.set('pnlIncentives', rows||[]); return rows; })
+      .catch(function(){ return LS.get('pnlIncentives')||[]; }),
+    sbSelect('overtime', 'salon_id=eq.'+encodeURIComponent(mySalonId)+'&month=eq.'+encodeURIComponent(document.getElementById('pnl-month').value||new Date().toISOString().slice(0,7)))
+      .then(function(rows){ LS.set('pnlOvertime', rows||[]); return rows; })
+      .catch(function(){ return LS.get('pnlOvertime')||[]; }),
     new Promise(function(resolve){
       loadFranchiseInputs(month, function(){ resolve(); });
     })
@@ -1884,25 +2176,12 @@ function _doRenderPNL(month){
     if(fs) salaryDetail.push(u.name+': '+fmtINR(_monthSal)+' ('+_present+' full+'+_half+' half/'+_pnlDays+'d)');
   });
 
-  // ── Actual Incentives paid — sum from salary breakdown this month ──
-  // Incentive = max(0, (barberMoSales - fixedSalary) * 10%)
-  var totalActualIncentives = 0;
-  var totalProjIncentives   = 0;
-  myStaff.filter(function(u){ return u.role==='barber'; }).forEach(function(u){
-    var bEntries = entries.filter(function(e){ return e.barberId===u.id; });
-    var bSales   = bEntries.reduce(function(a,e){ return a+Number(e.phPay||0)+Number(e.cash||0); },0);
-    var inc = Math.max(0, Math.round((bSales - Number(u.fixedSalary||0)) * 0.10));
-    totalActualIncentives += inc;
-    // Projected incentive: assume projected revenue distributed proportionally
-    var projRevTotal = parseFloat(document.getElementById('pnl-proj-rev').value)||0;
-    if(projRevTotal && revenue > 0){
-      var bShare = bSales / revenue;
-      var projBSales = bShare * projRevTotal;
-      totalProjIncentives += Math.max(0, Math.round((projBSales - Number(u.fixedSalary||0)) * 0.10));
-    } else {
-      totalProjIncentives += inc;
-    }
-  });
+  // ── Incentives + OT — from dedicated tables (entered by Franchise Owner) ──
+  var pnlIncentives = LS.get('pnlIncentives') || [];
+  var pnlOvertime   = LS.get('pnlOvertime')   || [];
+  var totalActualIncentives = pnlIncentives.reduce(function(a,r){ return a+Number(r.amount||0); }, 0);
+  var totalActualOT         = pnlOvertime.reduce(function(a,r){   return a+Number(r.amount||0); }, 0);
+  var totalProjIncentives   = totalActualIncentives;
 
   // ── Manual inputs (ads only; rest auto-fetched) ──
   function val(id){ return parseFloat((document.getElementById(id)||{}).value)||0; }
@@ -1989,11 +2268,11 @@ function _doRenderPNL(month){
 
   var actualOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
                    ebStaff + maid + ads + totalFood + extraFood +
-                   totalActualIncentives + wifi + misc;
+                   totalActualIncentives + totalActualOT + wifi + misc;
 
   var projOpex = totalSalary + rent + staffRent + cosmetics + ebStore +
                  ebStaff + maid + ads + totalFood + extraFood +
-                 totalProjIncentives + wifi + misc;
+                 totalProjIncentives + totalActualOT + wifi + misc;
 
   var profit     = revenue - actualOpex;
   var projProfit = projRev - projOpex;
@@ -2010,6 +2289,7 @@ function _doRenderPNL(month){
   document.getElementById('pnl-salaries').textContent    = fINR(totalSalary);
   document.getElementById('pnl-food').textContent        = fINR(totalFood);
   document.getElementById('pnl-incentives').textContent  = fINR(totalActualIncentives);
+  var otEl=document.getElementById('pnl-ot'); if(otEl) otEl.textContent=fINR(totalActualOT);
   document.getElementById('pnl-total-opex').textContent  = fINR(actualOpex);
   document.getElementById('pnl-proj-incentives').textContent = fINR(totalProjIncentives);
   document.getElementById('pnl-proj-opex').textContent   = fINR(projOpex);

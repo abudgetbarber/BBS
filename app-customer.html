@@ -453,21 +453,6 @@ select option { background: var(--surface) !important; color: var(--white) !impo
 </div>
 
 <!-- ════ VISIT HISTORY ════ -->
-<div class="page" id="pg-history">
-  <div class="pad">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);letter-spacing:1px;margin-bottom:2px;margin-top:4px">Visit History</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Every haircut with billing detail</div>
-
-    <!-- Monthly bar chart -->
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-hdr"><div class="card-title">Visits Per Month</div></div>
-      <div class="card-body"><div class="bar-chart" id="visitBarChart"></div></div>
-    </div>
-
-    <div id="histList"><div style="font-size:13px;color:var(--muted2)">Loading…</div></div>
-  </div>
-</div>
-
 <!-- ════ PROFILE ════ -->
 <div class="page" id="pg-profile">
   <div class="pad">
@@ -516,7 +501,6 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <button class="nb on" id="nb-home"    onclick="go('home')"><span class="ni">🏠</span>Home</button>
   <button class="nb"    id="nb-bills"   onclick="go('bills')"><span class="ni">💰</span>Bills</button>
   <button class="nb"    id="nb-cards"   onclick="go('cards')"><span class="ni">💈</span>Cards</button>
-  <button class="nb"    id="nb-history" onclick="go('history')"><span class="ni">📋</span>History</button>
   <button class="nb"    id="nb-profile" onclick="go('profile')"><span class="ni">👤</span>Profile</button>
 </nav>
 
@@ -594,42 +578,57 @@ function monthLabel(ym) {  // "yyyy-mm" → "Mar 2026"
 var SUPA_URL  = 'https://socgmrzzovpqaekpsklv.supabase.co';
 var SUPA_KEY  = 'sb_publishable_Aw-xgcvVKyPSxOi4rKa7sQ_830lOSuQ';
 
-function _supaGet(table){
-  return fetch(SUPA_URL+'/rest/v1/'+table+'?select=*',{
+function _supaGet(table, qs){
+  var url = SUPA_URL+'/rest/v1/'+table+'?select=*'+(qs?'&'+qs:'');
+  return fetch(url,{
     headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
   }).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; });
 }
 
+// Central data store — all rendering reads from here, never from localStorage
+var _data = { entries:[], styleCards:[], customers:[], visits:[] };
+
 (function bootCustomer(){
-  Promise.all([
-    _supaGet('customers'),
-    _supaGet('entries'),
-    _supaGet('style_cards'),
-    _supaGet('visits'),
-    _supaGet('staff'),
-    _supaGet('salons')
-  ]).then(function(res){
-    var customers = res[0], entries = res[1], styleCards = res[2],
-        visits = res[3], staff = res[4], salons = res[5];
-    function toStr(r, keys){ keys.forEach(function(k){ if(r[k]!=null) r[k]=String(r[k]); }); return r; }
-    // Always overwrite localStorage with fresh Supabase data
-    LS.set('customers', customers.map(function(r){ return toStr(r,['id','phone','loginPin']); }));
-    LS.set('entries',   entries.map(function(r){ return toStr(r,['id','barberId','salonId']); }));
-    LS.set('styleCards',styleCards.map(function(r){ return toStr(r,['id','customerId','barberId','salonId']); }));
-    LS.set('visits',    visits.map(function(r){ return toStr(r,['id','customerId','barberId','salonId']); }));
-    LS.set('staff',     staff.map(function(r){ return toStr(r,['id','phone','salonId']); }));
-    LS.set('salons',    salons.map(function(r){ return toStr(r,['id']); }));
-    // Re-find ME with fresh Supabase data
-    var custs = LS.get('customers') || [];
-    var freshMe = custs.find(function(c){ return c.phone === SESSION_PHONE; });
-    if(freshMe){
-      ME = freshMe;
-      // Update all DOM elements with fresh name/profile
+  function toStr(r,keys){keys.forEach(function(k){if(r[k]!=null)r[k]=String(r[k]);});return r;}
+
+  // Phase 1: get customer record by phone
+  _supaGet('customers','phone=eq.'+encodeURIComponent(SESSION_PHONE))
+  .then(function(custs){
+    var c = custs && custs[0] ? toStr(custs[0],['id','phone','loginPin']) : null;
+    if(c){
+      ME = c;
       applyMeToDOM();
     }
+    // Phase 2: fetch all data filtered for this customer in parallel
+    var phone = SESSION_PHONE;
+    return Promise.all([
+      // entries where customerPhone matches
+      _supaGet('entries', '"customerPhone"=eq.'+encodeURIComponent(phone)),
+      // style cards where customerId matches ME.id
+      c ? _supaGet('style_cards', '"customerId"=eq.'+encodeURIComponent(c.id)) : Promise.resolve([]),
+      // visits where customerId matches ME.id
+      c ? _supaGet('visits', '"customerId"=eq.'+encodeURIComponent(c.id))      : Promise.resolve([]),
+      // full customers list (for profile etc)
+      _supaGet('customers'),
+      _supaGet('salons')
+    ]);
+  })
+  .then(function(res){
+    function toStr(r,keys){keys.forEach(function(k){if(r[k]!=null)r[k]=String(r[k]);});return r;}
+    _data.entries    = (res[0]||[]).map(function(r){return toStr(r,['id','barberId','salonId']);});
+    _data.styleCards = (res[1]||[]).map(function(r){return toStr(r,['id','customerId','barberId','salonId']);});
+    _data.visits     = (res[2]||[]).map(function(r){return toStr(r,['id','customerId','barberId','salonId']);});
+    _data.customers  = (res[3]||[]).map(function(r){return toStr(r,['id','phone','loginPin']);});
+    // Also write to localStorage for any legacy helpers that still use LS.get
+    LS.set('entries',    _data.entries);
+    LS.set('styleCards', _data.styleCards);
+    LS.set('visits',     _data.visits);
+    LS.set('customers',  _data.customers);
+    LS.set('salons',     (res[4]||[]).map(function(r){return toStr(r,['id']);}));
     renderAll();
-  }).catch(function(err){
-    console.warn('[BB] Customer bootstrap failed, using cached data:', err);
+  })
+  .catch(function(err){
+    console.warn('[BB] Customer bootstrap failed:', err);
     renderAll();
   });
 })();
@@ -661,7 +660,6 @@ function renderAll(){
   if(id==='home')    loadHome();
   if(id==='bills')   loadBills();
   if(id==='cards')   loadCards();
-  if(id==='history') loadHistory();
   if(id==='profile') loadProfile();
 }
 
@@ -672,41 +670,24 @@ function renderAll(){
 
 
 
-// ── FIND ME (from localStorage cache — Supabase will update this shortly) ──
-var ME = null;
-(function() {
-  var customers = getCustomers();
-  ME = customers.find(function(c){ return c.phone === SESSION_PHONE; });
-  if (!ME) {
-    // Not in cache yet — show placeholder until Supabase loads
-    ME = {id:'',phone:SESSION_PHONE,name:'Loading…',role:'customer',hairType:'',faceShape:'',density:'',growthNotes:''};
-  }
-  applyMeToDOM();
-})();
+// ── FIND ME ── (placeholder until Supabase loads)
+var ME = {id:'',phone:SESSION_PHONE,name:'Loading…',role:'customer',hairType:'',faceShape:'',density:'',growthNotes:''};
+applyMeToDOM();
 
 
 
-// ── GET MY BILLS ──
-// Entries can be linked by customerId, customerPhone, or matched by visit date+barber
+// ── GET MY DATA — all pre-filtered from Supabase by phone/customerId ──
 function myBills() {
-  var all = getEntries();
-  var visits = myVisits();
-  // Build a set of (date+barberId) from my visits for cross-matching
-  var visitKeys = {};
-  visits.forEach(function(v){ visitKeys[v.date+'|'+v.barberId] = true; });
-  return all.filter(function(e){
-    if (e.customerId === ME.id) return true;
-    if (e.customerPhone === ME.phone) return true;
-    // match by visit: same barber visited me on that date
-    if (visitKeys[e.date+'|'+e.barberId]) return true;
-    return false;
-  });
+  // _data.entries already filtered by customerPhone from Supabase
+  return _data.entries;
 }
 function myVisits() {
-  return getVisits().filter(function(v){ return v.customerId === ME.id; });
+  // _data.visits already filtered by customerId from Supabase
+  return _data.visits;
 }
 function myCards() {
-  return getStyleCards().filter(function(c){ return c.customerId === ME.id; });
+  // _data.styleCards already filtered by customerId from Supabase
+  return _data.styleCards;
 }
 
 // ── NAVIGATE ──
@@ -718,7 +699,6 @@ function go(tab) {
   if (tab==='home')    loadHome();
   if (tab==='bills')   loadBills();
   if (tab==='cards')   loadCards();
-  if (tab==='history') loadHistory();
   if (tab==='profile') loadProfile();
 }
 
@@ -727,17 +707,17 @@ function loadHome() {
   var bills   = myBills();
   var visits  = myVisits();
   var cards   = myCards();
-  var totalSpend = bills.reduce(function(a,e){return a+e.total;},0);
+  var totalSpend = bills.reduce(function(a,e){return a+Number(e.total||0);},0);
   var now = new Date();
   var monthBills = bills.filter(function(e){
     var mo = parseInt(now.getMonth())+1; var yr = now.getFullYear();
     var p = e.date.split('/');
     return parseInt(p[1])===mo && parseInt(p[2])===yr;
   });
-  var monthSpend = monthBills.reduce(function(a,e){return a+e.total;},0);
+  var monthSpend = monthBills.reduce(function(a,e){return a+Number(e.total||0);},0);
 
-  document.getElementById('hTotalSpend').textContent = fmtINR(totalSpend);
-  document.getElementById('hTotalVisits').textContent = visits.length;
+  document.getElementById('hTotalSpend').textContent  = fmtINR(totalSpend);
+  document.getElementById('hTotalVisits').textContent = bills.length;
   document.getElementById('hThisMonth').textContent   = fmtINR(monthSpend);
 
   // Active style strip
@@ -927,63 +907,20 @@ function loadCards() {
 }
 
 // ── HISTORY ──
-function loadHistory() {
-  var visits  = myVisits().sort(function(a,b){ return parseDate(b.date)-parseDate(a.date); });
-  var bills   = myBills();
-
-  // Build monthly bar chart — last 6 months
-  var mCounts = {};
-  visits.forEach(function(v){ var mk=monthKey(v.date); if(mk) mCounts[mk]=(mCounts[mk]||0)+1; });
-  var mKeys = Object.keys(mCounts).sort().slice(-6);
-  var maxV  = Math.max.apply(null, mKeys.map(function(k){return mCounts[k];})) || 1;
-  document.getElementById('visitBarChart').innerHTML = mKeys.length ?
-    mKeys.map(function(m){ return '<div class="bar-group"><div class="bar" style="height:'+Math.round(mCounts[m]/maxV*100)+'%" data-tip="'+mCounts[m]+' visits"></div><div class="bar-lbl">'+monthLabel(m).split(' ')[0]+'</div></div>'; }).join('') :
-    '<div style="font-size:13px;color:var(--muted2);padding:8px 0">No visits yet</div>';
-
-  var el = document.getElementById('histList');
-  if (!visits.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>No visits recorded yet.</p></div>';
-    return;
-  }
-
-  // Pair each visit with any bill on the same date
-  var html = '<div class="card"><div class="card-body">';
-  visits.forEach(function(v,i){
-    var dayBills = bills.filter(function(e){ return e.date===v.date; });
-    var billsHtml = dayBills.length ?
-      '<div class="vt-bills">'+dayBills.map(function(e){
-        return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--accent);background:rgba(0,61,43,.07);border:1px solid rgba(0,61,43,.15);padding:4px 10px;border-radius:12px;margin-right:5px;margin-top:4px">'+e.services+' · '+fmtINR(e.total)+'</span>';
-      }).join('')+'</div>' : '';
-    html +=
-      '<div class="vt">' +
-        '<div class="vt-dot'+(i?' dim':'')+'"></div>' +
-        '<div style="flex:1">' +
-          '<div class="vt-date">'+v.date+'</div>' +
-          '<div class="vt-svc">'+v.styleName+'</div>' +
-          '<div class="vt-meta">✂️ '+(v.barberName||'')+(v.salonName?' · '+v.salonName:'')+'</div>' +
-          billsHtml +
-          (v.note?'<div class="vt-note">"'+v.note+'"</div>':'')+
-        '</div>' +
-      '</div>';
-  });
-  html += '</div></div>';
-  el.innerHTML = html;
-}
-
 // ── PROFILE ──
 function loadProfile() {
   var bills  = myBills();
   var visits = myVisits();
-  var totalSpend = bills.reduce(function(a,e){return a+e.total;},0);
-  var totalPh    = bills.reduce(function(a,e){return a+e.phPay;},0);
-  var totalCash  = bills.reduce(function(a,e){return a+e.cash;},0);
+  var vc     = bills.length;
+  var totalSpend = bills.reduce(function(a,e){return a+Number(e.total||0);},0);
+  var totalPh    = bills.reduce(function(a,e){return a+Number(e.phPay||0);},0);
+  var totalCash  = bills.reduce(function(a,e){return a+Number(e.cash||0);},0);
   document.getElementById('prTotalSpend').textContent = fmtINR(totalSpend);
-  document.getElementById('prVisits').textContent     = visits.length;
+  document.getElementById('prVisits').textContent     = vc;
   document.getElementById('prPhonePe').textContent    = fmtINR(totalPh);
   document.getElementById('prCash').textContent       = fmtINR(totalCash);
 
-  // Loyalty
-  var vc = visits.length;
+  // Loyalty based on bill count
   document.getElementById('loyVisits').innerHTML = vc + ' <span style="font-size:20px;letter-spacing:0">visits</span>';
   var milestones = [5,10,20,50,100];
   var next = milestones.find(function(m){return m>vc;}) || (Math.ceil(vc/50)*50+50);

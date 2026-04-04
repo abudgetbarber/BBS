@@ -436,6 +436,19 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div class="svc-grid" id="svc-chips"></div>
   <div class="sel-area" id="sel-area"><span class="sel-empty">Tap services above…</span></div>
 
+  <!-- Customer Phone + Name (auto-fill) -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px">
+    <div class="ifield">
+      <label>Customer Phone</label>
+      <input type="tel" id="inp-cust-phone" class="fi" placeholder="10-digit" maxlength="10" inputmode="numeric"
+        oninput="this.value=this.value.replace(/\D/g,'');billAutoFillName(this.value)">
+    </div>
+    <div class="ifield">
+      <label>Customer Name &nbsp;<span id="bill-name-status" style="font-size:9px;font-weight:700;color:var(--accent)"></span></label>
+      <input type="text" id="inp-cust-name" class="fi" placeholder="Walk-in">
+    </div>
+  </div>
+
   <!-- Payment: PhonePe + Cash with separate tips -->
   <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:7px;align-items:end;margin-bottom:6px">
     <div class="ifield"><label>PhonePe (₹)</label><input type="number" id="inp-ph" placeholder="0" min="0" inputmode="numeric"></div>
@@ -1301,14 +1314,42 @@ function toggleSvc(code){
 }
 function removeSvc(code){toggleSvc(code);}
 
+function billAutoFillName(phone){
+  var nameEl   = document.getElementById('inp-cust-name');
+  var statusEl = document.getElementById('bill-name-status');
+  if(!nameEl) return;
+  if(phone.length < 10){ if(statusEl) statusEl.textContent=''; return; }
+  // Check customers cache first
+  var customers = LS.get('customers') || [];
+  var found = customers.find(function(c){ return String(c.phone)===String(phone); });
+  if(found && found.name){
+    nameEl.value = found.name;
+    if(statusEl) statusEl.textContent = '✓ Found';
+    return;
+  }
+  // Fallback — check previous entries with same phone
+  var entries = getEntries().filter(function(e){
+    return e.customerPhone===phone && e.customerName && e.customerName!=='Walk-in';
+  });
+  if(entries.length){
+    nameEl.value = entries[entries.length-1].customerName;
+    if(statusEl) statusEl.textContent = '✓ Found';
+    return;
+  }
+  nameEl.value = '';
+  if(statusEl) statusEl.textContent = 'New';
+}
+
 function addBill(){
   if(!selectedSvcs.length){toast('Select at least one service');return;}
-  var ph    =parseFloat(document.getElementById('inp-ph').value)||0;
-  var cash  =parseFloat(document.getElementById('inp-cash').value)||0;
-  var phTip =parseFloat(document.getElementById('inp-ph-tip').value)||0;
-  var cashTip=parseFloat(document.getElementById('inp-cash-tip').value)||0;
-  var tip   =phTip+cashTip;
+  var ph      = parseFloat(document.getElementById('inp-ph').value)||0;
+  var cash    = parseFloat(document.getElementById('inp-cash').value)||0;
+  var phTip   = parseFloat(document.getElementById('inp-ph-tip').value)||0;
+  var cashTip = parseFloat(document.getElementById('inp-cash-tip').value)||0;
+  var tip     = phTip+cashTip;
   if(ph+cash===0){toast('Enter PhonePe or Cash amount');return;}
+  var custPhone = (document.getElementById('inp-cust-phone').value||'').trim();
+  var custName  = (document.getElementById('inp-cust-name').value||'').trim()||'Walk-in';
   var now=new Date();
   var entry={
     id:Date.now(),date:today(),
@@ -1316,20 +1357,47 @@ function addBill(){
     barberId:ME.id,barberName:ME.name,salonId:ME.salonId,
     services:selectedSvcs.map(function(s){return s.label;}).join(', '),
     phPay:ph,cash:cash,tip:tip,phTip:phTip,cashTip:cashTip,
-    total:ph+cash, // tip excluded from total
-    customerName:'Walk-in',customerPhone:''
+    total:ph+cash,
+    customerName:custName,customerPhone:custPhone
   };
   var entries=getEntries();
   entries.push(entry);
-  LS.set('entries',entries); // cache locally
+  LS.set('entries',entries);
   appendRowToSheet('Entries',entry,function(ok){if(!ok)toast('⚠ Saved locally — will sync');});
 
+  // Create customer in Supabase if real phone provided and not already known
+  if(custPhone.length===10){
+    var customers = LS.get('customers')||[];
+    var existing = customers.find(function(c){ return String(c.phone)===custPhone; });
+    if(!existing){
+      var newCust = {
+        phone:      custPhone,
+        name:       custName!=='Walk-in' ? custName : 'Customer '+custPhone.slice(-4),
+        salonId:    ME.salonId,
+        role:       'customer',
+        hairType:   '', faceShape:'', density:'', growthNotes:'', loginPin:''
+      };
+      sbInsert('customers', newCust).then(function(saved){
+        var c = saved || newCust;
+        if(!c.id) c.id = 'c'+Date.now();
+        var custs = LS.get('customers')||[];
+        custs.push(c);
+        LS.set('customers', custs);
+      }).catch(function(e){ console.warn('[BB] Customer insert failed:', e); });
+    }
+  }
+
+  // Clear form
   selectedSvcs=[];
   document.getElementById('inp-ph').value='';
   document.getElementById('inp-cash').value='';
   document.getElementById('inp-ph-tip').value='';
   document.getElementById('inp-cash-tip').value='';
-  toast('✅ Customer added — '+entry.services+(tip>0?' · Tip '+fmtINR(tip):''));
+  document.getElementById('inp-cust-phone').value='';
+  document.getElementById('inp-cust-name').value='';
+  var statusEl=document.getElementById('bill-name-status');
+  if(statusEl) statusEl.textContent='';
+  toast('✅ '+custName+' — '+entry.services+(tip>0?' · Tip '+fmtINR(tip):''));
   renderBilling();
 }
 

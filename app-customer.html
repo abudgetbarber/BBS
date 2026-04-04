@@ -608,6 +608,7 @@ function _supaGet(table){
       ME = freshMe;
       applyMeToDOM();
     }
+    // After finding ME, re-render with full data
     renderAll();
   }).catch(function(err){
     console.warn('[BB] Customer bootstrap failed:', err);
@@ -661,10 +662,19 @@ var ME = null;
 
 
 
-// ── GET MY BILLS — from Supabase data only, match by phone ──
+// ── GET MY BILLS — multiple matching strategies since entries may have empty phone ──
 function myBills() {
+  var myName   = (ME.name||'').trim().toLowerCase();
+  var myPhone  = ME.phone;
+  var mySalon  = ME.salonId;
+
   return _supaData.entries.filter(function(e){
-    if(e.customerPhone && e.customerPhone === ME.phone) return true;
+    // 1. Direct phone match
+    if(myPhone && e.customerPhone && e.customerPhone === myPhone) return true;
+    // 2. Name match within customer's salon (handles entries created without phone)
+    if(myName && myName !== 'loading…' && e.customerName &&
+       e.customerName.trim().toLowerCase() === myName &&
+       mySalon && String(e.salonId) === String(mySalon)) return true;
     return false;
   });
 }

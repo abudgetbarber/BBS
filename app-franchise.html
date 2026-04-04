@@ -1401,12 +1401,13 @@ function buildTable(entries){
 
 // ── DASHBOARD ──
 // ── FRANCHISE STAFF SALARY MODAL ─────────────────────────────────
-var frSalStaffId=null;
+var frSalStaffId=null, frSalStaffRole=null;
 function openFrStaffSalary(id){
   frSalStaffId=id;
   var staff=LS.get('staff')||[];
   var b=staff.find(function(u){return u.id===id;});
   if(!b)return;
+  frSalStaffRole=b.role||'barber';  // store role for renderFrSalary
   document.getElementById('fr-sal-title').textContent=b.name+' — Salary';
   var mo=document.getElementById('fr-sal-month');
   if(mo&&!mo.value) mo.value=new Date().toISOString().slice(0,7);
@@ -1433,6 +1434,7 @@ function renderFrSalary(){
   var staff=LS.get('staff')||[];
   var b=staff.find(function(u){return u.id===frSalStaffId;})||{};
   var fs=Number(b.fixedSalary||0),fm=Number(b.foodMoney||0),cm=Number(b.cleaningMoney||0);
+  var isBarber=(frSalStaffRole==='barber');
 
   // Attendance
   var attKey='att_'+frSalStaffId+'_'+mo;
@@ -1451,22 +1453,15 @@ function renderFrSalary(){
   }
   var monthSal=dim>0?Math.round(fs*(present+half*0.5)/dim):0;
 
-  // Incentive, OT from dedicated tables
-  var incRows=LS.get('frInc_'+frSalStaffId+'_'+mo)||[];
-  var otRows =LS.get('frOT_'+frSalStaffId+'_'+mo)||[];
-  var dedRows=(LS.get('frDed_'+frSalStaffId+'_'+mo)||[]).filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
-  var totalInc=incRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var totalOT =otRows.reduce(function(a,r){ return a+Number(r.amount||0);},0);
-  var totalDed=dedRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
-
   // Advances
   var advances=(LS.get('advances')||[]).filter(function(r){
     if(String(r.barberId)!==String(frSalStaffId))return false;
     var p=(r.date||'').split('/');
     return parseInt(p[1])===m&&parseInt(p[2])===yr;
   });
-  var totalAdv=advances.reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var net=monthSal+fm+cm+totalInc+totalOT-totalDed-totalAdv;
+  var cashAdv=advances.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var ppAdv  =advances.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+  var totalAdv=cashAdv+ppAdv;
 
   function row(lbl,val,col,sub){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px">'+
@@ -1476,7 +1471,8 @@ function renderFrSalary(){
 
   var el=document.getElementById('fr-sal-breakdown');
   if(!el)return;
-  el.innerHTML=
+
+  var header=
     '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+mName+'</div>'+
     '<div style="background:rgba(0,196,140,.08);border:1.5px solid rgba(0,196,140,.2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px">'+
       '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px">Prorated Salary</div>'+
@@ -1484,43 +1480,79 @@ function renderFrSalary(){
         '<div style="font-family:var(--HF);font-size:28px;color:var(--accent)">'+fmtINR(monthSal)+'</div>'+
         '<div style="font-size:11px;color:var(--muted2);font-family:monospace">'+fmtINR(fs)+' × ('+present+'F+'+half+'H) / '+dim+'d</div>'+
       '</div>'+
-    '</div>'+
-    row('Food Money',     fmtINR(fm),  'var(--accent)')+
-    row('Cleaning Money', fmtINR(cm),  'var(--accent)')+
-    row('Incentives',     fmtINR(totalInc), 'var(--blue)', frSalEntryRow('inc',incRows,mo))+
-    row('Overtime (OT)',  fmtINR(totalOT),  'var(--blue)', frSalEntryRow('ot',otRows,mo))+
-    row('Deductions',    '−'+fmtINR(totalDed),'var(--danger)', frDedEntryRow(dedRows,mo))+
-    row('Advances',      '−'+fmtINR(totalAdv),'var(--danger)',
-      totalAdv>0?advances.map(function(r){return r.date+': '+fmtINR(r.amount);}).join(' · '):'None')+
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;border-top:1.5px solid rgba(255,255,255,.12);margin-top:4px">'+
-      '<span style="font-size:13px;font-weight:800">Net Salary</span>'+
-      '<span style="font-family:var(--HF);font-size:24px;color:'+(net>=0?'var(--accent)':'var(--danger)')+'">'+fmtINR(net)+'</span>'+
-    '</div>'+
-    // Entry forms
-    '<div style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">'+
-      '<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Enter for '+mName+'</div>'+
-      // Incentive
-      '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">'+
-        '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">Incentive ₹</span>'+
-        '<input type="number" id="fr-sal-inc-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
-        '<input type="text" id="fr-sal-inc-note" class="fi" placeholder="Note (optional)" style="flex:2;padding:7px 10px">'+
-        '<button onclick="frSaveIncentive()" style="padding:7px 12px;background:rgba(29,109,181,.15);border:1.5px solid var(--blue);color:var(--blue);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Save</button>'+
-      '</div>'+
-      // OT
-      '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">'+
-        '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">OT ₹</span>'+
-        '<input type="number" id="fr-sal-ot-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
-        '<input type="text" id="fr-sal-ot-note" class="fi" placeholder="Note (optional)" style="flex:2;padding:7px 10px">'+
-        '<button onclick="frSaveOT()" style="padding:7px 12px;background:rgba(29,109,181,.15);border:1.5px solid var(--blue);color:var(--blue);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Save</button>'+
-      '</div>'+
-      // Deduction
-      '<div style="display:flex;gap:6px;align-items:center">'+
-        '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">Deduction ₹</span>'+
-        '<input type="number" id="fr-sal-ded-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
-        '<input type="text" id="fr-sal-ded-desc" class="fi" placeholder="Reason" style="flex:2;padding:7px 10px">'+
-        '<button onclick="frSaveDeduction()" style="padding:7px 12px;background:rgba(220,53,69,.12);border:1.5px solid rgba(220,53,69,.3);color:var(--danger);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Add</button>'+
-      '</div>'+
     '</div>';
+
+  var netEl='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;border-top:1.5px solid rgba(255,255,255,.12);margin-top:4px">'+
+    '<span style="font-size:13px;font-weight:800">Net Salary</span>'+
+    '<span style="font-family:var(--HF);font-size:24px;color:NET_COL">NET_VAL</span></div>';
+
+  if(isBarber){
+    // ── BARBER — calculated incentive, read-only ──
+    var allEntries=getEntries().filter(function(e){
+      var p=(e.date||'').split('/');
+      return String(e.barberId)===String(frSalStaffId)&&String(e.salonId)===String(mySalonId)&&parseInt(p[1])===m&&parseInt(p[2])===yr;
+    });
+    var moSales=allEntries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    var moPhTips=allEntries.reduce(function(a,e){return a+Number(e.phTip||0);},0);
+    var incentive=Math.max(0,Math.round((moSales-fs)*0.10));
+    // OT and deductions from deductions table
+    var dedRaw=LS.get('ded_'+frSalStaffId+'_'+mo)||[];
+    var otEntry=dedRaw.find(function(r){return r.desc==='__OT__';});
+    var totalOT=otEntry?Number(otEntry.amount||0):0;
+    var deductions=dedRaw.filter(function(r){return r.desc!=='__OT__';});
+    var totalDed=deductions.reduce(function(a,r){return a+Number(r.amount||0);},0);
+    var net=monthSal+fm+cm+incentive+moPhTips+totalOT-cashAdv-ppAdv-totalDed;
+    el.innerHTML=header+
+      row('Food Money',     fmtINR(fm),   'var(--accent)')+
+      row('Cleaning Money', fmtINR(cm),   'var(--accent)')+
+      row('Incentives',     fmtINR(incentive),'var(--blue)', 'max(0,(Sales '+fmtINR(moSales)+'−Fixed)×10%)')+
+      row('PhonePe Tips',   fmtINR(moPhTips), 'var(--blue)')+
+      (totalOT>0?row('Overtime (OT)', fmtINR(totalOT),'var(--blue)'):'')+
+      (totalDed>0?row('Deductions','−'+fmtINR(totalDed),'var(--danger)', deductions.map(function(r){return r.desc+': '+fmtINR(r.amount);}).join(' · ')):'')+
+      row('Advances — Cash',    '−'+fmtINR(cashAdv),'var(--danger)')+
+      row('Advances — PhonePe','−'+fmtINR(ppAdv),   'var(--danger)')+
+      netEl.replace('NET_COL',net>=0?'var(--accent)':'var(--danger)').replace('NET_VAL',fmtINR(net));
+  } else {
+    // ── MANAGER — franchise-entered incentive/OT/deductions + entry forms ──
+    var incRows=LS.get('frInc_'+frSalStaffId+'_'+mo)||[];
+    var otRows =LS.get('frOT_'+frSalStaffId+'_'+mo)||[];
+    var dedRows=(LS.get('frDed_'+frSalStaffId+'_'+mo)||[]).filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
+    var totalInc=incRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+    var totalOT2=otRows.reduce(function(a,r){ return a+Number(r.amount||0);},0);
+    var totalDed2=dedRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+    var net2=monthSal+fm+cm+totalInc+totalOT2-totalDed2-totalAdv;
+    el.innerHTML=header+
+      row('Food Money',     fmtINR(fm),  'var(--accent)')+
+      row('Cleaning Money', fmtINR(cm),  'var(--accent)')+
+      row('Incentives',     fmtINR(totalInc),'var(--blue)', frSalEntryRow('inc',incRows,mo))+
+      row('Overtime (OT)',  fmtINR(totalOT2),'var(--blue)', frSalEntryRow('ot',otRows,mo))+
+      row('Deductions',    '−'+fmtINR(totalDed2),'var(--danger)', frDedEntryRow(dedRows,mo))+
+      row('Advances',      '−'+fmtINR(totalAdv),'var(--danger)',
+        totalAdv>0?advances.map(function(r){return r.date+': '+fmtINR(r.amount);}).join(' · '):'None')+
+      netEl.replace('NET_COL',net2>=0?'var(--accent)':'var(--danger)').replace('NET_VAL',fmtINR(net2))+
+      // Entry forms — Manager only
+      '<div style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">'+
+        '<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Enter for '+mName+'</div>'+
+        '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">'+
+          '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">Incentive ₹</span>'+
+          '<input type="number" id="fr-sal-inc-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
+          '<input type="text" id="fr-sal-inc-note" class="fi" placeholder="Note (optional)" style="flex:2;padding:7px 10px">'+
+          '<button onclick="frSaveIncentive()" style="padding:7px 12px;background:rgba(29,109,181,.15);border:1.5px solid var(--blue);color:var(--blue);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Save</button>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">'+
+          '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">OT ₹</span>'+
+          '<input type="number" id="fr-sal-ot-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
+          '<input type="text" id="fr-sal-ot-note" class="fi" placeholder="Note (optional)" style="flex:2;padding:7px 10px">'+
+          '<button onclick="frSaveOT()" style="padding:7px 12px;background:rgba(29,109,181,.15);border:1.5px solid var(--blue);color:var(--blue);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Save</button>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<span style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">Deduction ₹</span>'+
+          '<input type="number" id="fr-sal-ded-amt" class="fi" placeholder="0" min="0" inputmode="numeric" style="flex:1;padding:7px 10px">'+
+          '<input type="text" id="fr-sal-ded-desc" class="fi" placeholder="Reason" style="flex:2;padding:7px 10px">'+
+          '<button onclick="frSaveDeduction()" style="padding:7px 12px;background:rgba(220,53,69,.12);border:1.5px solid rgba(220,53,69,.3);color:var(--danger);border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--BF);white-space:nowrap">Add</button>'+
+        '</div>'+
+      '</div>';
+  }
 }
 
 function frSalEntryRow(type, rows, mo){

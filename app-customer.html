@@ -689,69 +689,24 @@ var ME = null;
 // ── GET MY BILLS ──
 // Entries can be linked by customerId, customerPhone, or matched by visit date+barber
 function myBills() {
-  var all      = getEntries();
-  var myIds    = _getMyCustomerIds();
-  var myDates  = _getMyVisitDates();   // set of "date|salonId" from my visits
-
+  var all = getEntries();
+  var visits = myVisits();
+  // Build a set of (date+barberId) from my visits for cross-matching
+  var visitKeys = {};
+  visits.forEach(function(v){ visitKeys[v.date+'|'+v.barberId] = true; });
   return all.filter(function(e){
-    // 1. Direct phone match
-    if(e.customerPhone && e.customerPhone === ME.phone) return true;
-    // 2. Match by date+salonId from visits (entries have no customerId or phone)
-    if(e.date && e.salonId && myDates[e.date+'|'+String(e.salonId)]) return true;
+    if (e.customerId === ME.id) return true;
+    if (e.customerPhone === ME.phone) return true;
+    // match by visit: same barber visited me on that date
+    if (visitKeys[e.date+'|'+e.barberId]) return true;
     return false;
   });
 }
-
 function myVisits() {
-  var visits = getVisits();
-  var myIds  = _getMyCustomerIds();
-  return visits.filter(function(v){ return myIds[String(v.customerId)]; });
+  return getVisits().filter(function(v){ return v.customerId === ME.id; });
 }
-
 function myCards() {
-  var myIds = _getMyCustomerIds();
-  return getStyleCards().filter(function(c){ return myIds[String(c.customerId)]; });
-}
-
-// ── Helper: collect ALL customer IDs linked to ME's phone ──
-// Walks: phone → customers table → style_cards → visits customerId values
-function _getMyCustomerIds(){
-  var myIds = {};
-  // Start with ME's own id
-  if(ME.id) myIds[String(ME.id)] = true;
-  // Find all customer records sharing this phone
-  getCustomers().filter(function(c){ return c.phone === ME.phone; })
-    .forEach(function(c){ if(c.id) myIds[String(c.id)] = true; });
-  // From style cards linked to any of my IDs, collect ALL customerId values
-  // (barber may have used a local temp id that differs from the DB id)
-  getStyleCards().forEach(function(sc){
-    if(sc.customerId && myIds[String(sc.customerId)]){
-      myIds[String(sc.customerId)] = true;
-    }
-  });
-  // Also: any style card whose barberId serviced an entry matching my phone — collect its customerId
-  // This handles case where the barber created a visit linked to a style card whose
-  // customerId was never stored in the customers table with this phone
-  var myPhoneEntries = getEntries().filter(function(e){ return e.customerPhone === ME.phone; });
-  var myBarberDates = {};
-  myPhoneEntries.forEach(function(e){ myBarberDates[e.date+'|'+String(e.barberId)] = true; });
-  getStyleCards().forEach(function(sc){
-    // style card created by the barber who served ME on that date
-    if(sc.customerId && sc.barberId && sc.date && myBarberDates[sc.date+'|'+String(sc.barberId)]){
-      myIds[String(sc.customerId)] = true;
-    }
-  });
-  // Final pass: visits whose customerId we still don't have — check salonId+date match
-  return myIds;
-}
-
-// ── Helper: build set of "date|salonId" from ALL my visits ──
-function _getMyVisitDates(){
-  var myIds  = _getMyCustomerIds();
-  var result = {};
-  getVisits().filter(function(v){ return myIds[String(v.customerId)]; })
-    .forEach(function(v){ if(v.date && v.salonId) result[v.date+'|'+String(v.salonId)] = true; });
-  return result;
+  return getStyleCards().filter(function(c){ return c.customerId === ME.id; });
 }
 
 // ── NAVIGATE ──
@@ -976,36 +931,6 @@ function loadHistory() {
   var visits  = myVisits().sort(function(a,b){ return parseDate(b.date)-parseDate(a.date); });
   var bills   = myBills();
 
-  // ── DEBUG: show data summary so mismatch can be diagnosed ──
-  var allVisits  = getVisits();
-  var allEntries = getEntries();
-  var allCusts   = getCustomers();
-  var myIds      = _getMyCustomerIds();
-  var sampleV    = allVisits[0] ? 'customerId='+allVisits[0].customerId+' date='+allVisits[0].date : 'none';
-  var sampleE    = allEntries[0] ? 'phone='+allEntries[0].customerPhone+' date='+allEntries[0].date : 'none';
-  var debugEl = document.getElementById('bb-debug-info');
-  if(!debugEl){
-    debugEl = document.createElement('div');
-    debugEl.id = 'bb-debug-info';
-    debugEl.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin:10px 0;font-size:11px;font-family:monospace;line-height:1.6;color:#333';
-    var histEl = document.getElementById('histList');
-    if(histEl && histEl.parentNode) histEl.parentNode.insertBefore(debugEl, histEl);
-  }
-  debugEl.innerHTML =
-    '<b>🔍 Debug Info</b><br>'+
-    'ME.id: <b>'+ME.id+'</b><br>'+
-    'ME.phone: <b>'+ME.phone+'</b><br>'+
-    'All customer IDs found: <b>'+Object.keys(myIds).join(', ')+'</b><br>'+
-    'All visits in DB: <b>'+allVisits.length+'</b><br>'+
-    'My matched visits: <b>'+visits.length+'</b><br>'+
-    'All entries in DB: <b>'+allEntries.length+'</b><br>'+
-    'My matched bills: <b>'+bills.length+'</b><br>'+
-    'All customers in DB: <b>'+allCusts.length+'</b><br>'+
-    'Sample visit: '+sampleV+'<br>'+
-    'Sample entry: '+sampleE+'<br>'+
-    '<small>Remove debug panel once fixed.</small>';
-  // ── END DEBUG ──
-
   // Build monthly bar chart — last 6 months
   var mCounts = {};
   visits.forEach(function(v){ var mk=monthKey(v.date); if(mk) mCounts[mk]=(mCounts[mk]||0)+1; });
@@ -1021,13 +946,13 @@ function loadHistory() {
     return;
   }
 
-  // Pair each visit with bills for ME on the same date (match by phone to avoid cross-customer bleed)
+  // Pair each visit with any bill on the same date
   var html = '<div class="card"><div class="card-body">';
   visits.forEach(function(v,i){
-    var dayBills = bills.filter(function(e){ return e.date===v.date && e.customerPhone===ME.phone; });
+    var dayBills = bills.filter(function(e){ return e.date===v.date; });
     var billsHtml = dayBills.length ?
       '<div class="vt-bills">'+dayBills.map(function(e){
-        return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--accent);background:rgba(0,122,86,.07);border:1px solid rgba(0,122,86,.15);padding:4px 10px;border-radius:12px;margin-right:5px;margin-top:4px">'+e.services+' · '+fmtINR(e.total)+'</span>';
+        return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--accent);background:rgba(0,61,43,.07);border:1px solid rgba(0,61,43,.15);padding:4px 10px;border-radius:12px;margin-right:5px;margin-top:4px">'+e.services+' · '+fmtINR(e.total)+'</span>';
       }).join('')+'</div>' : '';
     html +=
       '<div class="vt">' +

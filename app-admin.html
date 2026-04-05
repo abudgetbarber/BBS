@@ -2159,7 +2159,7 @@ function renderSalonStaff(){
     sbSelect('att_overrides'),
     sbSelect('advances'),
     sbSelect('deductions'),
-    sbSelect('incentives','"salonId"=eq.'+encodeURIComponent(sid)),
+    sbSelect('incentives','salon_id=eq.'+encodeURIComponent(sid)),
     sbSelect('overtime',  'salon_id=eq.'+encodeURIComponent(sid))
   ]).then(function(res){
     var staff=res[0]||[], allE=res[1]||[], attLog=res[2]||[], attOvr=res[3]||[], advances=res[4]||[], deds=res[5]||[], incData=res[6]||[], otData=res[7]||[];

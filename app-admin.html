@@ -997,7 +997,9 @@ function renderSalonPNL(){
     sbSelect('mgr_expenses','"salonId"=eq.'+encodeURIComponent(sid)),
     sbSelect('franchise_inputs','salon_id=eq.'+encodeURIComponent(sid)+'&effective_from=lte.'+encodeURIComponent(month)+'&order=effective_from.desc'),
     sbSelect('att_overrides'),
-    sbSelect('attendance')
+    sbSelect('attendance'),
+    sbSelect('incentives','salon_id=eq.'+encodeURIComponent(sid)+'&month=eq.'+encodeURIComponent(month)),
+    sbSelect('overtime',  'salon_id=eq.'+encodeURIComponent(sid)+'&month=eq.'+encodeURIComponent(month))
   ]).then(function(results){
     // Normalize raw Supabase rows — handle both camelCase and snake_case field names
     function norm(r, map){
@@ -1032,6 +1034,8 @@ function renderSalonPNL(){
     // Staff salaries — attendance-prorated monthly salary only (no cleaning, same as Manager PNL)
     var attOverrides=results[5]||[];
     var attLog      =results[6]||[];
+    var incRows     =results[7]||[];
+    var otRows      =results[8]||[];
     var dIM2=new Date(yr,mo,0).getDate();
     var totalSalary=0, totalFood=0;
     var salaryDetail=[];
@@ -1061,13 +1065,10 @@ function renderSalonPNL(){
     var salonRec=(LS.get('salons')||[]).find(function(s){return s.id===sid;})||{};
     var isCompany=salonRec.companyManaged==1||salonRec.companyManaged==='1'||salonRec.companyManaged===true;
     var royalty=isCompany?0:5000;
-    // Incentives — barbers only: max(0, (barberSales - fixedSalary) * 10%)
-    var totalInc=0;
-    allStaff.filter(function(u){return u.role==='barber';}).forEach(function(u){
-      var bS=allE.filter(function(e){return String(e.barberId)===String(u.id);}).reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-      var fs=Number(u.fixedSalary||0);
-      totalInc+=Math.max(0,Math.round((bS-fs)*0.10));
-    });
+    // Incentives — from dedicated incentives table (entered by Franchise Owner)
+    var totalInc=incRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+    // OT — from dedicated overtime table (entered by Manager for barbers, Franchise for manager)
+    var totalOT=otRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
     // Salon expenses for this month
     var sxMo=allSalonExp.filter(function(r){
       var p=(r.date||'').split('/');
@@ -1097,7 +1098,7 @@ function renderSalonPNL(){
     var avgWd=wdR.length?(wdR.reduce(function(a,v){return a+v;},0)/wdR.length):0;
     var avgWe=weR.length?(weR.reduce(function(a,v){return a+v;},0)/weR.length):0;
     var projRev=Math.round(avgWd*totWd+avgWe*totWe);
-    var totalOpex=totalSalary+rent+staffRent+ebStore+ebStaff+maid+totalFood+extraFood+wifi+mgrExp+totalInc+royalty;
+    var totalOpex=totalSalary+rent+staffRent+ebStore+ebStaff+maid+totalFood+extraFood+wifi+mgrExp+totalInc+totalOT+royalty;
     var profit=revenue-totalOpex,projProfit=projRev-totalOpex;
     function fINR(n){return (n<0?'−₹':'₹')+Math.abs(Math.round(n)).toLocaleString('en-IN');}
     function prow(lbl,val,clr){return '<div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px"><span style="color:var(--muted)">'+lbl+'</span><span style="font-weight:700;color:'+clr+'">'+fINR(val)+'</span></div>';}
@@ -1117,6 +1118,7 @@ function renderSalonPNL(){
         prow('Maid',maid,'var(--danger)')+prow('Food Money',totalFood,'var(--danger)')+
         prow('Extra Sunday Food',extraFood,'var(--danger)')+prow('WiFi',wifi,'var(--danger)')+
         prow('Daily Expenses',mgrExp,'var(--danger)')+prow('Actual Incentives',totalInc,'var(--danger)')+
+        prow('Overtime (OT)',totalOT,'var(--danger)')+
         (royalty>0?prow('Franchise Royalty',royalty,'var(--danger)'):'')+
         '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px;font-weight:800;background:rgba(255,107,91,.06)"><span>Total Opex</span><span style="color:var(--danger)">'+fINR(totalOpex)+'</span></div>'+
       '</div>'+
@@ -1124,7 +1126,30 @@ function renderSalonPNL(){
         '<div style="background:rgba(217,119,6,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#D97706">PROFIT / LOSS</div>'+
         '<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:16px;font-weight:900;border-bottom:1px solid var(--border)"><span>Profit / Loss</span><span style="color:'+(profit>=0?'var(--accent)':'var(--danger)')+'">'+fINR(profit)+'</span></div>'+
         prow('Projected P/L',projProfit,projProfit>=0?'var(--accent)':'var(--danger)')+
-      '</div>';
+      '</div>'+
+      // Profit Share — company-managed only
+      (isCompany ? (function(){
+        var frPct=Number(salonRec.franchisePct||0);
+        var coPct=Number(salonRec.companyPct||0);
+        if(frPct&&!coPct) coPct=100-frPct;
+        if(coPct&&!frPct) frPct=100-coPct;
+        var total=frPct+coPct;
+        var frAmt=Math.round(profit*frPct/100);
+        var coAmt=Math.round(profit*coPct/100);
+        return '<div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-top:10px;overflow:hidden">'+
+          '<div style="background:rgba(109,40,217,.08);padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--purple)">PROFIT SHARE</div>'+
+          '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:13px;font-weight:800;border-bottom:1px solid var(--border)">'+
+            '<span>Franchise Owner ('+frPct+'%)</span>'+
+            '<span style="color:'+(frAmt>=0?'var(--accent)':'var(--danger)')+'">'+fINR(frAmt)+'</span>'+
+          '</div>'+
+          '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:13px;font-weight:800;border-bottom:1px solid var(--border)">'+
+            '<span>Company ('+coPct+'%)</span>'+
+            '<span style="color:'+(coAmt>=0?'var(--accent)':'var(--danger)')+'">'+fINR(coAmt)+'</span>'+
+          '</div>'+
+          (total!==100?'<div style="padding:6px 14px;font-size:10px;color:var(--warn);font-style:italic">⚠ '+frPct+'% + '+coPct+'% = '+total+'% — must equal 100%. Fix in Edit Salon.</div>':
+            '<div style="padding:6px 14px;font-size:10px;color:var(--muted2)">Based on actual profit '+fINR(profit)+'</div>')+
+        '</div>';
+      })() : '');
   }).catch(function(err){
     if(el) el.innerHTML='<div style="color:var(--danger);font-size:13px;padding:20px;text-align:center">Error loading data: '+err+'</div>';
   });
@@ -2051,7 +2076,7 @@ function applyRestoredData(d){
     Object.keys(dg).forEach(function(k){LS.set(k,dg[k]);});
   }
   if(d.attOverrides&&d.attOverrides.length){
-    d.attOverrides.forEach(function(r){LS.set('att_'+r.staffId+'_'+r.month,{present:r.present,half:r.half,absent:r.absent});});
+    d.attOverrides.forEach(function(r){LS.set('att_'+(r.staff_id||r.staffId)+'_'+r.month,{present:r.present,half:r.half,absent:r.absent});});
   }
 }
 
@@ -2133,14 +2158,18 @@ function renderSalonStaff(){
     sbSelect('attendance'),
     sbSelect('att_overrides'),
     sbSelect('advances'),
-    sbSelect('deductions')
+    sbSelect('deductions'),
+    sbSelect('incentives','"salonId"=eq.'+encodeURIComponent(sid)),
+    sbSelect('overtime',  'salon_id=eq.'+encodeURIComponent(sid))
   ]).then(function(res){
-    var staff=res[0]||[], allE=res[1]||[], attLog=res[2]||[], attOvr=res[3]||[], advances=res[4]||[], deds=res[5]||[];
+    var staff=res[0]||[], allE=res[1]||[], attLog=res[2]||[], attOvr=res[3]||[], advances=res[4]||[], deds=res[5]||[], incData=res[6]||[], otData=res[7]||[];
     // Cache for salary/att modals
     LS.set('staff', (LS.get('staff')||[]).filter(function(u){return u.salonId!==sid;}).concat(staff));
     LS.set('attendance', attLog);
     LS.set('advances', advances);
     LS.set('deductions', deds);
+    LS.set('adminIncData', incData);
+    LS.set('adminOTData',  otData);
     LS.set('entries', (LS.get('entries')||[]).filter(function(e){return e.salonId!==sid;}).concat(allE));
 
     var yr=parseInt(month.split('-')[0]),mo=parseInt(month.split('-')[1]);
@@ -2209,7 +2238,11 @@ function renderAdminSalary(){
   var staff=LS.get('staff')||[];
   var b=staff.find(function(u){return u.id===_adminSalStaffId;})||{};
   var fs=Number(b.fixedSalary||0),fm=Number(b.foodMoney||0),cm=Number(b.cleaningMoney||0);
+  var isBarber=(b.role==='barber');
   var dim=new Date(yr,m,0).getDate();
+  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+
+  // Attendance
   var savedAtt=LS.get('att_'+_adminSalStaffId+'_'+mo)||null;
   var present=0,half=0;
   if(savedAtt&&(savedAtt.present||savedAtt.half||savedAtt.absent)){
@@ -2224,29 +2257,78 @@ function renderAdminSalary(){
     }
   }
   var monthSal=dim>0?Math.round(fs*(present+half*0.5)/dim):0;
-  var moE=filterByMonth((LS.get('entries')||[]).filter(function(e){return String(e.barberId)===String(_adminSalStaffId);}),mo);
-  var moSales=moE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
-  var moPhTips=moE.reduce(function(a,e){return a+Number(e.phTip||0);},0);
-  var incentives=Math.max(0,Math.round((moSales-fs)*0.10));
-  var allAdv=(LS.get('advances')||[]).filter(function(r){if(String(r.barberId)!==String(_adminSalStaffId))return false;var p=(r.date||'').split('/');return parseInt(p[1])===m&&parseInt(p[2])===yr;});
+
+  // Advances
+  var allAdv=(LS.get('advances')||[]).filter(function(r){
+    if(String(r.barberId)!==String(_adminSalStaffId))return false;
+    var p=(r.date||'').split('/');
+    return parseInt(p[1])===m&&parseInt(p[2])===yr;
+  });
   var cashAdv=allAdv.filter(function(r){return !r.mode||r.mode==='cash';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var ppAdv=allAdv.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var allDed=(LS.get('deductions')||[]).filter(function(r){return String(r.staff_id||r.staffId||'')===String(_adminSalStaffId)&&r.month===mo;});
-  var otAmt=Number((allDed.find(function(r){return r.desc==='__OT__';})||{}).amount||0);
-  var totalDed=allDed.filter(function(r){return r.desc!=='__OT__';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
-  var net=monthSal+fm+cm+incentives+moPhTips+otAmt-cashAdv-ppAdv-totalDed;
-  var mName=new Date(yr,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+  var ppAdv  =allAdv.filter(function(r){return r.mode==='phonePe';}).reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // OT — from overtime table for ALL roles
+  var otAll=LS.get('adminOTData')||[];
+  var otAmt=otAll.filter(function(r){
+    return String(r.staff_id||r.staffId||'')===String(_adminSalStaffId)&&r.month===mo;
+  }).reduce(function(a,r){return a+Number(r.amount||0);},0);
+
+  // Deductions (non-OT, non-INC)
+  var allDed=(LS.get('deductions')||[]).filter(function(r){
+    return String(r.staff_id||r.staffId||'')===String(_adminSalStaffId)&&r.month===mo&&r.desc!=='__OT__'&&r.desc!=='__INC__';
+  });
+  var totalDed=allDed.reduce(function(a,r){return a+Number(r.amount||0);},0);
+
   function fR(n){return(n<0?'−₹':'₹')+Math.abs(Math.round(n)).toLocaleString('en-IN');}
-  function mkR(lbl,amt,t){return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--muted)">'+lbl+'</span><span style="color:'+(t==='add'?'var(--green)':'var(--danger)')+';font-weight:700">'+(t==='ded'?'- ':'')+fR(amt)+'</span></div>';}
-  document.getElementById('adm-sal-breakdown').innerHTML=
-    '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+mName+' · Sales: '+fmtINR(moSales)+'</div>'+
-    '<div style="background:rgba(0,196,140,.07);border-radius:6px;padding:7px 10px;margin-bottom:5px"><span style="font-size:11px;color:var(--muted)">Fixed Salary</span><span style="float:right;font-size:12px;color:var(--muted)">'+fR(fs)+'</span></div>'+
-    '<div style="background:rgba(0,196,140,.12);border-radius:6px;padding:7px 10px;margin-bottom:5px;border-left:3px solid var(--accent)"><span style="font-size:11px;font-weight:800;color:var(--accent)">Month Salary <span style="font-size:9px;color:var(--muted)">('+present+' full+'+half+' half/'+dim+'d)</span></span><span style="float:right;font-size:15px;font-weight:800;color:var(--accent)">'+fR(monthSal)+'</span></div>'+
-    mkR('Food Money',fm,'add')+mkR('Cleaning Money',cm,'add')+mkR('Incentives',incentives,'add')+mkR('PhonePe Tips',moPhTips,'add')+
-    (otAmt>0?mkR('Overtime (OT)',otAmt,'add'):'')+
-    mkR('Advances - Cash',cashAdv,'ded')+mkR('Advances - PhonePe',ppAdv,'ded')+
-    (totalDed>0?mkR('Deductions',totalDed,'ded'):'')+
-    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:800"><span style="color:var(--accent)">Net Salary</span><span style="color:var(--accent);font-size:18px;font-family:var(--HF)">'+fR(net)+'</span></div>';
+  function mkR(lbl,amt,t){
+    return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">'+
+      '<span style="color:var(--muted)">'+lbl+'</span>'+
+      '<span style="color:'+(t==='add'?'var(--green)':'var(--danger)')+';font-weight:700">'+(t==='ded'?'− ':'')+fR(amt)+'</span></div>';
+  }
+
+  var header=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+mName+'</div>'+
+    '<div style="background:rgba(0,196,140,.07);border-radius:6px;padding:7px 10px;margin-bottom:5px">'+
+      '<span style="font-size:11px;color:var(--muted)">Fixed Salary</span>'+
+      '<span style="float:right;font-size:12px;color:var(--muted)">'+fR(fs)+'</span></div>'+
+    '<div style="background:rgba(0,196,140,.12);border-radius:6px;padding:7px 10px;margin-bottom:5px;border-left:3px solid var(--accent)">'+
+      '<span style="font-size:11px;font-weight:800;color:var(--accent)">Month Salary '+
+        '<span style="font-size:9px;color:var(--muted)">('+present+' full+'+half+' half/'+dim+'d)</span></span>'+
+      '<span style="float:right;font-size:15px;font-weight:800;color:var(--accent)">'+fR(monthSal)+'</span></div>';
+
+  var net, rows;
+  if(isBarber){
+    // Barber — calculated incentive + PhonePe tips
+    var moE=filterByMonth((LS.get('entries')||[]).filter(function(e){return String(e.barberId)===String(_adminSalStaffId);}),mo);
+    var moSales=moE.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
+    var moPhTips=moE.reduce(function(a,e){return a+Number(e.phTip||0);},0);
+    var incentives=Math.max(0,Math.round((moSales-fs)*0.10));
+    net=monthSal+fm+cm+incentives+moPhTips+otAmt-cashAdv-ppAdv-totalDed;
+    rows=mkR('Food Money',fm,'add')+mkR('Cleaning Money',cm,'add')+
+      mkR('Incentives (Sales '+fR(moSales)+')',incentives,'add')+
+      mkR('PhonePe Tips',moPhTips,'add')+
+      (otAmt>0?mkR('Overtime (OT)',otAmt,'add'):'')+
+      mkR('Advances — Cash',cashAdv,'ded')+mkR('Advances — PhonePe',ppAdv,'ded')+
+      (totalDed>0?mkR('Deductions',totalDed,'ded'):'');
+  } else {
+    // Manager — incentive from incentives table
+    var incAll=LS.get('adminIncData')||[];
+    var incAmt=incAll.filter(function(r){
+      return String(r.staff_id||r.staffId||'')===String(_adminSalStaffId)&&r.month===mo;
+    }).reduce(function(a,r){return a+Number(r.amount||0);},0);
+    net=monthSal+fm+cm+incAmt+otAmt-cashAdv-ppAdv-totalDed;
+    rows=mkR('Food Money',fm,'add')+mkR('Cleaning Money',cm,'add')+
+      mkR('Incentives',incAmt,'add')+
+      mkR('Overtime (OT)',otAmt,'add')+
+      mkR('Advances — Cash',cashAdv,'ded')+mkR('Advances — PhonePe',ppAdv,'ded')+
+      (totalDed>0?mkR('Deductions',totalDed,'ded'):'');
+  }
+
+  document.getElementById('adm-sal-breakdown').innerHTML=header+rows+
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:800">'+
+      '<span style="color:var(--accent)">Net Salary</span>'+
+      '<span style="color:'+(net>=0?'var(--accent)':'var(--danger)')+';font-size:18px;font-family:var(--HF)">'+fR(net)+'</span>'+
+    '</div>';
 }
 
 // ── Admin Attendance Modal ──

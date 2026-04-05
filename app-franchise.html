@@ -1495,11 +1495,12 @@ function renderFrSalary(){
     var moSales=allEntries.reduce(function(a,e){return a+Number(e.phPay||0)+Number(e.cash||0);},0);
     var moPhTips=allEntries.reduce(function(a,e){return a+Number(e.phTip||0);},0);
     var incentive=Math.max(0,Math.round((moSales-fs)*0.10));
-    // OT and deductions from deductions table
+    // OT from dedicated overtime table (entered by Manager)
+    var otRows=LS.get('frOT_'+frSalStaffId+'_'+mo)||[];
+    var totalOT=otRows.reduce(function(a,r){return a+Number(r.amount||0);},0);
+    // Deductions (regular only — no __OT__ or __INC__)
     var dedRaw=LS.get('ded_'+frSalStaffId+'_'+mo)||[];
-    var otEntry=dedRaw.find(function(r){return r.desc==='__OT__';});
-    var totalOT=otEntry?Number(otEntry.amount||0):0;
-    var deductions=dedRaw.filter(function(r){return r.desc!=='__OT__';});
+    var deductions=dedRaw.filter(function(r){return r.desc!=='__OT__'&&r.desc!=='__INC__';});
     var totalDed=deductions.reduce(function(a,r){return a+Number(r.amount||0);},0);
     var net=monthSal+fm+cm+incentive+moPhTips+totalOT-cashAdv-ppAdv-totalDed;
     el.innerHTML=header+

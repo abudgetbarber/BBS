@@ -2802,10 +2802,10 @@ function saveOT(){
   var amt=parseFloat(document.getElementById('ss-ot-amt').value)||0;
   // Save OT locally for instant display
   LS.set('ot_'+salaryStaffId+'_'+mo,{amount:amt});
-  // Persist to Supabase: delete existing __OT__ row for this staff+month, then insert fresh if amt > 0
-  _supaFetch('deductions?staff_id=eq.'+encodeURIComponent(salaryStaffId)+'&month=eq.'+encodeURIComponent(mo)+'&desc=eq.__OT__',{method:'DELETE'})
+  // Persist to overtime table — delete existing row then insert fresh if amt > 0
+  _supaFetch('overtime?staff_id=eq.'+encodeURIComponent(salaryStaffId)+'&month=eq.'+encodeURIComponent(mo),{method:'DELETE'})
     .then(function(){
-      if(amt>0) return sbInsert('deductions',{staff_id:salaryStaffId,month:mo,desc:'__OT__',amount:amt});
+      if(amt>0) return sbInsert('overtime',{staff_id:salaryStaffId,salon_id:mySalonId,month:mo,amount:amt,note:''});
     })
     .catch(function(e){ console.warn('[BB] OT save error:',e); });
   renderStaffSalary();

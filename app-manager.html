@@ -990,7 +990,7 @@ select option { background: var(--surface) !important; color: var(--white) !impo
   <div style="background:var(--surface);border-radius:var(--r);padding:14px;margin-bottom:12px;border:1px solid var(--border)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent)">💰 My Salary</div>
-      <input type="month" id="mgr-sal-month" class="fi" style="width:auto;padding:4px 8px;font-size:12px" onchange="renderMgrSalary()">
+      <input type="month" id="mgr-sal-month" class="fi" style="width:auto;padding:4px 8px;font-size:12px" onchange="mgrSalMonthChanged()">
     </div>
     <div id="mgr-salary-breakdown"></div>
   </div>
@@ -1431,7 +1431,20 @@ function showTab(tab){
   if(tab==='staff')    { supaBootstrap(function(){ renderStaff(); }, function(){ renderStaff(); }); }
   if(tab==='salon'){ document.getElementById('sx-month').value=new Date().toISOString().slice(0,7); supaBootstrap(function(){ renderSalonExpenses(); }, function(){ renderSalonExpenses(); }); }
   if(tab==='pnl'){ initPNL(); renderPNL(); }
-  if(tab==='profile'){ supaBootstrap(function(){ renderMgrProfile(); }, function(){ renderMgrProfile(); }); }
+  if(tab==='profile'){
+    supaBootstrap(function(){
+      // Also fetch incentives and overtime for this manager — not in supaBootstrap readAll
+      var mo=new Date().toISOString().slice(0,7);
+      Promise.all([
+        sbSelect('incentives','staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];}),
+        sbSelect('overtime',  'staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];})
+      ]).then(function(res){
+        LS.set('pnlIncentives', res[0]||[]);
+        LS.set('pnlOvertime',   res[1]||[]);
+        renderMgrProfile();
+      }).catch(function(){ renderMgrProfile(); });
+    }, function(){ renderMgrProfile(); });
+  }
   if(tab==='dashboard'){
     supaBootstrap(function(){
       populateMgrBillBarbers();
@@ -1647,6 +1660,17 @@ function deleteMgrAdvance(idx){
   renderMgrAdvLog();
   renderMgrCashCounter();
   toast('Advance deleted');
+}
+function mgrSalMonthChanged(){
+  var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
+  Promise.all([
+    sbSelect('incentives','staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];}),
+    sbSelect('overtime',  'staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];})
+  ]).then(function(res){
+    LS.set('pnlIncentives', res[0]||[]);
+    LS.set('pnlOvertime',   res[1]||[]);
+    renderMgrSalary();
+  }).catch(function(){ renderMgrSalary(); });
 }
 function renderMgrSalary(){
   var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);

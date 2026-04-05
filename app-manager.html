@@ -1433,16 +1433,8 @@ function showTab(tab){
   if(tab==='pnl'){ initPNL(); renderPNL(); }
   if(tab==='profile'){
     supaBootstrap(function(){
-      // Also fetch incentives and overtime for this manager — not in supaBootstrap readAll
       var mo=new Date().toISOString().slice(0,7);
-      Promise.all([
-        sbSelect('incentives','staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];}),
-        sbSelect('overtime',  'staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];})
-      ]).then(function(res){
-        LS.set('pnlIncentives', res[0]||[]);
-        LS.set('pnlOvertime',   res[1]||[]);
-        renderMgrProfile();
-      }).catch(function(){ renderMgrProfile(); });
+      mgrFetchSalaryData(mo, renderMgrProfile);
     }, function(){ renderMgrProfile(); });
   }
   if(tab==='dashboard'){
@@ -1661,16 +1653,26 @@ function deleteMgrAdvance(idx){
   renderMgrCashCounter();
   toast('Advance deleted');
 }
-function mgrSalMonthChanged(){
-  var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
+function mgrFetchSalaryData(mo, cb){
+  // Fetch incentives, overtime and deductions for ME this month
   Promise.all([
     sbSelect('incentives','staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];}),
-    sbSelect('overtime',  'staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];})
+    sbSelect('overtime',  'staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];}),
+    sbSelect('deductions','staff_id=eq.'+encodeURIComponent(ME.id)+'&month=eq.'+encodeURIComponent(mo)).catch(function(){return[];})
   ]).then(function(res){
     LS.set('pnlIncentives', res[0]||[]);
     LS.set('pnlOvertime',   res[1]||[]);
-    renderMgrSalary();
-  }).catch(function(){ renderMgrSalary(); });
+    // Write deductions to both flat key and ded_ key
+    var deds=res[2]||[];
+    LS.set('deductions', deds);
+    if(deds.length) LS.set('ded_'+ME.id+'_'+mo, deds.map(function(r){return {desc:r.desc,amount:r.amount};}));
+    if(cb) cb();
+  }).catch(function(){ if(cb) cb(); });
+}
+
+function mgrSalMonthChanged(){
+  var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
+  mgrFetchSalaryData(mo, renderMgrSalary);
 }
 function renderMgrSalary(){
   var mo=document.getElementById('mgr-sal-month').value||new Date().toISOString().slice(0,7);
